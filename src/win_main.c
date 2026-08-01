@@ -99,8 +99,10 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    while ( 1 )
    {
-    //   Clock_StartFrame( &( game->clock ) );
-    //   Input_ResetState( &( game->input ) );
+      //Clock_StartFrame( &( game->clock ) );
+      //Input_ResetState( &( game->input ) );
+
+      PixelBuffer_ClearColor( g_winGlobals.game.pixelBuffer, 0 );
 
       while ( PeekMessageA( &msg, g_winGlobals.hWndMain, 0, 0, PM_REMOVE ) )
       {

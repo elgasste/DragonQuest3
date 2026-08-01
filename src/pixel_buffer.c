@@ -19,3 +19,14 @@ void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u
    ( *pBuffer )->h = h;
    ( *pBuffer )->mem = (u32*)( (u8*)(*pBuffer) + sizeof( PixelBuffer_t ) );
 }
+
+void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
+{
+   size_t pixels, i;
+
+   pixels = buffer->w * buffer->h;
+   for ( i = 0; i < pixels; i++ )
+   {
+      buffer->mem[i] = color;
+   }
+}
