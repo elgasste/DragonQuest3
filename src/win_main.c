@@ -19,12 +19,12 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    RECT expectedWindowRect = { 0 };
    LONG clientPaddingRight, clientPaddingTop;
    MSG msg;
-   // TODO
-   //Game_t* game = &g_winGlobals.game;
 
    UNUSED_PARAM( hPrevInstance );
    UNUSED_PARAM( lpCmdLine );
    UNUSED_PARAM( nCmdShow );
+
+   Game_Create( &( g_winGlobals.game ) );
 
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
@@ -87,7 +87,6 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                      DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
                                      "Consolas" );
 
-   Game_Create( &( g_winGlobals.game ) );
    g_winGlobals.bmpInfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
    g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.game.pixelBuffer->w;
    g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.game.pixelBuffer->h );
