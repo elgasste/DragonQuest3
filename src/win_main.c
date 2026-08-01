@@ -89,10 +89,10 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                      DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
                                      "Consolas" );
 
-   WinPixelBuffer_Init( &( g_winGlobals.screenBuffer ), SCREEN_WIDTH, SCREEN_HEIGHT );
+   PixelBuffer_Init( &( g_winGlobals.pixelBuffer ), SCREEN_WIDTH, SCREEN_HEIGHT );
    g_winGlobals.bmpInfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.screenBuffer.w;
-   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.screenBuffer.h );
+   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.pixelBuffer.w;
+   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.pixelBuffer.h );
    g_winGlobals.bmpInfo.bmiHeader.biPlanes = 1;
    g_winGlobals.bmpInfo.bmiHeader.biBitCount = 32;
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
@@ -121,7 +121,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       }
    }
 
-   WinPixelBuffer_CleanUp( &( g_winGlobals.screenBuffer ) );
+   PixelBuffer_CleanUp( &( g_winGlobals.pixelBuffer ) );
    return 0;
 }
 
@@ -174,8 +174,8 @@ internal void RenderScreen( void )
    // actually draw everything
    StretchDIBits( dcMem,
                   0, 0, winWidth, winHeight, // dest
-                  0, 0, g_winGlobals.screenBuffer.w, g_winGlobals.screenBuffer.h, // src
-                  g_winGlobals.screenBuffer.mem,
+                  0, 0, g_winGlobals.pixelBuffer.w, g_winGlobals.pixelBuffer.h, // src
+                  g_winGlobals.pixelBuffer.mem,
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
 

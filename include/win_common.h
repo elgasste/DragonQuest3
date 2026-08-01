@@ -6,7 +6,7 @@
 #include <mmsystem.h>
 
 #include "common.h"
-#include "win_pixel_buffer.h"
+#include "pixel_buffer.h"
 
 #define STRING_SIZE_DEFAULT               1024
 
@@ -16,7 +16,7 @@ typedef struct WinGlobalObjects_t
    HFONT hFont;
    LARGE_INTEGER performanceFrequency;
    BITMAPINFO bmpInfo;
-   WinPixelBuffer_t screenBuffer;
+   PixelBuffer_t pixelBuffer;
    b32 shutdown;
 }
 WinGlobalObjects_t;

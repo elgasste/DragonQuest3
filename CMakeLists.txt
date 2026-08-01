@@ -8,7 +8,7 @@ add_subdirectory(test)
 
 add_executable(DragonQuest3
 	src/win_main.c
-	src/win_pixel_buffer.c
+	src/pixel_buffer.c
 )
 
 set_property(TARGET DragonQuest3 PROPERTY COMPILE_WARNING_AS_ERROR ON)
