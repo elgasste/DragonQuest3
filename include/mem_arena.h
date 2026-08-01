@@ -54,7 +54,7 @@ extern "C" {
 MemArenaResult_t MemArena_Create( MemArena_t** pArena, size_t size );
 void MemArena_Destroy( MemArena_t** pArena );
 void MemArena_Reset( MemArena_t* arena );
-const char* MemoryArena_GetErrorMessage( MemArenaResult_t result );
+const char* MemArena_GetErrorMessage( MemArenaResult_t result );
 
 MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size );
 MemArenaResult_t MemArena_AllocSubArena( MemArena_t* arena, MemArena_t** subArena, size_t size );

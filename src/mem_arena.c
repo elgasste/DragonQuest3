@@ -40,7 +40,7 @@ void MemArena_Reset( MemArena_t* arena )
    arena->lastBlock = 0;
 }
 
-const char* MemoryArena_GetErrorMessage( MemArenaResult_t result )
+const char* MemArena_GetErrorMessage( MemArenaResult_t result )
 {
    switch ( result )
    {

@@ -1,16 +1,14 @@
 #include <stdio.h>
 
 #include "win_common.h"
+#include "pixel_buffer.h"
 
 // TODO: put these somewhere else
-#define SCREEN_WIDTH  640
-#define SCREEN_HEIGHT 480
 #define GRAPHICS_SCALE 2.0f
 
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void RenderScreen( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
-internal void FatalError( const char* message );
 
 int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
 {
@@ -89,10 +87,10 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                      DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
                                      "Consolas" );
 
-   PixelBuffer_Init( &( g_winGlobals.pixelBuffer ), SCREEN_WIDTH, SCREEN_HEIGHT );
+   Game_Create( &( g_winGlobals.game ) );
    g_winGlobals.bmpInfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.pixelBuffer.w;
-   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.pixelBuffer.h );
+   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.game.pixelBuffer->w;
+   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.game.pixelBuffer->h );
    g_winGlobals.bmpInfo.bmiHeader.biPlanes = 1;
    g_winGlobals.bmpInfo.bmiHeader.biBitCount = 32;
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
@@ -121,7 +119,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       }
    }
 
-   PixelBuffer_CleanUp( &( g_winGlobals.pixelBuffer ) );
+   Game_Destroy( &( g_winGlobals.game ) );
    return 0;
 }
 
@@ -174,8 +172,8 @@ internal void RenderScreen( void )
    // actually draw everything
    StretchDIBits( dcMem,
                   0, 0, winWidth, winHeight, // dest
-                  0, 0, g_winGlobals.pixelBuffer.w, g_winGlobals.pixelBuffer.h, // src
-                  g_winGlobals.pixelBuffer.mem,
+                  0, 0, g_winGlobals.game.pixelBuffer->w, g_winGlobals.game.pixelBuffer->h, // src
+                  g_winGlobals.game.pixelBuffer->mem,
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
 
@@ -232,10 +230,10 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
    }
 }
 
-internal void FatalError( const char* message )
+void FatalError( const char* message )
 {
    char errorMsg[STRING_SIZE_DEFAULT];
-   snprintf( errorMsg, STRING_SIZE_DEFAULT, "Windows error: %s", message );
+   snprintf( errorMsg, STRING_SIZE_DEFAULT, "Fatal error: %s", message );
    MessageBoxA( 0, message, "Error", MB_OK | MB_ICONERROR );
    exit( 1 );
 }

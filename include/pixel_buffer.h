@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+typedef struct MemArena_t MemArena_t;
+
 typedef struct PixelBuffer_t
 {
    u32 w;
@@ -11,7 +13,6 @@ typedef struct PixelBuffer_t
 }
 PixelBuffer_t;
 
-void PixelBuffer_Init( PixelBuffer_t* buffer, u32 w, u32 h );
-void PixelBuffer_CleanUp( PixelBuffer_t* buffer );
+void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u32 h );
 
 #endif // PIXEL_BUFFER_H

@@ -13,6 +13,8 @@
 
 #define UNUSED_PARAM( x )              (void)x
 
+#define STRING_SIZE_DEFAULT            512
+
 typedef int32_t b32;
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -24,5 +26,8 @@ typedef int32_t i32;
 typedef int64_t i64;
 typedef float r32;
 typedef double r64;
+
+// platform dependent
+void FatalError( const char* message );
 
 #endif // MA_COMMON_H
