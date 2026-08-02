@@ -11,7 +11,7 @@ You'll need to install the following extensions:
 
 Once these are installed, you can select a CMake compiler kit by opening the command palette (`ctrl+shift+p` in Windows) and typing `CMake: Select a Kit`).
 
-The next step is creating a `launch.json` file in the `.vscode` directory in the project's root folder. This will allow you to easily launch a debugger, here's an example of a `launch.json` file:
+The next step is creating a `launch.json` file in the `.vscode` directory in the project's root folder. This will allow you to easily launch a debugger, here's an example of a `launch.json` file, with an accompanying `tasks.json` file (this will ensure the project is built every time you try to debug):
 
 ```
 {
@@ -24,7 +24,35 @@ The next step is creating a `launch.json` file in the `.vscode` directory in the
       "program": "${workspaceFolder}/build/Debug/DragonQuest3.exe",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "stopAtEntry": false
+      "stopAtEntry": false,
+      "preLaunchTask": "build DragonQuest3"
+    }
+  ]
+}
+```
+
+```
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build DragonQuest3",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "${workspaceFolder}/build",
+        "--config",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile"
     }
   ]
 }
