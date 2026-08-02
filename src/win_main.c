@@ -1,12 +1,14 @@
 #include <stdio.h>
 
 #include "win_common.h"
+#include "mem_arena.h"
+#include "game.h"
 #include "pixel_buffer.h"
 
-// TODO: put these somewhere else
-#define GRAPHICS_SCALE 2.0f
-
+internal MemArena_t* CreateMemArena( void );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
+internal void HandleWinMessages( void );
+internal void HandleWinRender( void );
 internal void RenderScreen( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 
@@ -18,13 +20,21 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    DWORD windowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE;
    RECT expectedWindowRect = { 0 };
    LONG clientPaddingRight, clientPaddingTop;
-   MSG msg;
+   MemArena_t* memArena;
+   MemArenaResult_t result;
 
    UNUSED_PARAM( hPrevInstance );
    UNUSED_PARAM( lpCmdLine );
    UNUSED_PARAM( nCmdShow );
 
-   Game_Create( &( g_winGlobals.game ) );
+   memArena = CreateMemArena();
+   result = MemArena_Alloc( memArena, (void**)&( g_winGlobals.game ), sizeof( Game_t ) );
+   if ( result != MemArenaResult_Success )
+   {
+      FatalError( "failed to allocate memory for game object." );
+   }
+
+   Game_Create( g_winGlobals.game, memArena, HandleWinMessages, HandleWinRender );
 
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
@@ -60,6 +70,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - SCREEN_WIDTH;
    clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - SCREEN_HEIGHT;
 
+   g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
+
    // TODO: put the window title somewhere else
    g_winGlobals.hWndMain = CreateWindowExA( 0,
                                             mainWindowClass.lpszClassName,
@@ -67,8 +79,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             windowStyle,
                                             CW_USEDEFAULT,
                                             CW_USEDEFAULT,
-                                            (int)( SCREEN_WIDTH * GRAPHICS_SCALE ) + clientPaddingRight,
-                                            (int)( SCREEN_HEIGHT * GRAPHICS_SCALE ) + clientPaddingTop,
+                                            (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + clientPaddingRight,
+                                            (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + clientPaddingTop,
                                             0,
                                             0,
                                             hInstance,
@@ -88,40 +100,32 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                      "Consolas" );
 
    g_winGlobals.bmpInfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.game.pixelBuffer->w;
-   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.game.pixelBuffer->h );
+   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.game->pixelBuffer->w;
+   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.game->pixelBuffer->h );
    g_winGlobals.bmpInfo.bmiHeader.biPlanes = 1;
    g_winGlobals.bmpInfo.bmiHeader.biBitCount = 32;
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
 
-   g_winGlobals.shutdown = False;
+   Game_Run( g_winGlobals.game );
 
-   while ( 1 )
+   MemArena_Destroy( &( memArena ) );
+   return 0;
+}
+
+internal MemArena_t* CreateMemArena( void )
+{
+   MemArenaResult_t result;
+   char msg[STRING_SIZE_DEFAULT];
+   MemArena_t* memArena;
+
+   result = MemArena_Create( &( memArena ), GAME_MEMORY_SIZE );
+   if ( result != MemArenaResult_Success )
    {
-      //Clock_StartFrame( &( game->clock ) );
-      //Input_ResetState( &( game->input ) );
-
-      PixelBuffer_ClearColor( g_winGlobals.game.pixelBuffer, 0 );
-
-      while ( PeekMessageA( &msg, g_winGlobals.hWndMain, 0, 0, PM_REMOVE ) )
-      {
-         TranslateMessage( &msg );
-         DispatchMessageA( &msg );
-      }
-
-      //Game_Tic( game );
-
-      InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
-      //Clock_EndFrame( &game->clock );
-
-      if ( g_winGlobals.shutdown )
-      {
-         break;
-      }
+      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for game object: %s", MemArena_GetErrorMessage( result ) );
+      FatalError( msg );
    }
 
-   Game_Destroy( &( g_winGlobals.game ) );
-   return 0;
+   return memArena;
 }
 
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )
@@ -133,7 +137,7 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
       case WM_QUIT:
       case WM_CLOSE:
       case WM_DESTROY:
-         g_winGlobals.shutdown = True;
+         Game_Stop( g_winGlobals.game );
          break;
       case WM_KEYDOWN:
       case WM_KEYUP:
@@ -151,6 +155,22 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
    return result;
 }
 
+internal void HandleWinMessages( void )
+{
+   MSG msg;
+
+   while ( PeekMessageA( &msg, g_winGlobals.hWndMain, 0, 0, PM_REMOVE ) )
+   {
+      TranslateMessage( &msg );
+      DispatchMessageA( &msg );
+   }
+}
+
+internal void HandleWinRender( void )
+{
+   InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
+}
+
 // the double-buffering part of this came from Stack Overflow
 internal void RenderScreen( void )
 {
@@ -160,8 +180,8 @@ internal void RenderScreen( void )
    PAINTSTRUCT ps;
    int winWidth, winHeight;
 
-   winWidth = (int)( SCREEN_WIDTH * GRAPHICS_SCALE );
-   winHeight = (int)( SCREEN_HEIGHT * GRAPHICS_SCALE );
+   winWidth = (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale );
+   winHeight = (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale );
 
    dc = BeginPaint( g_winGlobals.hWndMain, &ps );
 
@@ -173,8 +193,8 @@ internal void RenderScreen( void )
    // actually draw everything
    StretchDIBits( dcMem,
                   0, 0, winWidth, winHeight, // dest
-                  0, 0, g_winGlobals.game.pixelBuffer->w, g_winGlobals.game.pixelBuffer->h, // src
-                  g_winGlobals.game.pixelBuffer->mem,
+                  0, 0, g_winGlobals.game->pixelBuffer->w, g_winGlobals.game->pixelBuffer->h, // src
+                  g_winGlobals.game->pixelBuffer->mem,
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
 
@@ -202,7 +222,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          // ensure alt+F4 still closes the window
          if ( keyCode == VK_F4 && ( flags & ( (LONG_PTR)1 << 29 ) ) )
          {
-            g_winGlobals.shutdown = True;
+            Game_Stop( g_winGlobals.game );
             return;
          }
 

@@ -8,14 +8,16 @@
 #include "common.h"
 #include "game.h"
 
+#define DEFAULT_GRAPHICS_SCALE 2.0f
+
 typedef struct WinGlobalObjects_t
 {
    HWND hWndMain;
    HFONT hFont;
    LARGE_INTEGER performanceFrequency;
    BITMAPINFO bmpInfo;
-   Game_t game;
-   b32 shutdown;
+   r32 graphicsScale;
+   Game_t* game;
 }
 WinGlobalObjects_t;
 

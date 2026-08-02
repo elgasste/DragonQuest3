@@ -4,24 +4,41 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 
-void Game_Create( Game_t* game )
+void Game_Create( Game_t* game, MemArena_t* memArena, void (*platformMessageHandler)( void ), void (*platformRender)( void ) )
 {
-   MemArenaResult_t result;
-   char msg[STRING_SIZE_DEFAULT];
+   game->memArena = memArena;
 
-   // TODO: define this value somewhere else
-   result = MemArena_Create( &( game->memArena ), 1024 * 1024 * 512 ); // 512 MB
-   if ( result != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for game object: %s", MemArena_GetErrorMessage( result ) );
-      FatalError( msg );
-   }
+   PixelBuffer_Create( &( game->pixelBuffer ), memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
 
-   PixelBuffer_Create( &( game->pixelBuffer ), game->memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
+   game->platformMessageHandler = platformMessageHandler;
+   game->platformRender = platformRender;
 }
 
-void Game_Destroy( Game_t* game )
+void Game_Run( Game_t* game )
 {
-   MemArena_Destroy( &( game->memArena ) );
-   game->memArena = 0;
+   game->shutdown = False;
+
+   while ( !game->shutdown )
+   {
+      // TODO
+      //Clock_StartFrame( &( game->clock ) );
+      //Input_ResetState( &( game->input ) );
+
+      game->platformMessageHandler();
+
+      PixelBuffer_ClearColor( game->pixelBuffer, 0 );
+
+      // TODO
+      //Game_Tic( game );
+
+      game->platformRender();
+
+      // TODO
+      //Clock_EndFrame( &game->clock );
+   }
+}
+
+void Game_Stop( Game_t* game )
+{
+   game->shutdown = True;
 }
