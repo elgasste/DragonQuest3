@@ -14,8 +14,7 @@ typedef struct WinGlobalObjects_t
    HFONT hFont;
    LARGE_INTEGER performanceFrequency;
    BITMAPINFO bmpInfo;
-   Game_t game;
-   b32 shutdown;
+   Game_t* game;
 }
 WinGlobalObjects_t;
 
