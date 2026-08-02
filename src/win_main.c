@@ -2,10 +2,8 @@
 
 #include "win_common.h"
 #include "mem_arena.h"
+#include "game.h"
 #include "pixel_buffer.h"
-
-// TODO: put these somewhere else
-#define GRAPHICS_SCALE 2.0f
 
 internal MemArena_t* CreateMemArena( void );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
@@ -72,6 +70,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - SCREEN_WIDTH;
    clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - SCREEN_HEIGHT;
 
+   g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
+
    // TODO: put the window title somewhere else
    g_winGlobals.hWndMain = CreateWindowExA( 0,
                                             mainWindowClass.lpszClassName,
@@ -79,8 +79,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             windowStyle,
                                             CW_USEDEFAULT,
                                             CW_USEDEFAULT,
-                                            (int)( SCREEN_WIDTH * GRAPHICS_SCALE ) + clientPaddingRight,
-                                            (int)( SCREEN_HEIGHT * GRAPHICS_SCALE ) + clientPaddingTop,
+                                            (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + clientPaddingRight,
+                                            (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + clientPaddingTop,
                                             0,
                                             0,
                                             hInstance,
@@ -118,8 +118,7 @@ internal MemArena_t* CreateMemArena( void )
    char msg[STRING_SIZE_DEFAULT];
    MemArena_t* memArena;
 
-   // TODO: define this size value somewhere
-   result = MemArena_Create( &( memArena ), 1024 * 1024 * 512 ); // 512 MB
+   result = MemArena_Create( &( memArena ), GAME_MEMORY_SIZE );
    if ( result != MemArenaResult_Success )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for game object: %s", MemArena_GetErrorMessage( result ) );
@@ -181,8 +180,8 @@ internal void RenderScreen( void )
    PAINTSTRUCT ps;
    int winWidth, winHeight;
 
-   winWidth = (int)( SCREEN_WIDTH * GRAPHICS_SCALE );
-   winHeight = (int)( SCREEN_HEIGHT * GRAPHICS_SCALE );
+   winWidth = (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale );
+   winHeight = (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale );
 
    dc = BeginPaint( g_winGlobals.hWndMain, &ps );
 

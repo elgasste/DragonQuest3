@@ -4,14 +4,14 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 
-void Game_Create( Game_t* game, MemArena_t* memArena, void (*platformMessageHandler)( void ), void (*platformRenderHandler)( void ) )
+void Game_Create( Game_t* game, MemArena_t* memArena, void (*platformMessageHandler)( void ), void (*platformRender)( void ) )
 {
    game->memArena = memArena;
 
    PixelBuffer_Create( &( game->pixelBuffer ), memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
 
    game->platformMessageHandler = platformMessageHandler;
-   game->platformRenderHandler = platformRenderHandler;
+   game->platformRender = platformRender;
 }
 
 void Game_Run( Game_t* game )
@@ -31,7 +31,7 @@ void Game_Run( Game_t* game )
       // TODO
       //Game_Tic( game );
 
-      game->platformRenderHandler();
+      game->platformRender();
 
       // TODO
       //Clock_EndFrame( &game->clock );
