@@ -110,7 +110,7 @@ int main( int argc, char** argv )
    createResult = MemArena_Create( &arena, arenaSize );
    if ( createResult != MemArenaResult_Success )
    {
-      printf( "MemArena_Create failed: %s\n", MemoryArena_GetErrorMessage( createResult ) );
+      printf( "MemArena_Create failed: %s\n", MemArena_GetErrorMessage( createResult ) );
       free( freeSlots );
       free( liveSlots );
       free( slots );

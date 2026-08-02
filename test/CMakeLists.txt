@@ -6,14 +6,24 @@ add_executable(Test_MemArena
 	test_mem_arena.c
 )
 
+add_executable(Test_PixelBuffer
+	../src/mem_arena.c
+	../src/pixel_buffer.c
+	vendor/unity.c
+	test_pixel_buffer.c
+)
+
 add_executable(MemArena_Perf
 	../src/mem_arena.c
 	mem_arena_perf.c
 )
 
 set_property(TARGET Test_MemArena PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_PixelBuffer PROPERTY COMPILE_WARNING_AS_ERROR ON)
+
 if(MSVC)
     target_compile_options(Test_MemArena PRIVATE /W4)
+    target_compile_options(Test_PixelBuffer PRIVATE /W4)
     target_compile_options(MemArena_Perf PRIVATE /W4)
 endif()
 
@@ -21,7 +31,12 @@ target_include_directories(Test_MemArena PRIVATE vendor)
 target_include_directories(Test_MemArena PRIVATE ../include)
 target_include_directories(Test_MemArena PRIVATE ../src)
 
+target_include_directories(Test_PixelBuffer PRIVATE vendor)
+target_include_directories(Test_PixelBuffer PRIVATE ../include)
+target_include_directories(Test_PixelBuffer PRIVATE ../src)
+
 target_include_directories(MemArena_Perf PRIVATE ../include)
 target_include_directories(MemArena_Perf PRIVATE ../src)
 
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)
+add_test( NAME Unity_PixelBuffer_Tests COMMAND Test_PixelBuffer)
