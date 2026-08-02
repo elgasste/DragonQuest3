@@ -47,10 +47,6 @@ typedef struct MemArenaStats_t
 }
 MemArenaStats_t;
 
-#if defined( __cplusplus )
-extern "C" {
-#endif
-
 MemArenaResult_t MemArena_Create( MemArena_t** pArena, size_t size );
 void MemArena_Destroy( MemArena_t** pArena );
 void MemArena_Reset( MemArena_t* arena );
@@ -61,9 +57,5 @@ MemArenaResult_t MemArena_AllocSubArena( MemArena_t* arena, MemArena_t** subAren
 void MemArena_Free( MemArena_t* arena, void* mem );
 
 MemArenaStats_t MemArena_GetStats( MemArena_t* arena );
-
-#if defined( __cplusplus )
-}
-#endif
 
 #endif // MEM_ARENA_H
