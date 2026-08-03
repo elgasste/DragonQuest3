@@ -13,6 +13,7 @@ void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for pixel buffer: %s", MemArena_GetErrorMessage( result ) );
       FatalError( msg );
+      return;
    };
    
    ( *pBuffer )->w = w;

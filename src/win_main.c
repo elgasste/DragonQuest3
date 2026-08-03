@@ -32,6 +32,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( result != MemArenaResult_Success )
    {
       FatalError( "failed to allocate memory for game object." );
+      return 1;
    }
 
    Game_Create( g_winGlobals.game, memArena, HandleWinMessages, HandleWinRender );
@@ -39,11 +40,13 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
       FatalError( "failed to query performance frequency." );
+      return 1;
    }
 
    if ( timeGetDevCaps( &timeCaps, sizeof( TIMECAPS ) ) != TIMERR_NOERROR )
    {
       FatalError( "failed to set timer resolution." );
+      return 1;
    }
 
    timerResolution = min( max( timeCaps.wPeriodMin, 1 ), timeCaps.wPeriodMax );
@@ -57,6 +60,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( !RegisterClassA( &mainWindowClass ) )
    {
       FatalError( "failed to register window class." );
+      return 1;
    }
 
    expectedWindowRect.right = SCREEN_WIDTH;
@@ -65,6 +69,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( !AdjustWindowRect( &expectedWindowRect, windowStyle, 0 ) )
    {
       FatalError( "failed to adjust window rect." );
+      return 1;
    }
 
    clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - SCREEN_WIDTH;
@@ -89,6 +94,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( !g_winGlobals.hWndMain )
    {
       FatalError( "failed to create main window." );
+      return 1;
    }
 
    SetCursor( LoadCursor( 0, IDC_ARROW ) );
@@ -118,6 +124,7 @@ internal MemArena_t* CreateMemArena( void )
    char msg[STRING_SIZE_DEFAULT];
    MemArena_t* memArena;
 
+   memArena = 0;
    result = MemArena_Create( &( memArena ), GAME_MEMORY_SIZE );
    if ( result != MemArenaResult_Success )
    {
