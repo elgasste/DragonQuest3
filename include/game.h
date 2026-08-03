@@ -21,6 +21,9 @@ typedef struct Game_t
 {
    MemArena_t* memArena;
    Clock_t* clock;
+
+   // MUFFINS: this belongs in some kind of Screen_t object, which can
+   // handle drawing to the buffer directly
    PixelBuffer_t* pixelBuffer;
 
    b32 shutdown;
