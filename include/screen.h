@@ -13,5 +13,6 @@ typedef struct Screen_t
 Screen_t;
 
 void Screen_Init( Screen_t* screen, MemArena_t* memArena, u32 w, u32 h );
+void Screen_Fill( Screen_t* screen, u32 color );
 
 #endif // SCREEN_H
