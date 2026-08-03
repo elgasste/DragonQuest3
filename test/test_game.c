@@ -172,8 +172,6 @@ void test_Game_Run_StopsAfterMultipleRenderHandlerTicks( void )
 {
    Game_t game;
 
-   memset( &game, 0, sizeof( game ) );
-
    g_currentGame = &game;
    Game_Create( &game, g_memArena );
 

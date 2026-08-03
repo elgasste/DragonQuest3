@@ -34,6 +34,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       return 1;
    }
 
+   // does not transfer ownership of memory arena
    Game_Create( g_winGlobals.game, memArena );
 
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )

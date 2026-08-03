@@ -28,7 +28,6 @@ typedef struct Game_t
 Game_t;
 
 void Game_Create( Game_t* game, MemArena_t* memArena );
-void Game_Destroy( Game_t* game );
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
 
