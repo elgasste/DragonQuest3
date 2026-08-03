@@ -7,8 +7,6 @@
 
 internal MemArena_t* CreateMemArena( void );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
-internal void HandleWinMessages( void );
-internal void HandleWinRender( void );
 internal void RenderScreen( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 
@@ -35,7 +33,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       return 1;
    }
 
-   Game_Create( g_winGlobals.game, memArena, HandleWinMessages, HandleWinRender );
+   Game_Create( g_winGlobals.game, memArena );
 
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
@@ -160,22 +158,6 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
    }
 
    return result;
-}
-
-internal void HandleWinMessages( void )
-{
-   MSG msg;
-
-   while ( PeekMessageA( &msg, g_winGlobals.hWndMain, 0, 0, PM_REMOVE ) )
-   {
-      TranslateMessage( &msg );
-      DispatchMessageA( &msg );
-   }
-}
-
-internal void HandleWinRender( void )
-{
-   InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
 }
 
 // the double-buffering part of this came from Stack Overflow

@@ -4,6 +4,7 @@
 #include "game.h"
 #include "mem_arena.h"
 #include "pixel_buffer.h"
+#include "platform_ops.h"
 
 typedef struct PixelBufferCreateCall_t
 {
@@ -25,8 +26,8 @@ PixelBufferClearColorCall_t;
 local_persist PixelBufferCreateCall_t g_pixelBufferCreateCall;
 local_persist int g_pixelBufferCreateCallCount;
 local_persist PixelBufferClearColorCall_t g_pixelBufferClearColorCall;
-local_persist int g_messageHandlerCallCount;
-local_persist int g_renderHandlerCallCount;
+local_persist int g_platformHandleMessagesCallCount;
+local_persist int g_platformRenderScreenBufferCallCount;
 local_persist Game_t* g_currentGame;
 
 void setUp( void )
@@ -41,8 +42,8 @@ void setUp( void )
    g_pixelBufferClearColorCall.color = 0;
    g_pixelBufferClearColorCall.callCount = 0;
 
-   g_messageHandlerCallCount = 0;
-   g_renderHandlerCallCount = 0;
+   g_platformHandleMessagesCallCount = 0;
+   g_platformRenderScreenBufferCallCount = 0;
    g_currentGame = 0;
 }
 
@@ -72,19 +73,19 @@ void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
    g_pixelBufferClearColorCall.callCount++;
 }
 
-void TestMessageHandler( void )
+void PlatformOps_HandleMessages( void )
 {
-   g_messageHandlerCallCount++;
-   if ( g_currentGame != 0 && g_messageHandlerCallCount >= 3 )
+   g_platformHandleMessagesCallCount++;
+   if ( g_currentGame != 0 && g_platformHandleMessagesCallCount >= 3 )
    {
       Game_Stop( g_currentGame );
    }
 }
 
-void TestRenderHandler( void )
+void PlatformOps_RenderScreenBuffer( void )
 {
-   g_renderHandlerCallCount++;
-   if ( g_currentGame != 0 && g_renderHandlerCallCount >= 3 )
+   g_platformRenderScreenBufferCallCount++;
+   if ( g_currentGame != 0 && g_platformRenderScreenBufferCallCount >= 3 )
    {
       Game_Stop( g_currentGame );
    }
@@ -94,13 +95,11 @@ void test_Game_Create_CreatesGameWithCorrectParameters( void )
 {
    MemArena_t arena;
    Game_t game;
-   void (*messageHandler)( void ) = 0;
-   void (*render)( void ) = 0;
 
    memset( &arena, 0, sizeof( arena ) );
    memset( &game, 0, sizeof( game ) );
 
-   Game_Create( &game, &arena, messageHandler, render );
+   Game_Create( &game, &arena );
 
    TEST_ASSERT_EQUAL( &arena, game.memArena );
    TEST_ASSERT_EQUAL( 1, g_pixelBufferCreateCallCount );
@@ -110,8 +109,6 @@ void test_Game_Create_CreatesGameWithCorrectParameters( void )
    TEST_ASSERT_NOT_NULL( game.pixelBuffer );
    TEST_ASSERT_EQUAL( SCREEN_WIDTH, game.pixelBuffer->w );
    TEST_ASSERT_EQUAL( SCREEN_HEIGHT, game.pixelBuffer->h );
-   TEST_ASSERT_EQUAL( messageHandler, game.platformMessageHandler );
-   TEST_ASSERT_EQUAL( render, game.platformRender );
 }
 
 void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
@@ -123,12 +120,12 @@ void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
    memset( &game, 0, sizeof( game ) );
 
    g_currentGame = &game;
-   Game_Create( &game, &arena, TestMessageHandler, TestRenderHandler );
+   Game_Create( &game, &arena );
 
    Game_Run( &game );
 
-   TEST_ASSERT_EQUAL( 3, g_messageHandlerCallCount );
-   TEST_ASSERT_EQUAL( 3, g_renderHandlerCallCount );
+   TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
+   TEST_ASSERT_EQUAL( 3, g_platformRenderScreenBufferCallCount );
    TEST_ASSERT_EQUAL( 3, g_pixelBufferClearColorCall.callCount );
    TEST_ASSERT_EQUAL( game.pixelBuffer, g_pixelBufferClearColorCall.buffer );
    TEST_ASSERT_EQUAL( 0, g_pixelBufferClearColorCall.color );
@@ -144,12 +141,12 @@ void test_Game_Run_StopsAfterMultipleRenderHandlerTicks( void )
    memset( &game, 0, sizeof( game ) );
 
    g_currentGame = &game;
-   Game_Create( &game, &arena, TestMessageHandler, TestRenderHandler );
+   Game_Create( &game, &arena );
 
    Game_Run( &game );
 
-   TEST_ASSERT_EQUAL( 3, g_messageHandlerCallCount );
-   TEST_ASSERT_EQUAL( 3, g_renderHandlerCallCount );
+   TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
+   TEST_ASSERT_EQUAL( 3, g_platformRenderScreenBufferCallCount );
    TEST_ASSERT_EQUAL( 3, g_pixelBufferClearColorCall.callCount );
    TEST_ASSERT_EQUAL( game.pixelBuffer, g_pixelBufferClearColorCall.buffer );
    TEST_ASSERT_EQUAL( 0, g_pixelBufferClearColorCall.color );
