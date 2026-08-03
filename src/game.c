@@ -3,8 +3,8 @@
 #include "clock.h"
 #include "game.h"
 #include "mem_arena.h"
-#include "pixel_buffer.h"
 #include "platform_ops.h"
+#include "screen.h"
 
 b32 Game_AllocObjects( Game_t* game );
 
@@ -20,7 +20,7 @@ void Game_Create( Game_t* game, MemArena_t* memArena )
    }
 
    Clock_Init( game->clock, GAME_DEFAULT_FPS );
-   PixelBuffer_Create( &( game->pixelBuffer ), game->memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
+   Screen_Init( game->screen, game->memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
 }
 
 void Game_Run( Game_t* game )
@@ -36,7 +36,7 @@ void Game_Run( Game_t* game )
 
       PlatformOps_HandleMessages();
 
-      PixelBuffer_ClearColor( game->pixelBuffer, 0 );
+      Screen_Fill( game->screen, 0 );
 
       // TODO
       //Game_Tic( game );
@@ -61,6 +61,14 @@ b32 Game_AllocObjects( Game_t* game )
    if ( memArenaResult != MemArenaResult_Success )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for clock: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      PlatformOps_FatalError( msg );
+      return False;
+   }
+
+   memArenaResult = MemArena_Alloc( game->memArena, &game->screen, sizeof( Screen_t ) );
+   if ( memArenaResult != MemArenaResult_Success )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for screen: %s", MemArena_GetErrorMessage( memArenaResult ) );
       PlatformOps_FatalError( msg );
       return False;
    }

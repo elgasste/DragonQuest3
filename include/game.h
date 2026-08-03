@@ -15,16 +15,13 @@
 
 typedef struct MemArena_t MemArena_t;
 typedef struct Clock_t Clock_t;
-typedef struct PixelBuffer_t PixelBuffer_t;
+typedef struct Screen_t Screen_t;
 
 typedef struct Game_t
 {
    MemArena_t* memArena;
    Clock_t* clock;
-
-   // MUFFINS: this belongs in some kind of Screen_t object, which can
-   // handle drawing to the buffer directly
-   PixelBuffer_t* pixelBuffer;
+   Screen_t* screen;
 
    b32 shutdown;
 }

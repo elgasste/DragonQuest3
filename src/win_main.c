@@ -4,6 +4,7 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "platform_ops.h"
+#include "screen.h"
 #include "win_common.h"
 
 internal MemArena_t* CreateMemArena( void );
@@ -106,8 +107,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                      "Consolas" );
 
    g_winGlobals.bmpInfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.game->pixelBuffer->w;
-   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.game->pixelBuffer->h );
+   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.game->screen->buffer->w;
+   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.game->screen->buffer->h );
    g_winGlobals.bmpInfo.bmiHeader.biPlanes = 1;
    g_winGlobals.bmpInfo.bmiHeader.biBitCount = 32;
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
@@ -184,8 +185,8 @@ internal void RenderScreen( void )
    // actually draw everything
    StretchDIBits( dcMem,
                   0, 0, winWidth, winHeight, // dest
-                  0, 0, g_winGlobals.game->pixelBuffer->w, g_winGlobals.game->pixelBuffer->h, // src
-                  g_winGlobals.game->pixelBuffer->mem,
+                  0, 0, g_winGlobals.game->screen->buffer->w, g_winGlobals.game->screen->buffer->h, // src
+                  g_winGlobals.game->screen->buffer->mem,
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
 
