@@ -8,6 +8,7 @@ add_executable(Test_Clock
 
 add_executable(Test_Game
 	../src/game.c
+	../src/mem_arena.c
 	vendor/unity.c
 	test_game.c
 )

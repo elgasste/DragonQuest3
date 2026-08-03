@@ -6,9 +6,10 @@
 #include <mmsystem.h>
 
 #include "common.h"
-#include "game.h"
 
 #define DEFAULT_GRAPHICS_SCALE 2.0f
+
+typedef struct Game_t Game_t;
 
 typedef struct WinGlobalObjects_t
 {

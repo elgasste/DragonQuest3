@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+void PlatformOps_FatalError( const char* msg );
 u64 PlatformOps_GetMicros( void );
 void PlatformOps_HandleMessages( void );
 void PlatformOps_RenderScreenBuffer( void );

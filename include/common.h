@@ -27,7 +27,4 @@ typedef int64_t i64;
 typedef float r32;
 typedef double r64;
 
-// platform dependent
-void FatalError( const char* message );
-
 #endif // MA_COMMON_H

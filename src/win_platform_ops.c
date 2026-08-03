@@ -1,5 +1,15 @@
+#include <stdio.h>
+
 #include "platform_ops.h"
 #include "win_common.h"
+
+void PlatformOps_FatalError( const char* msg )
+{
+   char errorMsg[STRING_SIZE_DEFAULT];
+   snprintf( errorMsg, STRING_SIZE_DEFAULT, "Fatal error: %s", msg );
+   MessageBoxA( 0, msg, "Error", MB_OK | MB_ICONERROR );
+   exit( 1 );
+}
 
 u64 PlatformOps_GetMicros( void )
 {

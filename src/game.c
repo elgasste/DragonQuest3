@@ -1,15 +1,26 @@
 #include <stdio.h>
 
+#include "clock.h"
 #include "game.h"
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "platform_ops.h"
 
+b32 Game_AllocObjects( Game_t* game );
+
 void Game_Create( Game_t* game, MemArena_t* memArena )
 {
    game->memArena = memArena;
 
-   PixelBuffer_Create( &( game->pixelBuffer ), memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
+   if ( !Game_AllocObjects( game ) )
+   {
+      // the game should shut down if we've reached this point, but we still
+      // need to do this so the unit tests won't fail.
+      return;
+   }
+
+   Clock_Init( game->clock, GAME_DEFAULT_FPS );
+   PixelBuffer_Create( &( game->pixelBuffer ), game->memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
 }
 
 void Game_Run( Game_t* game )
@@ -18,8 +29,9 @@ void Game_Run( Game_t* game )
 
    while ( !game->shutdown )
    {
-      // TODO: use the new clock we just added
-      //Clock_StartFrame( &( game->clock ) );
+      Clock_StartFrame( game->clock );
+
+      // TODO
       //Input_ResetState( &( game->input ) );
 
       PlatformOps_HandleMessages();
@@ -31,12 +43,27 @@ void Game_Run( Game_t* game )
 
       PlatformOps_RenderScreenBuffer();
 
-      // TODO
-      //Clock_EndFrame( &game->clock );
+      Clock_EndFrame( game->clock );
    }
 }
 
 void Game_Stop( Game_t* game )
 {
    game->shutdown = True;
+}
+
+b32 Game_AllocObjects( Game_t* game )
+{
+   MemArenaResult_t memArenaResult;
+   char msg[STRING_SIZE_DEFAULT];
+
+   memArenaResult = MemArena_Alloc( game->memArena, &game->clock, sizeof( Clock_t ) );
+   if ( memArenaResult != MemArenaResult_Success )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for clock: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      PlatformOps_FatalError( msg );
+      return False;
+   }
+
+   return True;
 }

@@ -1,10 +1,11 @@
 #include <string.h>
 
-#include "unity.h"
+#include "clock.h"
 #include "game.h"
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "platform_ops.h"
+#include "unity.h"
 
 typedef struct PixelBufferCreateCall_t
 {
@@ -29,6 +30,7 @@ local_persist PixelBufferClearColorCall_t g_pixelBufferClearColorCall;
 local_persist int g_platformHandleMessagesCallCount;
 local_persist int g_platformRenderScreenBufferCallCount;
 local_persist Game_t* g_currentGame;
+local_persist MemArena_t* g_memArena;
 
 void setUp( void )
 {
@@ -45,9 +47,34 @@ void setUp( void )
    g_platformHandleMessagesCallCount = 0;
    g_platformRenderScreenBufferCallCount = 0;
    g_currentGame = 0;
+
+   g_memArena = 0;
+   MemArena_Create( &g_memArena, 1024 );
 }
 
-void tearDown( void ) {}
+void tearDown( void )
+{
+   MemArena_Destroy( &g_memArena );
+}
+
+void Clock_Init( Clock_t* clock, u32 fps )
+{
+   // TODO
+   UNUSED_PARAM( clock );
+   UNUSED_PARAM( fps );
+}
+
+void Clock_StartFrame( Clock_t* clock )
+{
+   // TODO
+   UNUSED_PARAM( clock );
+}
+
+void Clock_EndFrame( Clock_t* clock )
+{
+   // TODO
+   UNUSED_PARAM( clock );
+}
 
 void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u32 h )
 {
@@ -73,6 +100,12 @@ void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
    g_pixelBufferClearColorCall.callCount++;
 }
 
+void PlatformOps_FatalError( const char* msg )
+{
+   // TODO
+   UNUSED_PARAM( msg );
+}
+
 void PlatformOps_HandleMessages( void )
 {
    g_platformHandleMessagesCallCount++;
@@ -93,17 +126,13 @@ void PlatformOps_RenderScreenBuffer( void )
 
 void test_Game_Create_CreatesGameWithCorrectParameters( void )
 {
-   MemArena_t arena;
    Game_t game;
 
-   memset( &arena, 0, sizeof( arena ) );
-   memset( &game, 0, sizeof( game ) );
+   Game_Create( &game, g_memArena );
 
-   Game_Create( &game, &arena );
-
-   TEST_ASSERT_EQUAL( &arena, game.memArena );
+   TEST_ASSERT_EQUAL( g_memArena, game.memArena );
    TEST_ASSERT_EQUAL( 1, g_pixelBufferCreateCallCount );
-   TEST_ASSERT_EQUAL( &arena, g_pixelBufferCreateCall.memArena );
+   TEST_ASSERT_EQUAL( g_memArena, g_pixelBufferCreateCall.memArena );
    TEST_ASSERT_EQUAL( SCREEN_WIDTH, g_pixelBufferCreateCall.width );
    TEST_ASSERT_EQUAL( SCREEN_HEIGHT, g_pixelBufferCreateCall.height );
    TEST_ASSERT_NOT_NULL( game.pixelBuffer );
@@ -113,14 +142,10 @@ void test_Game_Create_CreatesGameWithCorrectParameters( void )
 
 void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
 {
-   MemArena_t arena;
    Game_t game;
 
-   memset( &arena, 0, sizeof( arena ) );
-   memset( &game, 0, sizeof( game ) );
-
    g_currentGame = &game;
-   Game_Create( &game, &arena );
+   Game_Create( &game, g_memArena );
 
    Game_Run( &game );
 
@@ -134,14 +159,12 @@ void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
 
 void test_Game_Run_StopsAfterMultipleRenderHandlerTicks( void )
 {
-   MemArena_t arena;
    Game_t game;
 
-   memset( &arena, 0, sizeof( arena ) );
    memset( &game, 0, sizeof( game ) );
 
    g_currentGame = &game;
-   Game_Create( &game, &arena );
+   Game_Create( &game, g_memArena );
 
    Game_Run( &game );
 
@@ -158,7 +181,7 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_Create_CreatesGameWithCorrectParameters );
-   
+
    RUN_TEST( test_Game_Run_StopsAfterMultipleMessageHandlerTicks );
    RUN_TEST( test_Game_Run_StopsAfterMultipleRenderHandlerTicks );
 

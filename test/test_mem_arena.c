@@ -1,5 +1,5 @@
-#include "unity.h"
 #include "mem_arena.h"
+#include "unity.h"
 
 #define MEMARENA_TEST_HELPER_DECLARE_ARENA() \
    MemArena_t* arena; \

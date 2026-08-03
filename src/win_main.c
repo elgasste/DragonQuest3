@@ -1,9 +1,10 @@
 #include <stdio.h>
 
-#include "win_common.h"
-#include "mem_arena.h"
 #include "game.h"
+#include "mem_arena.h"
 #include "pixel_buffer.h"
+#include "platform_ops.h"
+#include "win_common.h"
 
 internal MemArena_t* CreateMemArena( void );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
@@ -29,7 +30,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    result = MemArena_Alloc( memArena, (void**)&( g_winGlobals.game ), sizeof( Game_t ) );
    if ( result != MemArenaResult_Success )
    {
-      FatalError( "failed to allocate memory for game object." );
+      PlatformOps_FatalError( "failed to allocate memory for game object." );
       return 1;
    }
 
@@ -37,13 +38,13 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
-      FatalError( "failed to query performance frequency." );
+      PlatformOps_FatalError( "failed to query performance frequency." );
       return 1;
    }
 
    if ( timeGetDevCaps( &timeCaps, sizeof( TIMECAPS ) ) != TIMERR_NOERROR )
    {
-      FatalError( "failed to set timer resolution." );
+      PlatformOps_FatalError( "failed to set timer resolution." );
       return 1;
    }
 
@@ -57,7 +58,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    if ( !RegisterClassA( &mainWindowClass ) )
    {
-      FatalError( "failed to register window class." );
+      PlatformOps_FatalError( "failed to register window class." );
       return 1;
    }
 
@@ -66,7 +67,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    if ( !AdjustWindowRect( &expectedWindowRect, windowStyle, 0 ) )
    {
-      FatalError( "failed to adjust window rect." );
+      PlatformOps_FatalError( "failed to adjust window rect." );
       return 1;
    }
 
@@ -91,7 +92,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    if ( !g_winGlobals.hWndMain )
    {
-      FatalError( "failed to create main window." );
+      PlatformOps_FatalError( "failed to create main window." );
       return 1;
    }
 
@@ -127,7 +128,7 @@ internal MemArena_t* CreateMemArena( void )
    if ( result != MemArenaResult_Success )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for game object: %s", MemArena_GetErrorMessage( result ) );
-      FatalError( msg );
+      PlatformOps_FatalError( msg );
    }
 
    return memArena;
@@ -238,12 +239,4 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          // }
       }
    }
-}
-
-void FatalError( const char* message )
-{
-   char errorMsg[STRING_SIZE_DEFAULT];
-   snprintf( errorMsg, STRING_SIZE_DEFAULT, "Fatal error: %s", message );
-   MessageBoxA( 0, message, "Error", MB_OK | MB_ICONERROR );
-   exit( 1 );
 }

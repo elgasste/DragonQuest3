@@ -1,8 +1,8 @@
 #include <string.h>
 
-#include "unity.h"
 #include "clock.h"
 #include "platform_ops.h"
+#include "unity.h"
 
 typedef struct PlatformOpsGetMicrosCall_t
 {
