@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "unity.h"
-#include "pixel_buffer.h"
 #include "mem_arena.h"
+#include "pixel_buffer.h"
+#include "platform_ops.h"
+#include "unity.h"
 
 local_persist int g_fatalErrorCallCount = 0;
 local_persist char g_fatalErrorMessage[256] = {0};
@@ -73,7 +74,7 @@ internal void test_PixelBuffer_ClearColor_ClearsColor( void )
    MemArena_Destroy( &arena );
 }
 
-void FatalError( const char* message )
+void PlatformOps_FatalError( const char* message )
 {
    g_fatalErrorCallCount++;
 
@@ -89,6 +90,7 @@ int main( void )
    
    RUN_TEST( test_PixelBuffer_Create_CreatesBufferWithCorrectDimensions );
    RUN_TEST( test_PixelBuffer_Create_NotEnoughMemoryFailsToCreateBuffer );
+
    RUN_TEST( test_PixelBuffer_ClearColor_ClearsColor );
    
    return UNITY_END();
