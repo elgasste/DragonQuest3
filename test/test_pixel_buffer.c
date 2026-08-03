@@ -89,6 +89,7 @@ int main( void )
    
    RUN_TEST( test_PixelBuffer_Create_CreatesBufferWithCorrectDimensions );
    RUN_TEST( test_PixelBuffer_Create_NotEnoughMemoryFailsToCreateBuffer );
+   
    RUN_TEST( test_PixelBuffer_ClearColor_ClearsColor );
    
    return UNITY_END();

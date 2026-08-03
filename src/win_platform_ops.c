@@ -1,7 +1,7 @@
 #include "platform_ops.h"
 #include "win_common.h"
 
-u64 PlatformOps_GetMicros()
+u64 PlatformOps_GetMicros( void )
 {
    LARGE_INTEGER ticks;
 
@@ -9,7 +9,7 @@ u64 PlatformOps_GetMicros()
    return (u64)( ( (r64)( ticks.QuadPart ) / (r64)( g_winGlobals.performanceFrequency.QuadPart ) ) * (u64)1000000 );
 }
 
-void PlatformOps_HandleMessages()
+void PlatformOps_HandleMessages( void )
 {
    MSG msg;
 
@@ -20,7 +20,7 @@ void PlatformOps_HandleMessages()
    }
 }
 
-void PlatformOps_RenderScreenBuffer()
+void PlatformOps_RenderScreenBuffer( void )
 {
    InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
 }

@@ -158,6 +158,7 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_Create_CreatesGameWithCorrectParameters );
+   
    RUN_TEST( test_Game_Run_StopsAfterMultipleMessageHandlerTicks );
    RUN_TEST( test_Game_Run_StopsAfterMultipleRenderHandlerTicks );
 

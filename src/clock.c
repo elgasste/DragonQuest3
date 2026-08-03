@@ -26,6 +26,7 @@ void Clock_StartFrame( Clock_t* clock )
    {
       clock->hasStarted = True;
       clock->absoluteStartMicro = clock->frameStartMicro;
+      clock->absoluteEndMicro = clock->frameStartMicro;
    }
 }
 

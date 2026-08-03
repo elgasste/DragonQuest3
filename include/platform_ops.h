@@ -3,9 +3,9 @@
 
 #include "common.h"
 
-u64 PlatformOps_GetMicros();
-void PlatformOps_HandleMessages();
-void PlatformOps_RenderScreenBuffer();
+u64 PlatformOps_GetMicros( void );
+void PlatformOps_HandleMessages( void );
+void PlatformOps_RenderScreenBuffer( void );
 void PlatformOps_SleepMs( u32 ms );
 
 #endif // PLATFORM_OPS_H

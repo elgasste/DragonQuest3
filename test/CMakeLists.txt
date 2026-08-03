@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 
+add_executable(Test_Clock
+	../src/clock.c
+	vendor/unity.c
+	test_clock.c
+)
+
 add_executable(Test_Game
 	../src/game.c
 	vendor/unity.c
@@ -35,6 +41,10 @@ if(MSVC)
     target_compile_options(MemArena_Perf PRIVATE /W4)
 endif()
 
+target_include_directories(Test_Clock PRIVATE vendor)
+target_include_directories(Test_Clock PRIVATE ../include)
+target_include_directories(Test_Clock PRIVATE ../src)
+
 target_include_directories(Test_Game PRIVATE vendor)
 target_include_directories(Test_Game PRIVATE ../include)
 target_include_directories(Test_Game PRIVATE ../src)
@@ -50,6 +60,7 @@ target_include_directories(Test_PixelBuffer PRIVATE ../src)
 target_include_directories(MemArena_Perf PRIVATE ../include)
 target_include_directories(MemArena_Perf PRIVATE ../src)
 
+add_test( NAME Unity_Clock_Tests COMMAND Test_Clock)
 add_test( NAME Unity_Game_Tests COMMAND Test_Game)
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)
 add_test( NAME Unity_PixelBuffer_Tests COMMAND Test_PixelBuffer)
