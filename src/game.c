@@ -20,7 +20,7 @@ void Game_Run( Game_t* game )
 
    while ( !game->shutdown )
    {
-      // TODO
+      // TODO: use the new clock we just added
       //Clock_StartFrame( &( game->clock ) );
       //Input_ResetState( &( game->input ) );
 
