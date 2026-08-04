@@ -19,9 +19,11 @@ u64 PlatformOps_GetMicros( void )
    return (u64)( ( (r64)( ticks.QuadPart ) / (r64)( g_winGlobals.performanceFrequency.QuadPart ) ) * (u64)1000000 );
 }
 
-void PlatformOps_HandleMessages( void )
+void PlatformOps_HandleMessages( Game_t* game )
 {
    MSG msg;
+
+   UNUSED_PARAM( game );
 
    while ( PeekMessageA( &msg, g_winGlobals.hWndMain, 0, 0, PM_REMOVE ) )
    {
@@ -30,8 +32,10 @@ void PlatformOps_HandleMessages( void )
    }
 }
 
-void PlatformOps_RenderScreenBuffer( void )
+void PlatformOps_RenderScreenBuffer( Screen_t* screen )
 {
+   UNUSED_PARAM( screen );
+   
    InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
 }
 

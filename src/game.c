@@ -36,14 +36,14 @@ void Game_Run( Game_t* game )
       // TODO
       //Input_ResetState( &( game->input ) );
 
-      PlatformOps_HandleMessages();
+      PlatformOps_HandleMessages( game );
 
       Screen_Fill( game->screen, 0 );
 
       // TODO
       //Game_Tic( game );
 
-      PlatformOps_RenderScreenBuffer();
+      PlatformOps_RenderScreenBuffer( game->screen );
 
       Clock_EndFrame( game->clock );
    }

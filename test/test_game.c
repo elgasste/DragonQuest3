@@ -104,8 +104,10 @@ void PlatformOps_FatalError( const char* msg )
    UNUSED_PARAM( msg );
 }
 
-void PlatformOps_HandleMessages( void )
+void PlatformOps_HandleMessages( Game_t* game )
 {
+   UNUSED_PARAM( game );
+
    g_platformHandleMessagesCallCount++;
    if ( g_currentGame != 0 && g_platformHandleMessagesCallCount >= 3 )
    {
@@ -113,8 +115,10 @@ void PlatformOps_HandleMessages( void )
    }
 }
 
-void PlatformOps_RenderScreenBuffer( void )
+void PlatformOps_RenderScreenBuffer( Screen_t* screen )
 {
+   UNUSED_PARAM( screen );
+   
    g_platformRenderScreenBufferCallCount++;
    if ( g_currentGame != 0 && g_platformRenderScreenBufferCallCount >= 3 )
    {
