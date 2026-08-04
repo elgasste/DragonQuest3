@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "clock.h"
 #include "platform_ops.h"
 #include "unity.h"

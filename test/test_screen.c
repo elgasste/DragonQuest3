@@ -26,6 +26,18 @@ PixelBufferClearColorCall_t;
 local_persist PixelBufferCreateCall_t g_pixelBufferCreateCall;
 local_persist PixelBufferClearColorCall_t g_pixelBufferClearColorCall;
 
+void FreeScreenBuffer( Screen_t* screen )
+{
+   if ( !screen || !screen->buffer )
+   {
+      return;
+   }
+
+   free( screen->buffer->mem );
+   free( screen->buffer );
+   screen->buffer = 0;
+}
+
 void setUp( void )
 {
    g_pixelBufferCreateCall.pBuffer = 0;
@@ -34,6 +46,7 @@ void setUp( void )
    g_pixelBufferCreateCall.h = 0;
    g_pixelBufferCreateCall.callCount = 0;
 
+   g_pixelBufferClearColorCall.buffer = 0;
    g_pixelBufferClearColorCall.color = 0;
    g_pixelBufferClearColorCall.callCount = 0;
 }
@@ -42,6 +55,15 @@ void tearDown( void ) {}
 
 void PixelBuffer_Create( PixelBuffer_t** buffer, MemArena_t* memArena, u32 w, u32 h )
 {
+   PixelBuffer_t* newBuffer;
+
+   newBuffer = (PixelBuffer_t*)malloc( sizeof( PixelBuffer_t ) );
+   newBuffer->w = w;
+   newBuffer->h = h;
+   newBuffer->mem = (u32*)calloc( w * h, sizeof( u32 ) );
+
+   *buffer = newBuffer;
+
    g_pixelBufferCreateCall.pBuffer = buffer;
    g_pixelBufferCreateCall.memArena = memArena;
    g_pixelBufferCreateCall.w = w;
@@ -70,7 +92,7 @@ void test_Screen_Init_CreatesPixelBufferWithCorrectParameters( void )
    TEST_ASSERT_EQUAL( 20, g_pixelBufferCreateCall.w );
    TEST_ASSERT_EQUAL( 45, g_pixelBufferCreateCall.h );
 
-   free( screen.buffer );
+   FreeScreenBuffer( &screen );
 }
 
 void test_Screen_Fill_FillsPixelBufferWithColor( void )
@@ -82,6 +104,45 @@ void test_Screen_Fill_FillsPixelBufferWithColor( void )
    Screen_Fill( &screen, 50 );
    TEST_ASSERT_EQUAL( 1, g_pixelBufferClearColorCall.callCount );
    TEST_ASSERT_EQUAL( 50, g_pixelBufferClearColorCall.color );
+
+   FreeScreenBuffer( &screen );
+}
+
+void test_Screen_DrawRect_WritesPixelsInsideTheRect( void )
+{
+   Screen_t screen;
+   Vector4i32_t rect = { 1, 1, 2, 2 };
+   const u32 color = 0x12345678u;
+
+   Screen_Init( &screen, 0, 4, 4 );
+
+   Screen_DrawRect( &screen, rect, color );
+
+   TEST_ASSERT_EQUAL( color, screen.buffer->mem[ ( 1 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( color, screen.buffer->mem[ ( 1 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( color, screen.buffer->mem[ ( 2 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( color, screen.buffer->mem[ ( 2 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, screen.buffer->mem[0] );
+   TEST_ASSERT_EQUAL( 0u, screen.buffer->mem[ ( 3 * 4 ) + 3 ] );
+
+   FreeScreenBuffer( &screen );
+}
+
+void test_Screen_DrawRect_ClampsToVisibleArea( void )
+{
+   Screen_t screen;
+   Vector4i32_t rect = { -2, -1, 6, 4 };
+   const u32 color = 0x9abcdef0u;
+
+   Screen_Init( &screen, 0, 4, 4 );
+
+   Screen_DrawRect( &screen, rect, color );
+
+   TEST_ASSERT_EQUAL( color, screen.buffer->mem[0] );
+   TEST_ASSERT_EQUAL( color, screen.buffer->mem[ ( 2 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0u, screen.buffer->mem[ ( 3 * 4 ) + 3 ] );
+
+   FreeScreenBuffer( &screen );
 }
 
 int main( void )
@@ -91,6 +152,9 @@ int main( void )
    RUN_TEST( test_Screen_Init_CreatesPixelBufferWithCorrectParameters );
 
    RUN_TEST( test_Screen_Fill_FillsPixelBufferWithColor );
+   
+   RUN_TEST( test_Screen_DrawRect_WritesPixelsInsideTheRect );
+   RUN_TEST( test_Screen_DrawRect_ClampsToVisibleArea );
 
    return UNITY_END();
 }

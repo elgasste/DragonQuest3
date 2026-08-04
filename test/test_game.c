@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "clock.h"
 #include "game.h"
 #include "mem_arena.h"
