@@ -43,7 +43,6 @@ local_persist ScreenInitCall_t g_screenInitCall;
 local_persist int g_clockStartFrameCallCount;
 local_persist int g_platformHandleMessagesCallCount;
 local_persist GameRenderCall_t g_gameRenderCall;
-local_persist int g_platformRenderScreenBufferCallCount;
 local_persist int g_clockEndFrameCallCount;
 local_persist Game_t* g_currentGame;
 local_persist MemArena_t* g_memArena;
@@ -64,7 +63,6 @@ void setUp( void )
    g_platformHandleMessagesCallCount = 0;
    g_gameRenderCall.game = 0;
    g_gameRenderCall.callCount = 0;
-   g_platformRenderScreenBufferCallCount = 0;
    g_clockEndFrameCallCount = 0;
 
    g_currentGame = 0;
@@ -144,17 +142,6 @@ void PlatformOps_HandleMessages( Game_t* game )
    }
 }
 
-void PlatformOps_RenderScreenBuffer( Screen_t* screen )
-{
-   UNUSED_PARAM( screen );
-
-   g_platformRenderScreenBufferCallCount++;
-   if ( g_currentGame != 0 && g_platformRenderScreenBufferCallCount >= 3 )
-   {
-      Game_Stop( g_currentGame );
-   }
-}
-
 void test_Game_Init_CreatesGameWithCorrectParameters( void )
 {
    Game_t game;
@@ -184,7 +171,6 @@ void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
    TEST_ASSERT_EQUAL( 3, g_inputResetPressStatesCall.callCount );
    TEST_ASSERT_EQUAL_PTR( game.input, g_inputResetPressStatesCall.input );
    TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
-   TEST_ASSERT_EQUAL( 3, g_platformRenderScreenBufferCallCount );
    TEST_ASSERT_EQUAL( 3, g_gameRenderCall.callCount );
    TEST_ASSERT_EQUAL_PTR( &game, g_gameRenderCall.game );
    TEST_ASSERT_TRUE( game.shutdown );
@@ -203,21 +189,6 @@ void test_Game_Run_ResetsInputPressStatesEveryFrame( void )
    TEST_ASSERT_EQUAL_PTR( game.input, g_inputResetPressStatesCall.input );
 }
 
-void test_Game_Run_StopsAfterMultipleRenderHandlerTicks( void )
-{
-   Game_t game;
-
-   g_currentGame = &game;
-   Game_Init( &game, g_memArena );
-
-   Game_Run( &game );
-   TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
-   TEST_ASSERT_EQUAL( 3, g_platformRenderScreenBufferCallCount );
-   TEST_ASSERT_EQUAL( 3, g_gameRenderCall.callCount );
-   TEST_ASSERT_EQUAL_PTR( &game, g_gameRenderCall.game );
-   TEST_ASSERT_TRUE( game.shutdown );
-}
-
 int main( void )
 {
    UNITY_BEGIN();
@@ -226,7 +197,6 @@ int main( void )
 
    RUN_TEST( test_Game_Run_StopsAfterMultipleMessageHandlerTicks );
    RUN_TEST( test_Game_Run_ResetsInputPressStatesEveryFrame );
-   RUN_TEST( test_Game_Run_StopsAfterMultipleRenderHandlerTicks );
 
    return UNITY_END();
 }

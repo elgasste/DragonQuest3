@@ -34,12 +34,11 @@ void Game_Run( Game_t* game )
       Clock_StartFrame( game->clock );
       Input_ResetPressStates( game->input );
       PlatformOps_HandleMessages( game );
-      Game_Render( game );
 
       // TODO
       //Game_Tic( game );
 
-      PlatformOps_RenderScreenBuffer( game->screen );
+      Game_Render( game );
       Clock_EndFrame( game->clock );
    }
 }
