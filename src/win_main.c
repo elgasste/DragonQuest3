@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "clock.h"
 #include "game.h"
 #include "input.h"
 #include "mem_arena.h"
@@ -13,6 +14,8 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
 internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
+internal void DrawDiagnostics( HDC* dcMem );
+internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha );
 
 int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
 {
@@ -96,6 +99,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - SCREEN_HEIGHT;
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
+   g_winGlobals.showDiagnostics = False;
 
    // TODO: put the window title somewhere else
    g_winGlobals.hWndMain = CreateWindowExA( 0,
@@ -209,6 +213,11 @@ internal void RenderScreen( void )
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
 
+   if ( g_winGlobals.showDiagnostics )
+   {
+      DrawDiagnostics( &dcMem );
+   }
+
    // transfer the off-screen DC to the screen
    BitBlt( dc, 0, 0, winWidth, winHeight, dcMem, 0, 0, SRCCOPY );
 
@@ -258,6 +267,13 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
                break;
             }
          }
+
+         switch ( keyCode )
+         {
+            case VK_F8:
+               TOGGLE_BOOL( g_winGlobals.showDiagnostics );
+               break;
+         }
       }
       else
       {
@@ -271,4 +287,119 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          }
       }
    }
+}
+
+internal void DrawDiagnostics( HDC* dcMem )
+{
+   u32 gameSeconds, realSeconds;
+   RECT r;
+   HFONT oldFont;
+   Game_t* game;
+   char str[STRING_SIZE_DEFAULT];
+
+   game = g_winGlobals.game;
+
+   r.left = 10;
+   r.top = 10;
+   r.right = 0;
+   r.bottom = 0;
+
+   // backdrop
+   DrawTranslucentRectangle( *dcMem, 0, 0, 256, 190, RGB( 0, 0, 128 ), 200 );
+
+   oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
+
+   SetTextColor( *dcMem, 0x00FFFFFF );
+   SetBkMode( *dcMem, TRANSPARENT );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "Target Frame Rate: %u", game->clock->fps );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "    Last Frame MS: %u", (u32)( game->clock->lastframeMicro / 1000 ) );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "     Total Frames: %u", game->clock->frameCount );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", game->clock->lagFrameCount );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   gameSeconds = game->clock->frameCount / game->clock->fps;
+   sprintf_s( str, STRING_SIZE_DEFAULT, "    In-Game Timer: %u:%02u:%02u", gameSeconds / 3600, gameSeconds / 60, gameSeconds );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   realSeconds = (u32)( game->clock->absoluteEndMicro - game->clock->absoluteStartMicro ) / 1000000;
+   sprintf_s( str, STRING_SIZE_DEFAULT, " Real World Timer: %u:%02u:%02u", realSeconds / 3600, realSeconds / 60, realSeconds );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
+   SetTextColor( *dcMem, game->input->buttonStates[InputButton_Up].down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "--" );
+   SetTextColor( *dcMem, game->input->buttonStates[InputButton_Left].down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "   --" );
+   SetTextColor( *dcMem, game->input->buttonStates[InputButton_Right].down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "      SEL" );
+   SetTextColor( *dcMem, game->input->buttonStates[InputButton_Select].down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "          STA" );
+   SetTextColor( *dcMem, game->input->buttonStates[InputButton_Start].down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "              B" );
+   SetTextColor( *dcMem, game->input->buttonStates[InputButton_B].down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "                A" );
+   SetTextColor( *dcMem, game->input->buttonStates[InputButton_A].down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
+   SetTextColor( *dcMem, game->input->buttonStates[InputButton_Down].down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   SelectObject( *dcMem, oldFont );
+}
+
+internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha )
+{
+   HDC hdcMem = CreateCompatibleDC( hdc );
+   HBITMAP bitmap = CreateCompatibleBitmap( hdc, w, h );
+   HBITMAP oldBitmap = (HBITMAP)SelectObject( hdcMem, bitmap );
+
+   HBRUSH blueBrush = CreateSolidBrush( color );
+   HBRUSH oldBrush = (HBRUSH)SelectObject( hdcMem, blueBrush );
+
+   Rectangle( hdcMem, 0, 0, w, h );
+
+   BLENDFUNCTION bf;
+   bf.BlendOp = AC_SRC_OVER;
+   bf.BlendFlags = 0;
+   bf.SourceConstantAlpha = alpha;
+   bf.AlphaFormat = 0;
+
+   AlphaBlend( hdc, x, y, w, h, hdcMem, 0, 0, w, h, bf );
+
+   SelectObject( hdcMem, oldBrush );
+   DeleteObject( blueBrush );
+   SelectObject( hdcMem, oldBitmap );
+   DeleteObject( bitmap );
+   DeleteDC( hdcMem );
 }
