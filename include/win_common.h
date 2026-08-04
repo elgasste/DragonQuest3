@@ -20,6 +20,8 @@ typedef struct WinGlobalObjects_t
    u32* buttonMap;
    // TODO: move this into screen.h?
    r32 graphicsScale;
+   b32 showDiagnostics;
+
    Game_t* game;
 }
 WinGlobalObjects_t;
