@@ -64,6 +64,24 @@ void test_Clock_Init_InitializesClockWithCorrectParameters( void )
    TEST_ASSERT_EQUAL( False, clock.hasStarted );
 }
 
+void test_Clock_SetFps_UpdatesFrameMicroSecAndFrameSec( void )
+{
+   u64 expectedFrameMicroSec;
+   r32 expectedFrameSec;
+   Clock_t clock;
+
+   Clock_Init( &clock, 30 );
+
+   expectedFrameMicroSec = 1000000 / 60;
+   expectedFrameSec = 1.0f / 60.0f;
+
+   Clock_SetFps( &clock, 60 );
+
+   TEST_ASSERT_EQUAL( 60, clock.fps );
+   TEST_ASSERT_EQUAL( expectedFrameMicroSec, clock.frameMicroSec );
+   TEST_ASSERT_EQUAL( expectedFrameSec, clock.frameSec );
+}
+
 void test_Clock_StartFrame_ClockIsMarkedAsStarted( void )
 {
    Clock_t clock;
@@ -150,6 +168,8 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Clock_Init_InitializesClockWithCorrectParameters );
+
+   RUN_TEST( test_Clock_SetFps_UpdatesFrameMicroSecAndFrameSec );
 
    RUN_TEST( test_Clock_StartFrame_ClockIsMarkedAsStarted );
    RUN_TEST( test_Clock_StartFrame_InitializesStartMicroValues );

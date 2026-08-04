@@ -22,6 +22,7 @@ typedef struct Clock_t
 Clock_t;
 
 void Clock_Init( Clock_t* clock, u32 fps );
+void Clock_SetFps( Clock_t* clock, u32 fps );
 void Clock_StartFrame( Clock_t* clock );
 void Clock_EndFrame( Clock_t* clock );
 
