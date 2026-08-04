@@ -8,6 +8,7 @@ include_directories(src)
 add_executable(DragonQuest3
    src/clock.c
    src/game.c
+   src/input.c
    src/mem_arena.c
 	src/pixel_buffer.c
    src/screen.c

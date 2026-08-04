@@ -2,6 +2,7 @@
 
 #include "clock.h"
 #include "game.h"
+#include "input.h"
 #include "mem_arena.h"
 #include "platform_ops.h"
 #include "screen.h"
@@ -20,6 +21,7 @@ void Game_Init( Game_t* game, MemArena_t* memArena )
    }
 
    Clock_Init( game->clock, GAME_DEFAULT_FPS );
+   Input_Init( game->input );
    Screen_Init( game->screen, game->memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
 }
 
@@ -30,21 +32,16 @@ void Game_Run( Game_t* game )
    while ( !game->shutdown )
    {
       Clock_StartFrame( game->clock );
-
-      // MUFFINS: we should do input next
-
-      // TODO
-      //Input_ResetState( &( game->input ) );
-
+      Input_ResetPressStates( game->input );
       PlatformOps_HandleMessages( game );
 
+      // TODO: move this to some kind of game renderer function
       Screen_Fill( game->screen, 0 );
 
       // TODO
       //Game_Tic( game );
 
       PlatformOps_RenderScreenBuffer( game->screen );
-
       Clock_EndFrame( game->clock );
    }
 }
@@ -63,6 +60,14 @@ internal b32 Game_AllocObjects( Game_t* game )
    if ( memArenaResult != MemArenaResult_Success )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for clock: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      PlatformOps_FatalError( msg );
+      return False;
+   }
+
+   memArenaResult = MemArena_Alloc( game->memArena, &game->input, sizeof( Input_t ) );
+   if ( memArenaResult != MemArenaResult_Success )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for input: %s", MemArena_GetErrorMessage( memArenaResult ) );
       PlatformOps_FatalError( msg );
       return False;
    }

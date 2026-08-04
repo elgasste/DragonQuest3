@@ -17,6 +17,7 @@ typedef struct WinGlobalObjects_t
    HFONT hFont;
    LARGE_INTEGER performanceFrequency;
    BITMAPINFO bmpInfo;
+   u32* buttonMap;
    // TODO: move this into screen.h?
    r32 graphicsScale;
    Game_t* game;

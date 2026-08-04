@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "game.h"
+#include "input.h"
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "platform_ops.h"
@@ -10,6 +11,7 @@
 internal MemArena_t* CreateMemArena( void );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void RenderScreen( void );
+internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 
 int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
@@ -35,6 +37,13 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       return 1;
    }
 
+   memArenaResult = MemArena_Alloc( memArena, (void**)&( g_winGlobals.buttonMap ), sizeof( u32 ) * InputButton_Count );
+   if ( memArenaResult != MemArenaResult_Success )
+   {
+      PlatformOps_FatalError( "failed to allocate memory for button map." );
+      return 1;
+   }
+
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
       PlatformOps_FatalError( "failed to query performance frequency." );
@@ -50,8 +59,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    timerResolution = min( max( timeCaps.wPeriodMin, 1 ), timeCaps.wPeriodMax );
    timeBeginPeriod( timerResolution );
 
-   // does not transfer ownership of memory arena
-   Game_Init( g_winGlobals.game, memArena );
+   InitButtonMap();
+   Game_Init( g_winGlobals.game, memArena ); // does not transfer ownership of memory arena
 
    mainWindowClass.cbClsExtra = 0;
    mainWindowClass.cbWndExtra = 0;
@@ -209,9 +218,22 @@ internal void RenderScreen( void )
    EndPaint( g_winGlobals.hWndMain, &ps );
 }
 
+internal void InitButtonMap()
+{
+   g_winGlobals.buttonMap[InputButton_Left] = VK_LEFT;
+   g_winGlobals.buttonMap[InputButton_Up] = VK_UP;
+   g_winGlobals.buttonMap[InputButton_Right] = VK_RIGHT;
+   g_winGlobals.buttonMap[InputButton_Down] = VK_DOWN;
+   g_winGlobals.buttonMap[InputButton_A] = 0x58; // X
+   g_winGlobals.buttonMap[InputButton_B] = 0x5A; // Z
+   g_winGlobals.buttonMap[InputButton_Start] = VK_RETURN;
+   g_winGlobals.buttonMap[InputButton_Select] = VK_SHIFT;
+}
+
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 {
    b32 keyWasDown, keyIsDown;
+   u32 i;
 
    keyWasDown = ( flags & ( (LONG_PTR)1 << 30 ) ) != 0 ? True : False;
    keyIsDown = ( flags & ( (LONG_PTR)1 << 31 ) ) == 0 ? True : False;
@@ -228,27 +250,25 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             return;
          }
 
-         // TODO
-         // for ( i = 0; i < InputButton_Count; i++ )
-         // {
-         //    if ( g_winGlobals.buttonMap[i] == keyCode )
-         //    {
-         //       Input_ButtonPressed( &g_winGlobals.game.input, i );
-         //       break;
-         //    }
-         // }
+         for ( i = 0; i < InputButton_Count; i++ )
+         {
+            if ( g_winGlobals.buttonMap[i] == keyCode )
+            {
+               Input_PressButton( g_winGlobals.game->input, i );
+               break;
+            }
+         }
       }
       else
       {
-         // TODO
-         // for ( i = 0; i < InputButton_Count; i++ )
-         // {
-         //    if ( g_winGlobals.buttonMap[i] == keyCode )
-         //    {
-         //       Input_ButtonReleased( &g_winGlobals.game.input, i );
-         //       break;
-         //    }
-         // }
+         for ( i = 0; i < InputButton_Count; i++ )
+         {
+            if ( g_winGlobals.buttonMap[i] == keyCode )
+            {
+               Input_ReleaseButton( g_winGlobals.game->input, i );
+               break;
+            }
+         }
       }
    }
 }
