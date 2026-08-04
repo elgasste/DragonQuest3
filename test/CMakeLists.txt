@@ -13,6 +13,12 @@ add_executable(Test_Game
 	test_game.c
 )
 
+add_executable(Test_Input
+	../src/input.c
+	vendor/unity.c
+	test_input.c
+)
+
 add_executable(Test_MemArena
 	../src/mem_arena.c
 	vendor/unity.c
@@ -39,6 +45,7 @@ add_executable(MemArena_Perf
 
 set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Input PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_MemArena PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_PixelBuffer PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Screen PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -46,6 +53,7 @@ set_property(TARGET Test_Screen PROPERTY COMPILE_WARNING_AS_ERROR ON)
 if(MSVC)
 	target_compile_options(Test_Clock PRIVATE /W4)
    target_compile_options(Test_Game PRIVATE /W4)
+   target_compile_options(Test_Input PRIVATE /W4)
    target_compile_options(Test_MemArena PRIVATE /W4)
    target_compile_options(Test_PixelBuffer PRIVATE /W4)
 	target_compile_options(Test_Screen PRIVATE /W4)
@@ -59,6 +67,10 @@ target_include_directories(Test_Clock PRIVATE ../src)
 target_include_directories(Test_Game PRIVATE vendor)
 target_include_directories(Test_Game PRIVATE ../include)
 target_include_directories(Test_Game PRIVATE ../src)
+
+target_include_directories(Test_Input PRIVATE vendor)
+target_include_directories(Test_Input PRIVATE ../include)
+target_include_directories(Test_Input PRIVATE ../src)
 
 target_include_directories(Test_MemArena PRIVATE vendor)
 target_include_directories(Test_MemArena PRIVATE ../include)
@@ -77,6 +89,7 @@ target_include_directories(MemArena_Perf PRIVATE ../src)
 
 add_test( NAME Unity_Clock_Tests COMMAND Test_Clock)
 add_test( NAME Unity_Game_Tests COMMAND Test_Game)
+add_test( NAME Unity_Input_Tests COMMAND Test_Input)
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)
 add_test( NAME Unity_PixelBuffer_Tests COMMAND Test_PixelBuffer)
 add_test( NAME Unity_Screen_Tests COMMAND Test_Screen)
