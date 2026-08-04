@@ -1,58 +1,54 @@
-#include <string.h>
-
 #include "clock.h"
 #include "game.h"
 #include "mem_arena.h"
-#include "pixel_buffer.h"
 #include "platform_ops.h"
+#include "screen.h"
 #include "unity.h"
 
-typedef struct PixelBufferCreateCall_t
+typedef struct ScreenInitCall_t
 {
+   Screen_t* screen;
    MemArena_t* memArena;
-   u32 width;
-   u32 height;
-   PixelBuffer_t* createdBuffer;
+   u32 w;
+   u32 h;
+   int callCount;
 }
-PixelBufferCreateCall_t;
+ScreenInitCall_t;
 
-typedef struct PixelBufferClearColorCall_t
+typedef struct ScreenFillCall_t
 {
-   PixelBuffer_t* buffer;
+   Screen_t* screen;
    u32 color;
    int callCount;
 }
-PixelBufferClearColorCall_t;
+ScreenFillCall_t;
 
 local_persist int g_clockInitCallCount;
+local_persist ScreenInitCall_t g_screenInitCall;
 local_persist int g_clockStartFrameCallCount;
-local_persist int g_clockEndFrameCallCount;
-local_persist PixelBufferCreateCall_t g_pixelBufferCreateCall;
-local_persist int g_pixelBufferCreateCallCount;
-local_persist PixelBufferClearColorCall_t g_pixelBufferClearColorCall;
 local_persist int g_platformHandleMessagesCallCount;
+local_persist ScreenFillCall_t g_screenFillCall;
 local_persist int g_platformRenderScreenBufferCallCount;
+local_persist int g_clockEndFrameCallCount;
 local_persist Game_t* g_currentGame;
 local_persist MemArena_t* g_memArena;
 
 void setUp( void )
 {
    g_clockInitCallCount = 0;
+   g_screenInitCall.screen = 0;
+   g_screenInitCall.memArena = 0;
+   g_screenInitCall.w = 0;
+   g_screenInitCall.h = 0;
+   g_screenInitCall.callCount = 0;
    g_clockStartFrameCallCount = 0;
+   g_platformHandleMessagesCallCount = 0;
+   g_screenFillCall.screen = 0;
+   g_screenFillCall.color = 0;
+   g_screenFillCall.callCount = 0;
+   g_platformRenderScreenBufferCallCount = 0;
    g_clockEndFrameCallCount = 0;
 
-   g_pixelBufferCreateCallCount = 0;
-   g_pixelBufferCreateCall.memArena = 0;
-   g_pixelBufferCreateCall.width = 0;
-   g_pixelBufferCreateCall.height = 0;
-   g_pixelBufferCreateCall.createdBuffer = 0;
-
-   g_pixelBufferClearColorCall.buffer = 0;
-   g_pixelBufferClearColorCall.color = 0;
-   g_pixelBufferClearColorCall.callCount = 0;
-
-   g_platformHandleMessagesCallCount = 0;
-   g_platformRenderScreenBufferCallCount = 0;
    g_currentGame = 0;
 
    g_memArena = 0;
@@ -86,28 +82,20 @@ void Clock_EndFrame( Clock_t* clock )
    g_clockEndFrameCallCount++;
 }
 
-void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u32 h )
+void Screen_Init( Screen_t* screen, MemArena_t* memArena, u32 w, u32 h )
 {
-   static PixelBuffer_t pixelBufferMock;
-
-   g_pixelBufferCreateCallCount++;
-   g_pixelBufferCreateCall.memArena = memArena;
-   g_pixelBufferCreateCall.width = w;
-   g_pixelBufferCreateCall.height = h;
-   g_pixelBufferCreateCall.createdBuffer = &pixelBufferMock;
-
-   pixelBufferMock.w = w;
-   pixelBufferMock.h = h;
-   pixelBufferMock.mem = 0;
-
-   *pBuffer = &pixelBufferMock;
+   g_screenInitCall.screen = screen;
+   g_screenInitCall.memArena = memArena;
+   g_screenInitCall.w = w;
+   g_screenInitCall.h = h;
+   g_screenInitCall.callCount++;
 }
 
-void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
+void Screen_Fill( Screen_t* screen, u32 color )
 {
-   g_pixelBufferClearColorCall.buffer = buffer;
-   g_pixelBufferClearColorCall.color = color;
-   g_pixelBufferClearColorCall.callCount++;
+   g_screenFillCall.screen = screen;
+   g_screenFillCall.color = color;
+   g_screenFillCall.callCount++;
 }
 
 void PlatformOps_FatalError( const char* msg )
@@ -141,13 +129,11 @@ void test_Game_Create_CreatesGameWithCorrectParameters( void )
    Game_Create( &game, g_memArena );
    TEST_ASSERT_EQUAL( g_memArena, game.memArena );
    TEST_ASSERT_EQUAL( 1, g_clockInitCallCount );
-   TEST_ASSERT_EQUAL( 1, g_pixelBufferCreateCallCount );
-   TEST_ASSERT_EQUAL( g_memArena, g_pixelBufferCreateCall.memArena );
-   TEST_ASSERT_EQUAL( SCREEN_WIDTH, g_pixelBufferCreateCall.width );
-   TEST_ASSERT_EQUAL( SCREEN_HEIGHT, g_pixelBufferCreateCall.height );
-   TEST_ASSERT_NOT_NULL( game.pixelBuffer );
-   TEST_ASSERT_EQUAL( SCREEN_WIDTH, game.pixelBuffer->w );
-   TEST_ASSERT_EQUAL( SCREEN_HEIGHT, game.pixelBuffer->h );
+   TEST_ASSERT_EQUAL( 1, g_screenInitCall.callCount );
+   TEST_ASSERT_EQUAL( game.screen, g_screenInitCall.screen );
+   TEST_ASSERT_EQUAL( g_memArena, g_screenInitCall.memArena );
+   TEST_ASSERT_EQUAL( SCREEN_WIDTH, g_screenInitCall.w );
+   TEST_ASSERT_EQUAL( SCREEN_HEIGHT, g_screenInitCall.h );
 }
 
 void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
@@ -162,9 +148,8 @@ void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
    TEST_ASSERT_EQUAL( 3, g_clockEndFrameCallCount );
    TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
    TEST_ASSERT_EQUAL( 3, g_platformRenderScreenBufferCallCount );
-   TEST_ASSERT_EQUAL( 3, g_pixelBufferClearColorCall.callCount );
-   TEST_ASSERT_EQUAL( game.pixelBuffer, g_pixelBufferClearColorCall.buffer );
-   TEST_ASSERT_EQUAL( 0, g_pixelBufferClearColorCall.color );
+   TEST_ASSERT_EQUAL( 3, g_screenFillCall.callCount );
+   TEST_ASSERT_EQUAL( 0, g_screenFillCall.color );
    TEST_ASSERT_TRUE( game.shutdown );
 }
 
@@ -178,9 +163,8 @@ void test_Game_Run_StopsAfterMultipleRenderHandlerTicks( void )
    Game_Run( &game );
    TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
    TEST_ASSERT_EQUAL( 3, g_platformRenderScreenBufferCallCount );
-   TEST_ASSERT_EQUAL( 3, g_pixelBufferClearColorCall.callCount );
-   TEST_ASSERT_EQUAL( game.pixelBuffer, g_pixelBufferClearColorCall.buffer );
-   TEST_ASSERT_EQUAL( 0, g_pixelBufferClearColorCall.color );
+   TEST_ASSERT_EQUAL( 3, g_screenFillCall.callCount );
+   TEST_ASSERT_EQUAL( 0, g_screenFillCall.color );
    TEST_ASSERT_TRUE( game.shutdown );
 }
 

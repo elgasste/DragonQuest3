@@ -4,13 +4,13 @@ set(CMAKE_C_STANDARD 99)
 
 enable_testing()
 include_directories(src)
-add_subdirectory(test)
 
 add_executable(DragonQuest3
    src/clock.c
    src/game.c
    src/mem_arena.c
 	src/pixel_buffer.c
+   src/screen.c
 )
 
 set_property(TARGET DragonQuest3 PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -26,3 +26,5 @@ endif()
 
 target_include_directories(DragonQuest3 PRIVATE include)
 target_include_directories(DragonQuest3 PRIVATE src)
+
+add_subdirectory(test)
