@@ -29,13 +29,12 @@ typedef struct ScreenInitCall_t
 }
 ScreenInitCall_t;
 
-typedef struct ScreenFillCall_t
+typedef struct GameRenderCall_t
 {
-   Screen_t* screen;
-   u32 color;
+   Game_t* game;
    int callCount;
 }
-ScreenFillCall_t;
+GameRenderCall_t;
 
 local_persist int g_clockInitCallCount;
 local_persist InputInitCall_t g_inputInitCall;
@@ -43,7 +42,7 @@ local_persist InputResetPressStatesCall_t g_inputResetPressStatesCall;
 local_persist ScreenInitCall_t g_screenInitCall;
 local_persist int g_clockStartFrameCallCount;
 local_persist int g_platformHandleMessagesCallCount;
-local_persist ScreenFillCall_t g_screenFillCall;
+local_persist GameRenderCall_t g_gameRenderCall;
 local_persist int g_platformRenderScreenBufferCallCount;
 local_persist int g_clockEndFrameCallCount;
 local_persist Game_t* g_currentGame;
@@ -63,9 +62,8 @@ void setUp( void )
    g_screenInitCall.callCount = 0;
    g_clockStartFrameCallCount = 0;
    g_platformHandleMessagesCallCount = 0;
-   g_screenFillCall.screen = 0;
-   g_screenFillCall.color = 0;
-   g_screenFillCall.callCount = 0;
+   g_gameRenderCall.game = 0;
+   g_gameRenderCall.callCount = 0;
    g_platformRenderScreenBufferCallCount = 0;
    g_clockEndFrameCallCount = 0;
 
@@ -123,11 +121,10 @@ void Screen_Init( Screen_t* screen, MemArena_t* memArena, u32 w, u32 h )
    g_screenInitCall.callCount++;
 }
 
-void Screen_Fill( Screen_t* screen, u32 color )
+void Game_Render( Game_t* game )
 {
-   g_screenFillCall.screen = screen;
-   g_screenFillCall.color = color;
-   g_screenFillCall.callCount++;
+   g_gameRenderCall.game = game;
+   g_gameRenderCall.callCount++;
 }
 
 void PlatformOps_FatalError( const char* msg )
@@ -188,8 +185,8 @@ void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
    TEST_ASSERT_EQUAL_PTR( game.input, g_inputResetPressStatesCall.input );
    TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
    TEST_ASSERT_EQUAL( 3, g_platformRenderScreenBufferCallCount );
-   TEST_ASSERT_EQUAL( 3, g_screenFillCall.callCount );
-   TEST_ASSERT_EQUAL( 0, g_screenFillCall.color );
+   TEST_ASSERT_EQUAL( 3, g_gameRenderCall.callCount );
+   TEST_ASSERT_EQUAL_PTR( &game, g_gameRenderCall.game );
    TEST_ASSERT_TRUE( game.shutdown );
 }
 
@@ -216,8 +213,8 @@ void test_Game_Run_StopsAfterMultipleRenderHandlerTicks( void )
    Game_Run( &game );
    TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
    TEST_ASSERT_EQUAL( 3, g_platformRenderScreenBufferCallCount );
-   TEST_ASSERT_EQUAL( 3, g_screenFillCall.callCount );
-   TEST_ASSERT_EQUAL( 0, g_screenFillCall.color );
+   TEST_ASSERT_EQUAL( 3, g_gameRenderCall.callCount );
+   TEST_ASSERT_EQUAL_PTR( &game, g_gameRenderCall.game );
    TEST_ASSERT_TRUE( game.shutdown );
 }
 

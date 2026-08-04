@@ -34,9 +34,7 @@ void Game_Run( Game_t* game )
       Clock_StartFrame( game->clock );
       Input_ResetPressStates( game->input );
       PlatformOps_HandleMessages( game );
-
-      // TODO: move this to some kind of game renderer function
-      Screen_Fill( game->screen, 0 );
+      Game_Render( game );
 
       // TODO
       //Game_Tic( game );

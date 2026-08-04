@@ -29,8 +29,12 @@ typedef struct Game_t
 }
 Game_t;
 
+// game.c
 void Game_Init( Game_t* game, MemArena_t* memArena );
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
+
+// game_render.c
+void Game_Render( Game_t* game );
 
 #endif // GAME_H
