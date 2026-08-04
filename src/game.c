@@ -6,9 +6,9 @@
 #include "platform_ops.h"
 #include "screen.h"
 
-b32 Game_AllocObjects( Game_t* game );
+internal b32 Game_AllocObjects( Game_t* game );
 
-void Game_Create( Game_t* game, MemArena_t* memArena )
+void Game_Init( Game_t* game, MemArena_t* memArena )
 {
    game->memArena = memArena;
 
@@ -31,6 +31,8 @@ void Game_Run( Game_t* game )
    {
       Clock_StartFrame( game->clock );
 
+      // MUFFINS: we should do input next
+
       // TODO
       //Input_ResetState( &( game->input ) );
 
@@ -52,7 +54,7 @@ void Game_Stop( Game_t* game )
    game->shutdown = True;
 }
 
-b32 Game_AllocObjects( Game_t* game )
+internal b32 Game_AllocObjects( Game_t* game )
 {
    MemArenaResult_t memArenaResult;
    char msg[STRING_SIZE_DEFAULT];

@@ -122,11 +122,11 @@ void PlatformOps_RenderScreenBuffer( void )
    }
 }
 
-void test_Game_Create_CreatesGameWithCorrectParameters( void )
+void test_Game_Init_CreatesGameWithCorrectParameters( void )
 {
    Game_t game;
 
-   Game_Create( &game, g_memArena );
+   Game_Init( &game, g_memArena );
    TEST_ASSERT_EQUAL( g_memArena, game.memArena );
    TEST_ASSERT_EQUAL( 1, g_clockInitCallCount );
    TEST_ASSERT_EQUAL( 1, g_screenInitCall.callCount );
@@ -141,7 +141,7 @@ void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
    Game_t game;
 
    g_currentGame = &game;
-   Game_Create( &game, g_memArena );
+   Game_Init( &game, g_memArena );
 
    Game_Run( &game );
    TEST_ASSERT_EQUAL( 3, g_clockStartFrameCallCount );
@@ -158,7 +158,7 @@ void test_Game_Run_StopsAfterMultipleRenderHandlerTicks( void )
    Game_t game;
 
    g_currentGame = &game;
-   Game_Create( &game, g_memArena );
+   Game_Init( &game, g_memArena );
 
    Game_Run( &game );
    TEST_ASSERT_EQUAL( 3, g_platformHandleMessagesCallCount );
@@ -172,7 +172,7 @@ int main( void )
 {
    UNITY_BEGIN();
 
-   RUN_TEST( test_Game_Create_CreatesGameWithCorrectParameters );
+   RUN_TEST( test_Game_Init_CreatesGameWithCorrectParameters );
 
    RUN_TEST( test_Game_Run_StopsAfterMultipleMessageHandlerTicks );
    RUN_TEST( test_Game_Run_StopsAfterMultipleRenderHandlerTicks );

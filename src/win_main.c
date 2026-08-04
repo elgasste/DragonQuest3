@@ -16,27 +16,24 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 {
    TIMECAPS timeCaps;
    UINT timerResolution;
-   WNDCLASSA mainWindowClass = { 0 };
-   DWORD windowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE;
-   RECT expectedWindowRect = { 0 };
+   WNDCLASSA mainWindowClass;
+   DWORD windowStyle;
+   RECT expectedWindowRect;
    LONG clientPaddingRight, clientPaddingTop;
    MemArena_t* memArena;
-   MemArenaResult_t result;
+   MemArenaResult_t memArenaResult;
 
    UNUSED_PARAM( hPrevInstance );
    UNUSED_PARAM( lpCmdLine );
    UNUSED_PARAM( nCmdShow );
 
    memArena = CreateMemArena();
-   result = MemArena_Alloc( memArena, (void**)&( g_winGlobals.game ), sizeof( Game_t ) );
-   if ( result != MemArenaResult_Success )
+   memArenaResult = MemArena_Alloc( memArena, (void**)&( g_winGlobals.game ), sizeof( Game_t ) );
+   if ( memArenaResult != MemArenaResult_Success )
    {
       PlatformOps_FatalError( "failed to allocate memory for game object." );
       return 1;
    }
-
-   // does not transfer ownership of memory arena
-   Game_Create( g_winGlobals.game, memArena );
 
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
@@ -53,6 +50,16 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    timerResolution = min( max( timeCaps.wPeriodMin, 1 ), timeCaps.wPeriodMax );
    timeBeginPeriod( timerResolution );
 
+   // does not transfer ownership of memory arena
+   Game_Init( g_winGlobals.game, memArena );
+
+   mainWindowClass.cbClsExtra = 0;
+   mainWindowClass.cbWndExtra = 0;
+   mainWindowClass.hbrBackground = 0;
+   mainWindowClass.hCursor = 0;
+   mainWindowClass.hIcon = 0;
+   mainWindowClass.lpszMenuName = 0;
+
    mainWindowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
    mainWindowClass.lpfnWndProc = MainWindowProc;
    mainWindowClass.hInstance = hInstance;
@@ -64,9 +71,12 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       return 1;
    }
 
+   expectedWindowRect.left = 0;
+   expectedWindowRect.top = 0;
    expectedWindowRect.right = SCREEN_WIDTH;
    expectedWindowRect.bottom = SCREEN_HEIGHT;
 
+   windowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE;
    if ( !AdjustWindowRect( &expectedWindowRect, windowStyle, 0 ) )
    {
       PlatformOps_FatalError( "failed to adjust window rect." );
