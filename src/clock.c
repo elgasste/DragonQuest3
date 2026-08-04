@@ -3,9 +3,7 @@
 
 void Clock_Init( Clock_t* clock, u32 fps )
 {
-   clock->fps = fps;
-   clock->frameMicroSec = 1000000 / (u64)fps;
-   clock->frameSec = 1.0f / (r32)fps;
+   Clock_SetFps( clock, fps );
 
    clock->frameStartMicro = 0;
    clock->absoluteStartMicro = 0;
@@ -16,6 +14,13 @@ void Clock_Init( Clock_t* clock, u32 fps )
    clock->lagFrameCount = 0;
 
    clock->hasStarted = False;
+}
+
+void Clock_SetFps( Clock_t* clock, u32 fps )
+{
+   clock->fps = fps;
+   clock->frameMicroSec = 1000000 / (u64)fps;
+   clock->frameSec = 1.0f / (r32)fps;
 }
 
 void Clock_StartFrame( Clock_t* clock )
