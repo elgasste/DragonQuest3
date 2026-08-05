@@ -17,6 +17,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 internal void DrawDiagnostics( HDC* dcMem );
 internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha );
 internal void ResizeScreen( b32 increase );
+internal void ChangeGameFps( b32 increase );
 
 int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
 {
@@ -257,14 +258,29 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 
          if ( keyIsDown )
          {
-            switch ( keyCode )
+            if ( GetKeyState( 0x53 ) & 0x8000 ) // "S" key: change the scale of the screen
             {
-               case VK_UP:
-                  ResizeScreen( True );
-                  break;
-               case VK_DOWN:
-                  ResizeScreen( False );
-                  break;
+               switch ( keyCode )
+               {
+                  case VK_UP:
+                     ResizeScreen( True );
+                     break;
+                  case VK_DOWN:
+                     ResizeScreen( False );
+                     break;
+               }
+            }
+            else if ( GetKeyState( 0x46 ) & 0x8000 ) // "F" key: change the game's frame rate
+            {
+               switch ( keyCode )
+               {
+                  case VK_UP:
+                     ChangeGameFps( True );
+                     break;
+                  case VK_DOWN:
+                     ChangeGameFps( False );
+                     break;
+               }
             }
          }
       }
@@ -434,12 +450,12 @@ internal void ResizeScreen( b32 increase )
    changed = False;
    if ( increase && g_winGlobals.graphicsScale < MAX_GRAPHICS_SCALE )
    {
-      g_winGlobals.graphicsScale += 0.5f;
+      g_winGlobals.graphicsScale += GRAPHICS_SCALE_STEP;
       changed = True;
    }
    else if ( !increase && g_winGlobals.graphicsScale > MIN_GRAPHICS_SCALE )
    {
-      g_winGlobals.graphicsScale -= 0.5f;
+      g_winGlobals.graphicsScale -= GRAPHICS_SCALE_STEP;
       changed = True;
    }
 
@@ -451,5 +467,17 @@ internal void ResizeScreen( b32 increase )
                     (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
                     (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
                     SWP_NOMOVE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS); 
+   }
+}
+
+internal void ChangeGameFps( b32 increase )
+{
+   if ( increase && g_winGlobals.game->clock->fps < MAX_GAME_FPS )
+   {
+      Clock_SetFps( g_winGlobals.game->clock, g_winGlobals.game->clock->fps + GAME_FPS_STEP );
+   }
+   else if ( !increase && g_winGlobals.game->clock->fps > MIN_GAME_FPS )
+   {
+      Clock_SetFps( g_winGlobals.game->clock, g_winGlobals.game->clock->fps - GAME_FPS_STEP );
    }
 }
