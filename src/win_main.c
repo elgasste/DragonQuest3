@@ -16,6 +16,7 @@ internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 internal void DrawDiagnostics( HDC* dcMem );
 internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha );
+internal void ResizeScreen( b32 increase );
 
 int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
 {
@@ -250,7 +251,26 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
    // ignore repeat presses
    if ( keyWasDown != keyIsDown )
    {
-      if ( keyIsDown )
+      if ( GetKeyState( VK_CONTROL ) & 0x8000 )
+      {
+         // ctrl should nullify all other input, so we don't end up with stuck button states
+         Input_ResetPressStates( g_winGlobals.game->input );
+
+         if ( keyIsDown )
+         {
+            switch ( keyCode )
+            {
+               case VK_UP:
+                  ResizeScreen( True );
+                  break;
+               case VK_DOWN:
+                  ResizeScreen( False );
+                  break;
+            }
+         }
+      }
+
+      else if ( keyIsDown )
       {
          // ensure alt+F4 still closes the window
          if ( keyCode == VK_F4 && ( flags & ( (LONG_PTR)1 << 29 ) ) )
@@ -402,4 +422,29 @@ internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COL
    SelectObject( hdcMem, oldBitmap );
    DeleteObject( bitmap );
    DeleteDC( hdcMem );
+}
+
+internal void ResizeScreen( b32 increase )
+{
+   b32 changed;
+
+   changed = False;
+   if ( increase && g_winGlobals.graphicsScale < MAX_GRAPHICS_SCALE )
+   {
+      g_winGlobals.graphicsScale += 1.0f;
+      changed = True;
+   }
+   else if ( !increase && g_winGlobals.graphicsScale > MIN_GRAPHICS_SCALE )
+   {
+      g_winGlobals.graphicsScale -= 1.0f;
+      changed = True;
+   }
+
+   if ( changed )
+   {
+      SetWindowPos( g_winGlobals.hWndMain, 0, 0, 0,
+                  (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ),
+                  (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ),
+                  SWP_NOMOVE | SWP_NOZORDER );
+   }
 }
