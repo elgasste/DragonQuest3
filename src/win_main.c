@@ -324,7 +324,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.bottom = 0;
 
    // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 256, 190, RGB( 0, 0, 128 ), 200 );
+   DrawTranslucentRectangle( *dcMem, 0, 0, 256, 206, RGB( 0, 0, 128 ), 200 );
 
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
 
@@ -344,6 +344,10 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.top += 16;
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", game->clock->lagFrameCount );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "   Graphics Scale: %.1f", g_winGlobals.graphicsScale );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
