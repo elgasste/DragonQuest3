@@ -8,7 +8,7 @@
 #include "common.h"
 
 #define DEFAULT_GRAPHICS_SCALE 2.0f
-#define MIN_GRAPHICS_SCALE 1.0f
+#define MIN_GRAPHICS_SCALE 0.5f
 #define MAX_GRAPHICS_SCALE 4.0f
 #define GRAPHICS_SCALE_STEP 0.5f
 
