@@ -25,7 +25,6 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    WNDCLASSA mainWindowClass;
    DWORD windowStyle;
    RECT expectedWindowRect;
-   LONG clientPaddingRight, clientPaddingTop;
    MemArena_t* memArena;
    MemArenaResult_t memArenaResult;
 
@@ -96,8 +95,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       return 1;
    }
 
-   clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - SCREEN_WIDTH;
-   clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - SCREEN_HEIGHT;
+   g_winGlobals.clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - SCREEN_WIDTH;
+   g_winGlobals.clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - SCREEN_HEIGHT;
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
    g_winGlobals.showDiagnostics = False;
@@ -109,8 +108,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             windowStyle,
                                             CW_USEDEFAULT,
                                             CW_USEDEFAULT,
-                                            (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + clientPaddingRight,
-                                            (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + clientPaddingTop,
+                                            (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight,
+                                            (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
                                             0,
                                             0,
                                             hInstance,
@@ -442,9 +441,11 @@ internal void ResizeScreen( b32 increase )
 
    if ( changed )
    {
-      SetWindowPos( g_winGlobals.hWndMain, 0, 0, 0,
-                  (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ),
-                  (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ),
-                  SWP_NOMOVE | SWP_NOZORDER );
+      SetWindowPos( g_winGlobals.hWndMain,
+                    NULL, // No change in Z-order
+                    0, 0, // No change in position
+                    (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
+                    (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
+                    SWP_NOMOVE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS); 
    }
 }
