@@ -18,6 +18,28 @@ void test_Input_Init_InitializesAllButtonStatesToFalse( void )
    }
 }
 
+void test_Input_ResetAllStates_ResetsAllButtonStatesToFalse( void )
+{
+   Input_t input;
+   u32 i;
+
+   Input_Init( &input );
+   for ( i = 0; i < InputButton_Count; i++ )
+   {
+      input.buttonStates[i].pressed = True;
+      input.buttonStates[i].released = True;
+      input.buttonStates[i].down = True;
+   }
+
+   Input_ResetAllStates( &input );
+   for ( i = 0; i < InputButton_Count; i++ )
+   {
+      TEST_ASSERT_EQUAL( False, input.buttonStates[i].pressed );
+      TEST_ASSERT_EQUAL( False, input.buttonStates[i].released );
+      TEST_ASSERT_EQUAL( False, input.buttonStates[i].down );
+   }
+}
+
 void test_Input_ResetPressStates_ResetsPressedAndReleasedStatesButLeavesDownAlone( void )
 {
    Input_t input;
@@ -101,6 +123,7 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Input_Init_InitializesAllButtonStatesToFalse );
+   RUN_TEST( test_Input_ResetAllStates_ResetsAllButtonStatesToFalse );
 
    RUN_TEST( test_Input_ResetPressStates_ResetsPressedAndReleasedStatesButLeavesDownAlone );
 

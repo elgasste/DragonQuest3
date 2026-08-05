@@ -254,7 +254,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
       if ( GetKeyState( VK_CONTROL ) & 0x8000 )
       {
          // ctrl should nullify all other input, so we don't end up with stuck button states
-         Input_ResetPressStates( g_winGlobals.game->input );
+         Input_ResetAllStates( g_winGlobals.game->input );
 
          if ( keyIsDown )
          {
