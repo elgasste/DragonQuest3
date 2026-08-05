@@ -16,6 +16,8 @@ typedef struct Game_t Game_t;
 typedef struct WinGlobalObjects_t
 {
    HWND hWndMain;
+   LONG clientPaddingRight;
+   LONG clientPaddingTop;
    HFONT hFont;
    LARGE_INTEGER performanceFrequency;
    BITMAPINFO bmpInfo;

@@ -25,7 +25,6 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    WNDCLASSA mainWindowClass;
    DWORD windowStyle;
    RECT expectedWindowRect;
-   LONG clientPaddingRight, clientPaddingTop;
    MemArena_t* memArena;
    MemArenaResult_t memArenaResult;
 
@@ -96,8 +95,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       return 1;
    }
 
-   clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - SCREEN_WIDTH;
-   clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - SCREEN_HEIGHT;
+   g_winGlobals.clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - SCREEN_WIDTH;
+   g_winGlobals.clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - SCREEN_HEIGHT;
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
    g_winGlobals.showDiagnostics = False;
@@ -109,8 +108,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             windowStyle,
                                             CW_USEDEFAULT,
                                             CW_USEDEFAULT,
-                                            (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + clientPaddingRight,
-                                            (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + clientPaddingTop,
+                                            (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight,
+                                            (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
                                             0,
                                             0,
                                             hInstance,
@@ -325,7 +324,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.bottom = 0;
 
    // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 256, 190, RGB( 0, 0, 128 ), 200 );
+   DrawTranslucentRectangle( *dcMem, 0, 0, 256, 206, RGB( 0, 0, 128 ), 200 );
 
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
 
@@ -345,6 +344,10 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.top += 16;
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", game->clock->lagFrameCount );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "   Graphics Scale: %.1f", g_winGlobals.graphicsScale );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
@@ -442,9 +445,11 @@ internal void ResizeScreen( b32 increase )
 
    if ( changed )
    {
-      SetWindowPos( g_winGlobals.hWndMain, 0, 0, 0,
-                  (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ),
-                  (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ),
-                  SWP_NOMOVE | SWP_NOZORDER );
+      SetWindowPos( g_winGlobals.hWndMain,
+                    NULL, // No change in Z-order
+                    0, 0, // No change in position
+                    (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
+                    (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
+                    SWP_NOMOVE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS); 
    }
 }
