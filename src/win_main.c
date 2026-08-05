@@ -431,12 +431,12 @@ internal void ResizeScreen( b32 increase )
    changed = False;
    if ( increase && g_winGlobals.graphicsScale < MAX_GRAPHICS_SCALE )
    {
-      g_winGlobals.graphicsScale += 1.0f;
+      g_winGlobals.graphicsScale += 0.5f;
       changed = True;
    }
    else if ( !increase && g_winGlobals.graphicsScale > MIN_GRAPHICS_SCALE )
    {
-      g_winGlobals.graphicsScale -= 1.0f;
+      g_winGlobals.graphicsScale -= 0.5f;
       changed = True;
    }
 
