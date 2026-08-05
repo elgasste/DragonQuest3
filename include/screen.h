@@ -16,5 +16,6 @@ Screen_t;
 void Screen_Init( Screen_t* screen, MemArena_t* memArena, u32 w, u32 h );
 void Screen_Fill( Screen_t* screen, u32 color );
 void Screen_DrawRect( Screen_t* screen, Vector4i32_t rect, u32 color );
+void Screen_DrawPixelBuffer( Screen_t* screen, PixelBuffer_t* buffer, i32 screenX, i32 screenY );
 
 #endif // SCREEN_H

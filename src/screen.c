@@ -66,3 +66,61 @@ void Screen_DrawRect( Screen_t* screen, Vector4i32_t rect, u32 color )
       mem += ( buffer->w - rect.w );
    }
 }
+
+void Screen_DrawPixelBuffer( Screen_t* screen, PixelBuffer_t* buffer, i32 screenX, i32 screenY )
+{
+   i32 screenR, screenB, row, col;
+   u32 bufferOffsetL, bufferOffsetR, bufferOffsetT, bufferOffsetB;
+   PixelBuffer_t* screenBuffer;
+   u32* screenMem;
+
+   screenBuffer = screen->buffer;
+   screenR = screenX + buffer->w;
+   screenB = screenY + buffer->h;
+
+   // make sure the rect is even on the screen
+   if ( screenX >= (i32)( screenBuffer->w ) || screenY >= (i32)( screenBuffer->h ) || screenR <= 0 || screenB <= 0 )
+   {
+      return;
+   }
+
+   bufferOffsetL = 0;
+   bufferOffsetR = 0;
+   if ( screenX < 0 )
+   {
+      // the left side is off the screen
+      bufferOffsetL += -screenX;
+      screenX = 0;
+   }
+   if ( screenR > (i32)( screenBuffer->w ) )
+   {
+      // the right side is off the screen
+      bufferOffsetR += ( screenR - screenBuffer->w );
+   }
+
+   bufferOffsetT = 0;
+   bufferOffsetB = 0;
+   if ( screenY < 0 )
+   {
+      // the top side is off the screen
+      bufferOffsetT += -screenY;
+      screenY = 0;
+   }
+   if ( screenB > (i32)( screenBuffer->h ) )
+   {
+      // the bottom side is off the screen
+      bufferOffsetB += ( screenB - screenBuffer->h );
+   }
+
+   screenMem = screenBuffer->mem + ( ( screenY * screenBuffer->w ) + screenX );
+   for ( row = bufferOffsetT; row < (i32)( buffer->h - bufferOffsetB ); row++ )
+   {
+      for ( col = bufferOffsetL; col < (i32)( buffer->w - bufferOffsetR ); col++ )
+      {
+         *screenMem = buffer->mem[( row * buffer->w ) + col];
+         screenMem++;
+      }
+
+      screenMem += ( screenBuffer->w - ( buffer->w - bufferOffsetL - bufferOffsetR ) );
+   }
+}
