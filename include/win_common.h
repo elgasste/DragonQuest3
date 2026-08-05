@@ -7,9 +7,14 @@
 
 #include "common.h"
 
+#define DEFAULT_GRAPHICS_SCALE 2.0f
 #define MIN_GRAPHICS_SCALE 1.0f
 #define MAX_GRAPHICS_SCALE 4.0f
-#define DEFAULT_GRAPHICS_SCALE 2.0f
+#define GRAPHICS_SCALE_STEP 0.5f
+
+#define MIN_GAME_FPS 15
+#define MAX_GAME_FPS 120
+#define GAME_FPS_STEP 15
 
 typedef struct Game_t Game_t;
 
