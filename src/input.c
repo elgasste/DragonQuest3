@@ -2,6 +2,11 @@
 
 void Input_Init( Input_t* input )
 {
+   Input_ResetAllStates( input );
+}
+
+void Input_ResetAllStates( Input_t* input )
+{
    u32 i;
 
    for ( i = 0; i < InputButton_Count; i++ )
