@@ -11,6 +11,7 @@
 #include "win_common.h"
 
 internal MemArena_t* CreateMemArena( void );
+internal void MemArena_DumpStats( MemArena_t* memArena );
 internal void SetExeDir( void );
 internal void WriteTestGameDataFile( const char* filePath );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
@@ -172,6 +173,40 @@ internal MemArena_t* CreateMemArena( void )
    }
 
    return memArena;
+}
+
+internal void MemArena_DumpStats( MemArena_t* memArena )
+{
+   MemArenaStats_t stats;
+   char msg[STRING_SIZE_DEFAULT];
+
+   if ( !memArena )
+   {
+      Platform_Log( "mem arena stats: arena is null" );
+      return;
+   }
+
+   stats = MemArena_GetStats( memArena );
+
+   Platform_Log( "mem arena stats:" );
+
+   snprintf( msg, STRING_SIZE_DEFAULT, "  arena size              : %zu", memArena->size );
+   Platform_Log( msg );
+
+   snprintf( msg, STRING_SIZE_DEFAULT, "  largest available block : %zu", stats.largestAvailableBlock );
+   Platform_Log( msg );
+
+   snprintf( msg, STRING_SIZE_DEFAULT, "  total allocated space   : %zu", stats.totalAllocatedSpace );
+   Platform_Log( msg );
+
+   snprintf( msg, STRING_SIZE_DEFAULT, "  total unallocated space : %zu", stats.totalUnallocatedSpace );
+   Platform_Log( msg );
+
+   snprintf( msg, STRING_SIZE_DEFAULT, "  total fragmented space  : %zu", stats.totalFragmentedSpace );
+   Platform_Log( msg );
+
+   snprintf( msg, STRING_SIZE_DEFAULT, "  total unusable space    : %zu", stats.totalUnusableSpace );
+   Platform_Log( msg );
 }
 
 internal void SetExeDir( void )
@@ -359,6 +394,10 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
                      ChangeGameFps( False );
                      break;
                }
+            }
+            else if ( GetKeyState( 0x4D ) & 0x8000 ) // "M" key: dump memory stats to the log file
+            {
+               MemArena_DumpStats( g_winGlobals.game->memArena );
             }
          }
       }
