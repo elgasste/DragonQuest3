@@ -8,6 +8,7 @@ include_directories(src)
 add_executable(DragonQuest3
    src/clock.c
    src/game.c
+   src/game_load.c
    src/game_render.c
    src/input.c
    src/mem_arena.c
@@ -23,7 +24,7 @@ if(WIN32)
       src/win_platform_ops.c)
    set_target_properties(DragonQuest3 PROPERTIES WIN32_EXECUTABLE TRUE)
    target_compile_options(DragonQuest3 PRIVATE /W4)
-   target_link_libraries(DragonQuest3 PRIVATE winmm msimg32)
+   target_link_libraries(DragonQuest3 PRIVATE winmm msimg32 shlwapi)
 endif()
 
 target_include_directories(DragonQuest3 PRIVATE include)
