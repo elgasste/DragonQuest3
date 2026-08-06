@@ -12,6 +12,11 @@ void Game_LoadFromFile( Game_t* game, const char* filePath )
    u8 *fileContents;
 
    fileContents = PlatformOps_LoadFileToMemory( filePath, game->memArena, &fileSize );
+   if ( !fileContents )
+   {
+      PlatformOps_FatalError( "Failed to load game data file into memory." );
+      return;
+   }
 
    GameData_VerifyHeaderAndVersion( fileContents, fileSize );
 
