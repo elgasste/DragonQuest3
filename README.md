@@ -62,6 +62,10 @@ The next step is creating a `launch.json` file in the `.vscode` directory in the
 
 This is actually really easy, just select "Open a local folder", and everything should be done. Select any target executable at the top, and it should just work.
 
+## Logging
+
+In Windows, any log messages are printed out to a file called `dw3.log`, which should exist in the same directory as the game's executable.
+
 ## Key Mappings
 
 ### Game Keys
