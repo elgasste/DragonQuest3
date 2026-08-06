@@ -78,6 +78,7 @@ In Windows, the following keys are bound to the equivalent of the NES controller
 
 In Windows, these keys are bound to the following operations:
 
+- `ctrl + m`: prints the current memory usage to the log file.
 - `F8`: toggle the diagnostics view.
 - `ctrl + s + up-arrow`: increase the graphics scale in increments of 0.5x, up to 4.0x.
 - `ctrl + s + down-arrow`: decrease the graphics scale in increments of 0.5x, down to 0.5x.
