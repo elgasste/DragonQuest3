@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "mem_arena.h"
 #include "platform_ops.h"
 #include "win_common.h"
 
@@ -42,4 +43,60 @@ void PlatformOps_RenderScreenBuffer( Screen_t* screen )
 void PlatformOps_SleepMs( u32 ms )
 {
    Sleep( (DWORD)ms );
+}
+
+u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* bytesRead )
+{
+   HANDLE hFile;
+   LARGE_INTEGER fileSize;
+   DWORD bytesReadFromFile;
+   u8* buffer;
+   MemArenaResult_t memArenaResult;
+   char msg[STRING_SIZE_DEFAULT];
+
+   hFile = CreateFile( filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+   if ( hFile == INVALID_HANDLE_VALUE )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "Error opening file: %lu\n", GetLastError() );
+      PlatformOps_FatalError( msg );
+      return 0;
+   }
+
+   if ( !GetFileSizeEx( hFile, &fileSize ) )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "Error getting file size: %lu\n", GetLastError() );
+      PlatformOps_FatalError( msg );
+      return 0;
+   }
+
+   memArenaResult = MemArena_Alloc( memArena, (void**)&buffer, (u32)( fileSize.QuadPart ) );
+   if ( memArenaResult != MemArenaResult_Success )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to allocate memory for file buffer: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      PlatformOps_FatalError( msg );
+      return 0;
+   }
+
+   if ( !ReadFile( hFile, buffer, (u32)( fileSize.QuadPart ), &bytesReadFromFile, NULL ) )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "Error reading file: %lu\n", GetLastError() );
+      PlatformOps_FatalError( msg );
+      return 0;
+   }
+
+   CloseHandle( hFile );
+
+   if ( bytesReadFromFile != (u32)( fileSize.QuadPart ) )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "Error reading file: read %lu of %llu bytes\n", bytesReadFromFile, fileSize.QuadPart );
+      PlatformOps_FatalError( msg );
+      return 0;
+   }
+
+   if ( bytesRead )
+   {
+      *bytesRead = bytesReadFromFile;
+   }
+
+   return buffer;
 }
