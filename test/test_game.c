@@ -1,7 +1,7 @@
 #include "clock.h"
 #include "game.h"
 #include "mem_arena.h"
-#include "platform_ops.h"
+#include "platform.h"
 #include "screen.h"
 #include "unity.h"
 
@@ -125,13 +125,13 @@ void Game_Render( Game_t* game )
    g_gameRenderCall.callCount++;
 }
 
-void PlatformOps_FatalError( const char* msg )
+void Platform_FatalError( const char* msg )
 {
    // TODO
    UNUSED_PARAM( msg );
 }
 
-void PlatformOps_HandleMessages( Game_t* game )
+void Platform_HandleMessages( Game_t* game )
 {
    UNUSED_PARAM( game );
 

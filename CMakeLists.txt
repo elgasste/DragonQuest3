@@ -21,7 +21,7 @@ set_property(TARGET DragonQuest3 PROPERTY COMPILE_WARNING_AS_ERROR ON)
 if(WIN32)
    target_sources(DragonQuest3 PRIVATE
       src/win_main.c
-      src/win_platform_ops.c)
+      src/win_platform.c)
    set_target_properties(DragonQuest3 PROPERTIES WIN32_EXECUTABLE TRUE)
    target_compile_options(DragonQuest3 PRIVATE /W4)
    target_link_libraries(DragonQuest3 PRIVATE winmm msimg32 shlwapi)

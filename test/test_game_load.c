@@ -41,7 +41,7 @@ void MemArena_Free( MemArena_t* memArena, void* ptr )
    g_memArenaFreeCallCount++;
 }
 
-u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* bytesRead )
+u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* bytesRead )
 {
    strncpy_s( g_platformLoadFileToMemoryCall.filePath, MAX_PATH, filePath, _TRUNCATE );
    g_platformLoadFileToMemoryCall.memArena = memArena;
@@ -51,7 +51,7 @@ u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u3
    return g_mockFileContents;
 }
 
-void PlatformOps_FatalError( const char* msg )
+void Platform_FatalError( const char* msg )
 {
    UNUSED_PARAM( msg );
    g_fatalErrorCallCount++;
