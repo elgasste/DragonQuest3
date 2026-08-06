@@ -7,11 +7,28 @@
 void PlatformOps_Log( const char* msg )
 {
    HANDLE hFile;
+   SYSTEMTIME now;
    DWORD bytesToWrite;
    BOOL result;
+   char timestamp[32];
+   char timestampedMsg[STRING_SIZE_LARGE];
    char err[STRING_SIZE_DEFAULT];
 
-   bytesToWrite = (DWORD)strlen( msg );
+   GetLocalTime( &now );
+   snprintf(
+      timestamp,
+      sizeof( timestamp ),
+      "[%04u-%02u-%02u %02u:%02u:%02u] ",
+      now.wYear,
+      now.wMonth,
+      now.wDay,
+      now.wHour,
+      now.wMinute,
+      now.wSecond
+   );
+
+   snprintf( timestampedMsg, STRING_SIZE_LARGE, "%s: %s\n", timestamp, msg );
+   bytesToWrite = (DWORD)strlen( timestampedMsg );
 
    hFile = CreateFileA( g_winGlobals.logFilePath, FILE_APPEND_DATA, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
 
@@ -22,7 +39,7 @@ void PlatformOps_Log( const char* msg )
       return;
    }
 
-   result = WriteFile( hFile, msg, bytesToWrite, 0, 0 );
+   result = WriteFile( hFile, timestampedMsg, bytesToWrite, 0, 0 );
 
    if ( !result )
    {

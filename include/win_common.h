@@ -16,7 +16,7 @@
 #define MAX_GAME_FPS             120
 #define GAME_FPS_STEP            15
 
-#define LOG_FILE_NAME            "log.txt"
+#define LOG_FILENAME             "dw3.log"
 #define GAME_DATA_FILENAME       "data.dw3d"
 
 typedef struct Game_t Game_t;

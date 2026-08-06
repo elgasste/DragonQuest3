@@ -38,7 +38,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    UNUSED_PARAM( nCmdShow );
 
    SetExeDir();
-   snprintf( g_winGlobals.logFilePath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, LOG_FILE_NAME );
+   snprintf( g_winGlobals.logFilePath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, LOG_FILENAME );
    snprintf( gameDataPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, GAME_DATA_FILENAME );
 
    memArena = CreateMemArena();

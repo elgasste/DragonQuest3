@@ -14,6 +14,7 @@
 #define UNUSED_PARAM( x )              (void)x
 
 #define STRING_SIZE_DEFAULT            512
+#define STRING_SIZE_LARGE              1024
 
 typedef int32_t b32;
 typedef uint8_t u8;
