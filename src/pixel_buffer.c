@@ -2,7 +2,7 @@
 
 #include "mem_arena.h"
 #include "pixel_buffer.h"
-#include "platform_ops.h"
+#include "platform.h"
 
 void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u32 h )
 {
@@ -13,7 +13,7 @@ void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u
    if ( memArenaResult != MemArenaResult_Success )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for pixel buffer: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
       return;
    };
    

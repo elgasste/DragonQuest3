@@ -3,7 +3,7 @@
 
 #include "mem_arena.h"
 #include "pixel_buffer.h"
-#include "platform_ops.h"
+#include "platform.h"
 #include "unity.h"
 
 local_persist int g_fatalErrorCallCount = 0;
@@ -74,7 +74,7 @@ internal void test_PixelBuffer_ClearColor_ClearsColor( void )
    MemArena_Destroy( &arena );
 }
 
-void PlatformOps_FatalError( const char* message )
+void Platform_FatalError( const char* message )
 {
    g_fatalErrorCallCount++;
 

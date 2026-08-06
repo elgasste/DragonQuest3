@@ -1,10 +1,10 @@
 #include <stdio.h>
 
 #include "mem_arena.h"
-#include "platform_ops.h"
+#include "platform.h"
 #include "win_common.h"
 
-void PlatformOps_Log( const char* msg )
+void Platform_Log( const char* msg )
 {
    HANDLE hFile;
    SYSTEMTIME now;
@@ -50,16 +50,16 @@ void PlatformOps_Log( const char* msg )
    CloseHandle( hFile );
 }
 
-void PlatformOps_FatalError( const char* msg )
+void Platform_FatalError( const char* msg )
 {
    char err[STRING_SIZE_DEFAULT];
    snprintf( err, STRING_SIZE_DEFAULT, "Fatal error: %s", msg );
-   PlatformOps_Log( err );
+   Platform_Log( err );
    MessageBoxA( 0, err, "Error", MB_OK | MB_ICONERROR );
    exit( 1 );
 }
 
-u64 PlatformOps_GetMicros( void )
+u64 Platform_GetMicros( void )
 {
    LARGE_INTEGER ticks;
 
@@ -67,7 +67,7 @@ u64 PlatformOps_GetMicros( void )
    return (u64)( ( (r64)( ticks.QuadPart ) / (r64)( g_winGlobals.performanceFrequency.QuadPart ) ) * (u64)1000000 );
 }
 
-void PlatformOps_HandleMessages( Game_t* game )
+void Platform_HandleMessages( Game_t* game )
 {
    MSG msg;
 
@@ -80,19 +80,19 @@ void PlatformOps_HandleMessages( Game_t* game )
    }
 }
 
-void PlatformOps_RenderScreenBuffer( Screen_t* screen )
+void Platform_RenderScreenBuffer( Screen_t* screen )
 {
    UNUSED_PARAM( screen );
    
    InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
 }
 
-void PlatformOps_SleepMs( u32 ms )
+void Platform_SleepMs( u32 ms )
 {
    Sleep( (DWORD)ms );
 }
 
-u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* bytesRead )
+u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* bytesRead )
 {
    HANDLE hFile;
    LARGE_INTEGER fileSize;
@@ -105,14 +105,14 @@ u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u3
    if ( hFile == INVALID_HANDLE_VALUE )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "could not open file: %lu\n", GetLastError() );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
       return 0;
    }
 
    if ( !GetFileSizeEx( hFile, &fileSize ) )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "could not get file size: %lu\n", GetLastError() );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
       return 0;
    }
 
@@ -120,14 +120,14 @@ u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u3
    if ( memArenaResult != MemArenaResult_Success )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "could not allocate memory for file buffer: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
       return 0;
    }
 
    if ( !ReadFile( hFile, buffer, (u32)( fileSize.QuadPart ), &bytesReadFromFile, NULL ) )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "could not read file: %lu\n", GetLastError() );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
       return 0;
    }
 
@@ -136,7 +136,7 @@ u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u3
    if ( bytesReadFromFile != (u32)( fileSize.QuadPart ) )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "could not read file: read %lu of %llu bytes\n", bytesReadFromFile, fileSize.QuadPart );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
       return 0;
    }
 

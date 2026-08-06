@@ -32,7 +32,7 @@ void setUp( void )
 
 void tearDown( void ) {}
 
-void PlatformOps_RenderScreenBuffer( Screen_t* screen )
+void Platform_RenderScreenBuffer( Screen_t* screen )
 {
    g_platformRenderScreenBufferCall.screen = screen;
    g_platformRenderScreenBufferCall.callCount++;

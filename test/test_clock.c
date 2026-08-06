@@ -1,5 +1,5 @@
 #include "clock.h"
-#include "platform_ops.h"
+#include "platform.h"
 #include "unity.h"
 
 typedef struct PlatformOpsGetMicrosCall_t
@@ -30,13 +30,13 @@ void setUp( void )
 
 void tearDown( void ) {}
 
-u64 PlatformOps_GetMicros( void )
+u64 Platform_GetMicros( void )
 {
    g_platformOpsGetMicrosCall.callCount++;
    return g_platformOpsGetMicrosCall.returnValue;
 }
 
-void PlatformOps_SleepMs( u32 ms )
+void Platform_SleepMs( u32 ms )
 {
    g_platformOpsSleepMsCall.ms = ms;
    g_platformOpsSleepMsCall.callCount++;

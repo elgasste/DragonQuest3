@@ -6,7 +6,7 @@
 #include "input.h"
 #include "mem_arena.h"
 #include "pixel_buffer.h"
-#include "platform_ops.h"
+#include "platform.h"
 #include "screen.h"
 #include "win_common.h"
 
@@ -47,26 +47,26 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    memArenaResult = MemArena_Alloc( memArena, (void**)&( g_winGlobals.game ), sizeof( Game_t ) );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      PlatformOps_FatalError( "failed to allocate memory for game object." );
+      Platform_FatalError( "failed to allocate memory for game object." );
       return 1;
    }
 
    memArenaResult = MemArena_Alloc( memArena, (void**)&( g_winGlobals.buttonMap ), sizeof( u32 ) * InputButton_Count );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      PlatformOps_FatalError( "failed to allocate memory for button map." );
+      Platform_FatalError( "failed to allocate memory for button map." );
       return 1;
    }
 
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
-      PlatformOps_FatalError( "failed to query performance frequency." );
+      Platform_FatalError( "failed to query performance frequency." );
       return 1;
    }
 
    if ( timeGetDevCaps( &timeCaps, sizeof( TIMECAPS ) ) != TIMERR_NOERROR )
    {
-      PlatformOps_FatalError( "failed to set timer resolution." );
+      Platform_FatalError( "failed to set timer resolution." );
       return 1;
    }
 
@@ -94,7 +94,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    if ( !RegisterClassA( &mainWindowClass ) )
    {
-      PlatformOps_FatalError( "failed to register window class." );
+      Platform_FatalError( "failed to register window class." );
       return 1;
    }
 
@@ -106,7 +106,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    windowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE;
    if ( !AdjustWindowRect( &expectedWindowRect, windowStyle, 0 ) )
    {
-      PlatformOps_FatalError( "failed to adjust window rect." );
+      Platform_FatalError( "failed to adjust window rect." );
       return 1;
    }
 
@@ -132,7 +132,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    if ( !g_winGlobals.hWndMain )
    {
-      PlatformOps_FatalError( "failed to create main window." );
+      Platform_FatalError( "failed to create main window." );
       return 1;
    }
 
@@ -168,7 +168,7 @@ internal MemArena_t* CreateMemArena( void )
    if ( result != MemArenaResult_Success )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for game object: %s", MemArena_GetErrorMessage( result ) );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
    }
 
    return memArena;
@@ -210,7 +210,7 @@ internal void WriteTestGameDataFile( const char* filePath )
    if ( hFile == INVALID_HANDLE_VALUE )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file: %lu", GetLastError() );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
    }
 
    for ( i = 0; i < 4; i++ )
@@ -227,12 +227,12 @@ internal void WriteTestGameDataFile( const char* filePath )
    if ( !result )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file: %lu", GetLastError() );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
    }
    else if ( bytesWritten != sizeof( GameDataHeader_t ) )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file: wrote %lu of %lu bytes", bytesWritten, sizeof( GameDataHeader_t ) );
-      PlatformOps_FatalError( msg );
+      Platform_FatalError( msg );
    }
 
    CloseHandle( hFile );

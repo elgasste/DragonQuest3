@@ -1,5 +1,5 @@
 #include "clock.h"
-#include "platform_ops.h"
+#include "platform.h"
 
 void Clock_Init( Clock_t* clock, u32 fps )
 {
@@ -25,7 +25,7 @@ void Clock_SetFps( Clock_t* clock, u32 fps )
 
 void Clock_StartFrame( Clock_t* clock )
 {
-   clock->frameStartMicro = PlatformOps_GetMicros();
+   clock->frameStartMicro = Platform_GetMicros();
 
    if ( !clock->hasStarted )
    {
@@ -39,7 +39,7 @@ void Clock_EndFrame( Clock_t* clock )
 {
    u64 frameEndMicro, elapsedMicro;
 
-   frameEndMicro = PlatformOps_GetMicros();
+   frameEndMicro = Platform_GetMicros();
    clock->frameCount++;
    clock->absoluteEndMicro = frameEndMicro;
    elapsedMicro = frameEndMicro - clock->frameStartMicro;
@@ -47,7 +47,7 @@ void Clock_EndFrame( Clock_t* clock )
 
    if ( elapsedMicro <= clock->frameMicroSec )
    {
-      PlatformOps_SleepMs( (u32)( ( clock->frameMicroSec - elapsedMicro ) / 1000 ) );
+      Platform_SleepMs( (u32)( ( clock->frameMicroSec - elapsedMicro ) / 1000 ) );
    }
    else
    {
