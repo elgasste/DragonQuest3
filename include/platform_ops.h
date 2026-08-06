@@ -7,6 +7,7 @@ typedef struct Game_t Game_t;
 typedef struct MemArena_t MemArena_t;
 typedef struct Screen_t Screen_t;
 
+void PlatformOps_Log( const char* msg );
 void PlatformOps_FatalError( const char* msg );
 u64 PlatformOps_GetMicros( void );
 void PlatformOps_HandleMessages( Game_t* game );

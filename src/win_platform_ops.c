@@ -4,11 +4,41 @@
 #include "platform_ops.h"
 #include "win_common.h"
 
+void PlatformOps_Log( const char* msg )
+{
+   HANDLE hFile;
+   DWORD bytesToWrite;
+   BOOL result;
+   char err[STRING_SIZE_DEFAULT];
+
+   bytesToWrite = (DWORD)strlen( msg );
+
+   hFile = CreateFileA( g_winGlobals.logFilePath, FILE_APPEND_DATA, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
+
+   if ( hFile == INVALID_HANDLE_VALUE )
+   {
+      snprintf( err, STRING_SIZE_DEFAULT, "Error opening log file: %lu", GetLastError() );
+      MessageBoxA( 0, err, "Error", MB_OK | MB_ICONERROR );
+      return;
+   }
+
+   result = WriteFile( hFile, msg, bytesToWrite, 0, 0 );
+
+   if ( !result )
+   {
+      snprintf( err, STRING_SIZE_DEFAULT, "Error writing to log file: %lu", GetLastError() );
+      MessageBoxA( 0, err, "Error", MB_OK | MB_ICONERROR );
+   }
+
+   CloseHandle( hFile );
+}
+
 void PlatformOps_FatalError( const char* msg )
 {
-   char errorMsg[STRING_SIZE_DEFAULT];
-   snprintf( errorMsg, STRING_SIZE_DEFAULT, "Fatal error: %s", msg );
-   MessageBoxA( 0, msg, "Error", MB_OK | MB_ICONERROR );
+   char err[STRING_SIZE_DEFAULT];
+   snprintf( err, STRING_SIZE_DEFAULT, "Fatal error: %s", msg );
+   PlatformOps_Log( err );
+   MessageBoxA( 0, err, "Error", MB_OK | MB_ICONERROR );
    exit( 1 );
 }
 
@@ -57,14 +87,14 @@ u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u3
    hFile = CreateFile( filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
    if ( hFile == INVALID_HANDLE_VALUE )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Error opening file: %lu\n", GetLastError() );
+      snprintf( msg, STRING_SIZE_DEFAULT, "could not open file: %lu\n", GetLastError() );
       PlatformOps_FatalError( msg );
       return 0;
    }
 
    if ( !GetFileSizeEx( hFile, &fileSize ) )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Error getting file size: %lu\n", GetLastError() );
+      snprintf( msg, STRING_SIZE_DEFAULT, "could not get file size: %lu\n", GetLastError() );
       PlatformOps_FatalError( msg );
       return 0;
    }
@@ -72,14 +102,14 @@ u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u3
    memArenaResult = MemArena_Alloc( memArena, (void**)&buffer, (u32)( fileSize.QuadPart ) );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to allocate memory for file buffer: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "could not allocate memory for file buffer: %s", MemArena_GetErrorMessage( memArenaResult ) );
       PlatformOps_FatalError( msg );
       return 0;
    }
 
    if ( !ReadFile( hFile, buffer, (u32)( fileSize.QuadPart ), &bytesReadFromFile, NULL ) )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Error reading file: %lu\n", GetLastError() );
+      snprintf( msg, STRING_SIZE_DEFAULT, "could not read file: %lu\n", GetLastError() );
       PlatformOps_FatalError( msg );
       return 0;
    }
@@ -88,7 +118,7 @@ u8* PlatformOps_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u3
 
    if ( bytesReadFromFile != (u32)( fileSize.QuadPart ) )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Error reading file: read %lu of %llu bytes\n", bytesReadFromFile, fileSize.QuadPart );
+      snprintf( msg, STRING_SIZE_DEFAULT, "could not read file: read %lu of %llu bytes\n", bytesReadFromFile, fileSize.QuadPart );
       PlatformOps_FatalError( msg );
       return 0;
    }

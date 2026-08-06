@@ -56,7 +56,7 @@ internal b32 Game_AllocObjects( Game_t* game )
    memArenaResult = MemArena_Alloc( game->memArena, &game->clock, sizeof( Clock_t ) );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for clock: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for clock: %s", MemArena_GetErrorMessage( memArenaResult ) );
       PlatformOps_FatalError( msg );
       return False;
    }
@@ -64,7 +64,7 @@ internal b32 Game_AllocObjects( Game_t* game )
    memArenaResult = MemArena_Alloc( game->memArena, &game->input, sizeof( Input_t ) );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for input: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for input: %s", MemArena_GetErrorMessage( memArenaResult ) );
       PlatformOps_FatalError( msg );
       return False;
    }
@@ -72,7 +72,7 @@ internal b32 Game_AllocObjects( Game_t* game )
    memArenaResult = MemArena_Alloc( game->memArena, &game->screen, sizeof( Screen_t ) );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "Failed to create memory arena for screen: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for screen: %s", MemArena_GetErrorMessage( memArenaResult ) );
       PlatformOps_FatalError( msg );
       return False;
    }
