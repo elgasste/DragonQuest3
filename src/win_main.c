@@ -22,6 +22,8 @@ internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COL
 internal void ResizeScreen( b32 increase );
 internal void ChangeGameFps( b32 increase );
 
+WinGlobalObjects_t g_winGlobals;
+
 int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
 {
    TIMECAPS timeCaps;

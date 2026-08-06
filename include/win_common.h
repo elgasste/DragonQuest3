@@ -39,6 +39,6 @@ typedef struct WinGlobalObjects_t
 }
 WinGlobalObjects_t;
 
-WinGlobalObjects_t g_winGlobals;
+extern WinGlobalObjects_t g_winGlobals;
 
 #endif // !defined( WIN_COMMON_H )
