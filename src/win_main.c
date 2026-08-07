@@ -19,9 +19,13 @@ internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 internal void DrawDiagnostics( HDC* dcMem );
+internal void DrawMemArenaDumpIndicator( HDC* dcMem, int winWidth, int winHeight );
 internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha );
 internal void ResizeScreen( b32 increase );
 internal void ChangeGameFps( b32 increase );
+
+// TODO: We can turn this into a persistent thing that shows temporary messages
+local_persist u64 g_memArenaDumpIndicatorUntilMs = 0;
 
 WinGlobalObjects_t g_winGlobals;
 
@@ -332,6 +336,8 @@ internal void RenderScreen( void )
       DrawDiagnostics( &dcMem );
    }
 
+   DrawMemArenaDumpIndicator( &dcMem, winWidth, winHeight );
+
    // transfer the off-screen DC to the screen
    BitBlt( dc, 0, 0, winWidth, winHeight, dcMem, 0, 0, SRCCOPY );
 
@@ -398,6 +404,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             else if ( GetKeyState( 0x4D ) & 0x8000 ) // "M" key: dump memory stats to the log file
             {
                MemArena_DumpStats( g_winGlobals.game->memArena );
+               g_memArenaDumpIndicatorUntilMs = GetTickCount64() + 2000;
             }
          }
       }
@@ -531,6 +538,36 @@ internal void DrawDiagnostics( HDC* dcMem )
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
+   SelectObject( *dcMem, oldFont );
+}
+
+internal void DrawMemArenaDumpIndicator( HDC* dcMem, int winWidth, int winHeight )
+{
+   RECT r;
+   HFONT oldFont;
+   int boxWidth, boxHeight, boxX, boxY;
+
+   if ( GetTickCount64() > g_memArenaDumpIndicatorUntilMs )
+   {
+      return;
+   }
+
+   boxWidth = 340;
+   boxHeight = 28;
+   boxX = winWidth - boxWidth - 12;
+   boxY = winHeight - boxHeight - 12;
+
+   DrawTranslucentRectangle( *dcMem, boxX, boxY, boxWidth, boxHeight, RGB( 0, 128, 0 ), 210 );
+
+   r.left = boxX + 10;
+   r.top = boxY + 6;
+   r.right = boxX + boxWidth;
+   r.bottom = boxY + boxHeight;
+
+   oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
+   SetTextColor( *dcMem, 0x00FFFFFF );
+   SetBkMode( *dcMem, TRANSPARENT );
+   DrawTextA( *dcMem, "Memory stats dumped to log", -1, &r, DT_SINGLELINE | DT_NOCLIP );
    SelectObject( *dcMem, oldFont );
 }
 
