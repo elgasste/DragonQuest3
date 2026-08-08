@@ -77,7 +77,7 @@ void test_Game_LoadFromFile_CallsPlatformLoadFileToMemory( void )
    g_mockFileContents = (u8*)&( GameDataHeader_t ){
       .magic = { 'D', 'W', '3', 'D' },
       .version = { GAME_VERSION_MAJOR, GAME_VERSION_MINOR, GAME_VERSION_MAINT },
-      .tileTexturesOffset = 0
+      .tileTexturesHeaderOffset = 0
    };
 
    Game_LoadFromFile( &game, testFilePath );
@@ -178,7 +178,7 @@ void test_Game_LoadFromFile_ValidHeaderAndVersionDoesNotResultInFatalError( void
    validHeader.version.major = GAME_VERSION_MAJOR;
    validHeader.version.minor = GAME_VERSION_MINOR;
    validHeader.version.maint = GAME_VERSION_MAINT;
-   validHeader.tileTexturesOffset = sizeof( GameDataHeader_t );
+   validHeader.tileTexturesHeaderOffset = sizeof( GameDataHeader_t );
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&validHeader;
@@ -203,7 +203,7 @@ void test_Game_LoadFromFile_InvalidTileTexturesOffsetResultsInFatalError( void )
    invalidHeader.version.major = GAME_VERSION_MAJOR;
    invalidHeader.version.minor = GAME_VERSION_MINOR;
    invalidHeader.version.maint = GAME_VERSION_MAINT;
-   invalidHeader.tileTexturesOffset = sizeof( GameDataHeader_t );
+   invalidHeader.tileTexturesHeaderOffset = sizeof( GameDataHeader_t );
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&invalidHeader;
@@ -228,7 +228,7 @@ void test_Game_LoadFromFile_LoadedSuccessfullyFreesFileBuffer( void )
    validHeader.version.major = GAME_VERSION_MAJOR;
    validHeader.version.minor = GAME_VERSION_MINOR;
    validHeader.version.maint = GAME_VERSION_MAINT;
-   validHeader.tileTexturesOffset = sizeof( GameDataHeader_t );
+   validHeader.tileTexturesHeaderOffset = sizeof( GameDataHeader_t );
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&validHeader;

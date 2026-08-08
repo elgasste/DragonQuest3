@@ -3,19 +3,16 @@
 
 #include "clock.h"
 #include "game.h"
-#include "game_data.h"
 #include "input.h"
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "platform.h"
 #include "screen.h"
-#include "version.h"
 #include "win_common.h"
 
 internal MemArena_t* CreateMemArena( void );
 internal void MemArena_DumpStats( MemArena_t* memArena );
 internal void SetExeDir( void );
-internal void WriteTestGameDataFile( const char* filePath );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void RenderScreen( void );
 internal void InitButtonMap( void );
@@ -239,49 +236,6 @@ internal void SetExeDir( void )
    }
 
    strcpy_s( g_winGlobals.exeDir, MAX_PATH, exePath );
-}
-
-// TODO: we can get rid of this once we have a proper game editor
-internal void WriteTestGameDataFile( const char* filePath )
-{
-   HANDLE hFile;
-   DWORD bytesWritten;
-   BOOL result;
-   GameDataHeader_t header;
-   u32 i;
-   char msg[STRING_SIZE_DEFAULT];
-
-   hFile = CreateFileA( filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
-
-   if ( hFile == INVALID_HANDLE_VALUE )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file: %lu", GetLastError() );
-      Platform_FatalError( msg );
-   }
-
-   for ( i = 0; i < 4; i++ )
-   {
-      header.magic[i] = GAME_DATA_MAGIC[i];
-   }
-   header.version.major = GAME_VERSION_MAJOR;
-   header.version.minor = GAME_VERSION_MINOR;
-   header.version.maint = GAME_VERSION_MAINT;;
-
-   bytesWritten = 0;
-   result = WriteFile( hFile, &header, sizeof( GameDataHeader_t ), &bytesWritten, NULL );
-
-   if ( !result )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file: %lu", GetLastError() );
-      Platform_FatalError( msg );
-   }
-   else if ( bytesWritten != sizeof( GameDataHeader_t ) )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file: wrote %lu of %lu bytes", bytesWritten, sizeof( GameDataHeader_t ) );
-      Platform_FatalError( msg );
-   }
-
-   CloseHandle( hFile );
 }
 
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )

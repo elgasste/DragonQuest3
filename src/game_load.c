@@ -50,7 +50,7 @@ internal void GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
       return;
    }
 
-   if ( header->tileTexturesOffset >= fileSize )
+   if ( header->tileTexturesHeaderOffset >= fileSize )
    {
       Platform_FatalError( "game data file has an invalid tile textures offset." );
       return;
