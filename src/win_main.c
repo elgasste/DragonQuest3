@@ -11,14 +11,6 @@
 #include "version.h"
 #include "win_common.h"
 
-typedef struct Popup_t
-{
-   b32 show;
-   char msg[STRING_SIZE_DEFAULT];
-   u64 untilMs;
-}
-Popup_t;
-
 internal MemArena_t* CreateMemArena( void );
 internal void MemArena_DumpStats( MemArena_t* memArena );
 internal void SetExeDir( void );
@@ -28,15 +20,14 @@ internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 internal void DrawDiagnostics( HDC* dcMem );
-internal void ShowPopup( const char* msg );
-internal void DrawPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight );
+internal void StartCornerPopup( const char* msg );
+internal void DrawCornerPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight );
 internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha );
 internal void ResizeScreen( b32 increase );
 internal void ChangeGameFps( b32 increase );
 
-local_persist Popup_t g_popup;
-
 WinGlobalObjects_t g_winGlobals;
+WinCornerPopup_t g_winCornerPopup;
 
 int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
 {
@@ -345,9 +336,9 @@ internal void RenderScreen( void )
       DrawDiagnostics( &dcMem );
    }
 
-   if ( g_popup.show )
+   if ( g_winCornerPopup.show )
    {
-      DrawPopup( g_popup.msg, &dcMem, winWidth, winHeight );
+      DrawCornerPopup( g_winCornerPopup.msg, &dcMem, winWidth, winHeight );
    }
 
    // transfer the off-screen DC to the screen
@@ -416,7 +407,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             else if ( GetKeyState( 0x4D ) & 0x8000 ) // "M" key: dump memory stats to the log file
             {
                MemArena_DumpStats( g_winGlobals.game->memArena );
-               ShowPopup( "Memory stats dumped to log" );
+               StartCornerPopup( "Memory stats dumped to log" );
             }
          }
       }
@@ -553,23 +544,23 @@ internal void DrawDiagnostics( HDC* dcMem )
    SelectObject( *dcMem, oldFont );
 }
 
-internal void ShowPopup( const char* msg )
+internal void StartCornerPopup( const char* msg )
 {
-   g_popup.show = True;
-   strncpy_s( g_popup.msg, STRING_SIZE_DEFAULT, msg, STRING_SIZE_DEFAULT - 1 );
-   g_popup.untilMs = GetTickCount64() + 3000;
+   g_winCornerPopup.show = True;
+   strncpy_s( g_winCornerPopup.msg, STRING_SIZE_DEFAULT, msg, STRING_SIZE_DEFAULT - 1 );
+   g_winCornerPopup.untilMs = GetTickCount64() + 3000;
 }
 
-internal void DrawPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight )
+internal void DrawCornerPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight )
 {
    RECT r;
    SIZE textSize;
    HFONT oldFont;
    int boxWidth, boxHeight, boxX, boxY;
 
-   if ( GetTickCount64() > g_popup.untilMs )
+   if ( GetTickCount64() > g_winCornerPopup.untilMs )
    {
-      g_popup.show = False;
+      g_winCornerPopup.show = False;
       return;
    }
 
