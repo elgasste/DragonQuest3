@@ -74,6 +74,7 @@ internal b32 GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
 
 internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, u32 tileTexturesHeaderOffset )
 {
+   u32 expectedTexturesSize;
    GameDataTileTexturesHeader_t* tileTexturesHeader;
 
    if ( ( tileTexturesHeaderOffset + sizeof( GameDataTileTexturesHeader_t ) ) > fileSize )
@@ -88,6 +89,16 @@ internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, 
    {
       Platform_FatalError( "game data file has an invalid textures offset." );
       return False;
+   }
+
+   if ( tileTexturesHeader->count > 0 )
+   {
+      expectedTexturesSize = tileTexturesHeader->count * tileTexturesHeader->tileSize * tileTexturesHeader->tileSize * sizeof( u32 );
+      if ( ( tileTexturesHeader->texturesOffset + expectedTexturesSize ) > fileSize )
+      {
+         Platform_FatalError( "game data file is too small to contain all tile textures." );
+         return False;
+      }
    }
 
    return True;

@@ -8,6 +8,9 @@
 #include "version.h"
 
 #define MAX_PATH 260
+#define MOCK_TILE_TEXTURE_COUNT 1
+#define MOCK_TILE_TEXTURE_SIZE 8
+#define MOCK_TILE_TEXTURE_BYTES ( MOCK_TILE_TEXTURE_COUNT * MOCK_TILE_TEXTURE_SIZE * MOCK_TILE_TEXTURE_SIZE * sizeof( u32 ) )
 
 typedef struct PlatformLoadFileToMemoryCall_t
 {
@@ -22,6 +25,7 @@ typedef struct MockGameDataFile_t
 {
    GameDataHeader_t header;
    GameDataTileTexturesHeader_t tileTexturesHeader;
+   u8 textureData[MOCK_TILE_TEXTURE_BYTES];
 }
 MockGameDataFile_t;
 
@@ -76,6 +80,8 @@ void Platform_FatalError( const char* msg )
 
 internal void SetupValidMockGameDataFile( void )
 {
+   u32 i;
+
    g_mockGameDataFile.header.magic[0] = 'D';
    g_mockGameDataFile.header.magic[1] = 'W';
    g_mockGameDataFile.header.magic[2] = '3';
@@ -85,9 +91,14 @@ internal void SetupValidMockGameDataFile( void )
    g_mockGameDataFile.header.version.maint = GAME_VERSION_MAINT;
    g_mockGameDataFile.header.tileTexturesHeaderOffset = sizeof( GameDataHeader_t );
 
-   g_mockGameDataFile.tileTexturesHeader.count = 1;
-   g_mockGameDataFile.tileTexturesHeader.tileSize = 8;
-   g_mockGameDataFile.tileTexturesHeader.texturesOffset = 0;
+   g_mockGameDataFile.tileTexturesHeader.count = MOCK_TILE_TEXTURE_COUNT;
+   g_mockGameDataFile.tileTexturesHeader.tileSize = MOCK_TILE_TEXTURE_SIZE;
+   g_mockGameDataFile.tileTexturesHeader.texturesOffset = sizeof( GameDataHeader_t ) + sizeof( GameDataTileTexturesHeader_t );
+
+   for ( i = 0; i < MOCK_TILE_TEXTURE_BYTES; i++ )
+   {
+      g_mockGameDataFile.textureData[i] = (u8)i;
+   }
 
    g_mockFileContents = (u8*)&g_mockGameDataFile;
    g_mockFileSize = sizeof( g_mockGameDataFile );
@@ -286,6 +297,45 @@ void test_Game_LoadFromFile_InvalidTileTexturesDataOffsetResultsInFatalError( vo
    TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
 }
 
+void test_Game_LoadFromFile_TileTexturesPayloadTooSmallResultsInFatalError( void )
+{
+   Game_t game;
+   MemArena_t memArena;
+   u32 expectedTexturesSize;
+   const char* testFilePath = "mock.dw3d";
+
+   SetupValidMockGameDataFile();
+   expectedTexturesSize = g_mockGameDataFile.tileTexturesHeader.count *
+                          g_mockGameDataFile.tileTexturesHeader.tileSize *
+                          g_mockGameDataFile.tileTexturesHeader.tileSize *
+                          sizeof( u32 );
+   g_mockFileSize = g_mockGameDataFile.tileTexturesHeader.texturesOffset + expectedTexturesSize - 1;
+
+   game.memArena = &memArena;
+
+   Game_LoadFromFile( &game, testFilePath );
+   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
+   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
+}
+
+void test_Game_LoadFromFile_ZeroTileTextureCountDoesNotRequireTexturePayload( void )
+{
+   Game_t game;
+   MemArena_t memArena;
+   const char* testFilePath = "mock.dw3d";
+
+   SetupValidMockGameDataFile();
+   g_mockGameDataFile.tileTexturesHeader.count = 0;
+   g_mockGameDataFile.tileTexturesHeader.texturesOffset = 0;
+   g_mockFileSize = sizeof( GameDataHeader_t ) + sizeof( GameDataTileTexturesHeader_t );
+
+   game.memArena = &memArena;
+
+   Game_LoadFromFile( &game, testFilePath );
+   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
+   TEST_ASSERT_EQUAL_INT( 0, g_fatalErrorCallCount );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -300,6 +350,8 @@ int main( void )
    RUN_TEST( test_Game_LoadFromFile_LoadedSuccessfullyFreesFileBuffer );
    RUN_TEST( test_Game_LoadFromFile_TileTexturesHeaderTooSmallResultsInFatalError );
    RUN_TEST( test_Game_LoadFromFile_InvalidTileTexturesDataOffsetResultsInFatalError );
+   RUN_TEST( test_Game_LoadFromFile_TileTexturesPayloadTooSmallResultsInFatalError );
+   RUN_TEST( test_Game_LoadFromFile_ZeroTileTextureCountDoesNotRequireTexturePayload );
 
    return UNITY_END();
 }
