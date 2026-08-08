@@ -10,6 +10,14 @@
 #include "screen.h"
 #include "win_common.h"
 
+typedef struct Popup_t
+{
+   b32 show;
+   char msg[STRING_SIZE_DEFAULT];
+   u64 untilMs;
+}
+Popup_t;
+
 internal MemArena_t* CreateMemArena( void );
 internal void MemArena_DumpStats( MemArena_t* memArena );
 internal void SetExeDir( void );
@@ -19,13 +27,13 @@ internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 internal void DrawDiagnostics( HDC* dcMem );
-internal void DrawMemArenaDumpIndicator( HDC* dcMem, int winWidth, int winHeight );
+internal void ShowPopup( const char* msg );
+internal void DrawPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight );
 internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha );
 internal void ResizeScreen( b32 increase );
 internal void ChangeGameFps( b32 increase );
 
-// TODO: We can turn this into a persistent thing that shows temporary messages
-local_persist u64 g_memArenaDumpIndicatorUntilMs = 0;
+local_persist Popup_t g_popup;
 
 WinGlobalObjects_t g_winGlobals;
 
@@ -336,7 +344,10 @@ internal void RenderScreen( void )
       DrawDiagnostics( &dcMem );
    }
 
-   DrawMemArenaDumpIndicator( &dcMem, winWidth, winHeight );
+   if ( g_popup.show )
+   {
+      DrawPopup( g_popup.msg, &dcMem, winWidth, winHeight );
+   }
 
    // transfer the off-screen DC to the screen
    BitBlt( dc, 0, 0, winWidth, winHeight, dcMem, 0, 0, SRCCOPY );
@@ -404,7 +415,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             else if ( GetKeyState( 0x4D ) & 0x8000 ) // "M" key: dump memory stats to the log file
             {
                MemArena_DumpStats( g_winGlobals.game->memArena );
-               g_memArenaDumpIndicatorUntilMs = GetTickCount64() + 2000;
+               ShowPopup( "Memory stats dumped to log" );
             }
          }
       }
@@ -541,17 +552,26 @@ internal void DrawDiagnostics( HDC* dcMem )
    SelectObject( *dcMem, oldFont );
 }
 
-internal void DrawMemArenaDumpIndicator( HDC* dcMem, int winWidth, int winHeight )
+internal void ShowPopup( const char* msg )
+{
+   g_popup.show = True;
+   strncpy_s( g_popup.msg, STRING_SIZE_DEFAULT, msg, STRING_SIZE_DEFAULT - 1 );
+   g_popup.untilMs = GetTickCount64() + 3000;
+}
+
+internal void DrawPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight )
 {
    RECT r;
    HFONT oldFont;
    int boxWidth, boxHeight, boxX, boxY;
 
-   if ( GetTickCount64() > g_memArenaDumpIndicatorUntilMs )
+   if ( GetTickCount64() > g_popup.untilMs )
    {
+      g_popup.show = False;
       return;
    }
 
+   // TODO: set the box width and height based on the message length and font size
    boxWidth = 340;
    boxHeight = 28;
    boxX = winWidth - boxWidth - 12;
@@ -567,7 +587,7 @@ internal void DrawMemArenaDumpIndicator( HDC* dcMem, int winWidth, int winHeight
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
    SetTextColor( *dcMem, 0x00FFFFFF );
    SetBkMode( *dcMem, TRANSPARENT );
-   DrawTextA( *dcMem, "Memory stats dumped to log", -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   DrawTextA( *dcMem, msg, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    SelectObject( *dcMem, oldFont );
 }
 
