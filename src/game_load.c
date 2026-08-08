@@ -6,12 +6,14 @@
 #include "platform.h"
 #include "version.h"
 
-internal void GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize );
+internal b32 GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize );
+internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, u32 tileTexturesHeaderOffset );
 
 void Game_LoadFromFile( Game_t* game, const char* filePath )
 {
    u32 fileSize;
    u8 *fileContents;
+   GameDataHeader_t* header;
 
    fileContents = Platform_LoadFileToMemory( filePath, game->memArena, &fileSize );
    if ( !fileContents )
@@ -20,19 +22,30 @@ void Game_LoadFromFile( Game_t* game, const char* filePath )
       return;
    }
 
-   GameData_VerifyHeaderAndVersion( fileContents, fileSize );
+   if ( !GameData_VerifyHeaderAndVersion( fileContents, fileSize ) )
+   {
+      MemArena_Free( game->memArena, fileContents );
+      return;
+   }
+
+   header = (GameDataHeader_t*)fileContents;
+   if ( !GameData_VerifyTileTexturesHeader( fileContents, fileSize, header->tileTexturesHeaderOffset ) )
+   {
+      MemArena_Free( game->memArena, fileContents );
+      return;
+   }
 
    MemArena_Free( game->memArena, fileContents );
 }
 
-internal void GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
+internal b32 GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
 {
    GameDataHeader_t* header;
 
    if ( fileSize < sizeof( GameDataHeader_t ) )
    {
       Platform_FatalError( "game data file is too small to contain a valid header." );
-      return;
+      return False;
    }
 
    header = (GameDataHeader_t*)fileContents;
@@ -40,19 +53,42 @@ internal void GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
    if ( strncmp( header->magic, GAME_DATA_MAGIC, 4 ) != 0 )
    {
       Platform_FatalError( "game data file has an invalid magic number." );
-      return;
+      return False;
    }
    else if ( header->version.major != GAME_VERSION_MAJOR ||
              header->version.minor != GAME_VERSION_MINOR ||
              header->version.maint != GAME_VERSION_MAINT )
    {
       Platform_FatalError( "game data file has an incompatible version." );
-      return;
+      return False;
    }
 
    if ( header->tileTexturesHeaderOffset >= fileSize )
    {
       Platform_FatalError( "game data file has an invalid tile textures offset." );
-      return;
+      return False;
    }
+
+   return True;
+}
+
+internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, u32 tileTexturesHeaderOffset )
+{
+   GameDataTileTexturesHeader_t* tileTexturesHeader;
+
+   if ( ( tileTexturesHeaderOffset + sizeof( GameDataTileTexturesHeader_t ) ) > fileSize )
+   {
+      Platform_FatalError( "game data file is too small to contain a valid tile textures header." );
+      return False;
+   }
+
+   tileTexturesHeader = (GameDataTileTexturesHeader_t*)( fileContents + tileTexturesHeaderOffset );
+
+   if ( tileTexturesHeader->texturesOffset >= fileSize )
+   {
+      Platform_FatalError( "game data file has an invalid textures offset." );
+      return False;
+   }
+
+   return True;
 }
