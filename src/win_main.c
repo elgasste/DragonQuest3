@@ -3,6 +3,7 @@
 
 #include "clock.h"
 #include "game.h"
+#include "game_data.h"
 #include "input.h"
 #include "mem_arena.h"
 #include "pixel_buffer.h"

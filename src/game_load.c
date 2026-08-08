@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "game.h"
+#include "game_data.h"
 #include "mem_arena.h"
 #include "platform.h"
 #include "version.h"

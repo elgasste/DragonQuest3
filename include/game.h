@@ -3,8 +3,6 @@
 
 #include "common.h"
 
-#define GAME_DATA_MAGIC          "DW3D"
-
 // TODO: define these values somewhere else
 #define SCREEN_WIDTH    640
 #define SCREEN_HEIGHT   480
@@ -19,21 +17,6 @@ typedef struct MemArena_t MemArena_t;
 typedef struct Clock_t Clock_t;
 typedef struct Input_t Input_t;
 typedef struct Screen_t Screen_t;
-
-typedef struct GameDataVersion_t
-{
-   u8 major;
-   u8 minor;
-   u8 maint;
-}
-GameDataVersion_t;
-
-typedef struct GameDataHeader_t
-{
-   char magic[4];
-   GameDataVersion_t version;
-}
-GameDataHeader_t;
 
 typedef struct Game_t
 {
