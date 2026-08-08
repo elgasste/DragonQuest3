@@ -50,6 +50,20 @@ void setUp( void )
 
 void tearDown( void ) {}
 
+MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
+{
+   UNUSED_PARAM( arena );
+   UNUSED_PARAM( user );
+   UNUSED_PARAM( size );
+   return MemArenaResult_Success;
+}
+
+const char* MemArena_GetErrorMessage( MemArenaResult_t result )
+{
+   UNUSED_PARAM( result );
+   return "mock mem arena error";
+}
+
 void MemArena_Free( MemArena_t* memArena, void* ptr )
 {
    UNUSED_PARAM( memArena );

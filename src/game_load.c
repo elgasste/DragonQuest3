@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 #include "game.h"
@@ -8,6 +9,7 @@
 
 internal b32 GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize );
 internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, u32 tileTexturesHeaderOffset );
+internal b32 GameData_LoadTileTextures( Game_t* game, u8* fileContents, u32 tileTexturesHeaderOffset );
 
 void Game_LoadFromFile( Game_t* game, const char* filePath )
 {
@@ -30,6 +32,12 @@ void Game_LoadFromFile( Game_t* game, const char* filePath )
 
    header = (GameDataHeader_t*)fileContents;
    if ( !GameData_VerifyTileTexturesHeader( fileContents, fileSize, header->tileTexturesHeaderOffset ) )
+   {
+      MemArena_Free( game->memArena, fileContents );
+      return;
+   }
+
+   if ( !GameData_LoadTileTextures( game, fileContents, header->tileTexturesHeaderOffset ) )
    {
       MemArena_Free( game->memArena, fileContents );
       return;
@@ -99,6 +107,28 @@ internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, 
          Platform_FatalError( "game data file is too small to contain all tile textures." );
          return False;
       }
+   }
+
+   return True;
+}
+
+internal b32 GameData_LoadTileTextures( Game_t* game, u8* fileContents, u32 tileTexturesHeaderOffset )
+{
+   GameDataTileTexturesHeader_t* tileTexturesHeader;
+   MemArenaResult_t memArenaResult;
+   char msg[STRING_SIZE_DEFAULT];
+
+   tileTexturesHeader = (GameDataTileTexturesHeader_t*)( fileContents + tileTexturesHeaderOffset );
+
+   game->tileSize = tileTexturesHeader->tileSize;
+   game->tileTextureCount = tileTexturesHeader->count;
+
+   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextures ), tileTexturesHeader->count * tileTexturesHeader->tileSize * tileTexturesHeader->tileSize * sizeof( u32 ) );
+   if ( memArenaResult != MemArenaResult_Success )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile textures: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      Platform_FatalError( msg );
+      return False;
    }
 
    return True;

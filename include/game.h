@@ -25,6 +25,11 @@ typedef struct Game_t
    Input_t* input;
    Screen_t* screen;
 
+   // TODO: this will go in some kind of TileMap_t struct later
+   u32 tileTextureCount;
+   u32 tileSize;
+   void* tileTextures;
+
    b32 shutdown;
 }
 Game_t;
