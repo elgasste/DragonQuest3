@@ -562,6 +562,7 @@ internal void ShowPopup( const char* msg )
 internal void DrawPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight )
 {
    RECT r;
+   SIZE textSize;
    HFONT oldFont;
    int boxWidth, boxHeight, boxX, boxY;
 
@@ -571,9 +572,21 @@ internal void DrawPopup( const char* msg, HDC* dcMem, int winWidth, int winHeigh
       return;
    }
 
-   // TODO: set the box width and height based on the message length and font size
-   boxWidth = 340;
-   boxHeight = 28;
+   oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
+
+   if ( !GetTextExtentPoint32A( *dcMem, msg, lstrlenA( msg ), &textSize ) )
+   {
+      textSize.cx = 320;
+      textSize.cy = 16;
+   }
+
+   boxWidth = textSize.cx + 20;
+   if ( boxWidth < 120 )
+   {
+      boxWidth = 120;
+   }
+
+   boxHeight = textSize.cy + 12;
    boxX = winWidth - boxWidth - 12;
    boxY = winHeight - boxHeight - 12;
 
@@ -584,7 +597,6 @@ internal void DrawPopup( const char* msg, HDC* dcMem, int winWidth, int winHeigh
    r.right = boxX + boxWidth;
    r.bottom = boxY + boxHeight;
 
-   oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
    SetTextColor( *dcMem, 0x00FFFFFF );
    SetBkMode( *dcMem, TRANSPARENT );
    DrawTextA( *dcMem, msg, -1, &r, DT_SINGLELINE | DT_NOCLIP );
