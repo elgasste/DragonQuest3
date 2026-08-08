@@ -4,6 +4,7 @@
 #include "mem_arena.h"
 #include "screen.h"
 #include "unity.h"
+#include "version.h"
 
 #define MAX_PATH 260
 
@@ -110,9 +111,9 @@ void test_Game_LoadFromFile_InvalidHeaderMagicNumberResultsInFatalError( void )
    invalidHeader.magic[1] = 'A';
    invalidHeader.magic[2] = 'D';
    invalidHeader.magic[3] = '!';
-   invalidHeader.version.major = GAME_DATA_VERSION_MAJOR;
-   invalidHeader.version.minor = GAME_DATA_VERSION_MINOR;
-   invalidHeader.version.maint = GAME_DATA_VERSION_MAINT;
+   invalidHeader.version.major = GAME_VERSION_MAJOR;
+   invalidHeader.version.minor = GAME_VERSION_MINOR;
+   invalidHeader.version.maint = GAME_VERSION_MAINT;
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&invalidHeader;
@@ -133,9 +134,9 @@ void test_Game_LoadFromFile_InvalidHeaderVersionResultsInFatalError( void )
    invalidHeader.magic[1] = 'W';
    invalidHeader.magic[2] = '3';
    invalidHeader.magic[3] = 'D';
-   invalidHeader.version.major = GAME_DATA_VERSION_MAJOR + 1;
-   invalidHeader.version.minor = GAME_DATA_VERSION_MINOR;
-   invalidHeader.version.maint = GAME_DATA_VERSION_MAINT;
+   invalidHeader.version.major = GAME_VERSION_MAJOR + 1;
+   invalidHeader.version.minor = GAME_VERSION_MINOR;
+   invalidHeader.version.maint = GAME_VERSION_MAINT;
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&invalidHeader;
@@ -156,9 +157,9 @@ void test_Game_LoadFromFile_ValidHeaderAndVersionDoesNotResultInFatalError( void
    validHeader.magic[1] = 'W';
    validHeader.magic[2] = '3';
    validHeader.magic[3] = 'D';
-   validHeader.version.major = GAME_DATA_VERSION_MAJOR;
-   validHeader.version.minor = GAME_DATA_VERSION_MINOR;
-   validHeader.version.maint = GAME_DATA_VERSION_MAINT;
+   validHeader.version.major = GAME_VERSION_MAJOR;
+   validHeader.version.minor = GAME_VERSION_MINOR;
+   validHeader.version.maint = GAME_VERSION_MAINT;
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&validHeader;
@@ -179,9 +180,9 @@ void test_Game_LoadFromFile_LoadedSuccessfullyFreesFileBuffer( void )
    validHeader.magic[1] = 'W';
    validHeader.magic[2] = '3';
    validHeader.magic[3] = 'D';
-   validHeader.version.major = GAME_DATA_VERSION_MAJOR;
-   validHeader.version.minor = GAME_DATA_VERSION_MINOR;
-   validHeader.version.maint = GAME_DATA_VERSION_MAINT;
+   validHeader.version.major = GAME_VERSION_MAJOR;
+   validHeader.version.minor = GAME_VERSION_MINOR;
+   validHeader.version.maint = GAME_VERSION_MAINT;
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&validHeader;

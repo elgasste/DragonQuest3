@@ -21,6 +21,14 @@
 
 typedef struct Game_t Game_t;
 
+typedef struct WinCornerPopup_t
+{
+   b32 show;
+   char msg[STRING_SIZE_DEFAULT];
+   u64 untilMs;
+}
+WinCornerPopup_t;
+
 typedef struct WinGlobalObjects_t
 {
    HWND hWndMain;
@@ -40,5 +48,6 @@ typedef struct WinGlobalObjects_t
 WinGlobalObjects_t;
 
 extern WinGlobalObjects_t g_winGlobals;
+extern WinCornerPopup_t g_winCornerPopup;
 
 #endif // !defined( WIN_COMMON_H )
