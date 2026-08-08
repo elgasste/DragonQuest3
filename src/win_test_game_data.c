@@ -7,7 +7,7 @@
 #include "win_common.h"
 
 internal b32 WriteTestGameDataHeader( HANDLE hFile );
-internal b32 WriteTestGameDataTileTexturesHeader( HANDLE hFile );
+internal b32 WriteTestGameDataTileTextures( HANDLE hFile );
 
 // TODO: we can get rid of this once we have a proper game editor
 void WriteTestGameDataFile( const char* filePath )
@@ -28,7 +28,7 @@ void WriteTestGameDataFile( const char* filePath )
       CloseHandle( hFile );
       return;
    }
-   if ( !WriteTestGameDataTileTexturesHeader( hFile ) )
+   if ( !WriteTestGameDataTileTextures( hFile ) )
    {
       CloseHandle( hFile );
       return;
@@ -73,16 +73,19 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile )
    return True;
 }
 
-internal b32 WriteTestGameDataTileTexturesHeader( HANDLE hFile )
+internal b32 WriteTestGameDataTileTextures( HANDLE hFile )
 {
    DWORD bytesWritten;
    BOOL result;
+   u32 pixel, tilePixels, tileIndex, pixelIndex;
+   u32 tileColors[5];
    GameDataTileTexturesHeader_t tileTexturesHeader;
    char msg[STRING_SIZE_DEFAULT];
 
-   tileTexturesHeader.count = 0;
+   // write the header
+   tileTexturesHeader.count = 5;
    tileTexturesHeader.tileSize = 16;
-   tileTexturesHeader.texturesOffset = 0;
+   tileTexturesHeader.texturesOffset = sizeof( GameDataHeader_t ) + sizeof( GameDataTileTexturesHeader_t );
 
    bytesWritten = 0;
    result = WriteFile( hFile, &tileTexturesHeader, sizeof( GameDataTileTexturesHeader_t ), &bytesWritten, NULL );
@@ -98,6 +101,37 @@ internal b32 WriteTestGameDataTileTexturesHeader( HANDLE hFile )
       snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile textures header: wrote %lu of %lu bytes", bytesWritten, sizeof( GameDataTileTexturesHeader_t ) );
       Platform_FatalError( msg );
       return False;
+   }
+
+   // write the tile textures
+   tileColors[0] = RGB( 0, 0, 0 );
+   tileColors[1] = RGB( 255, 255, 255 );
+   tileColors[2] = RGB( 255, 0, 0 );
+   tileColors[3] = RGB( 0, 0, 255 );
+   tileColors[4] = RGB( 0, 255, 0 );
+   tilePixels = tileTexturesHeader.tileSize * tileTexturesHeader.tileSize;
+
+   for ( tileIndex = 0; tileIndex < tileTexturesHeader.count; tileIndex++ )
+   {
+      for ( pixelIndex = 0; pixelIndex < tilePixels; pixelIndex++ )
+      {
+         pixel = tileColors[tileIndex];
+         bytesWritten = 0;
+         result = WriteFile( hFile, &pixel, sizeof( u32 ), &bytesWritten, NULL );
+
+         if ( !result )
+         {
+            snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile textures: %lu", GetLastError() );
+            Platform_FatalError( msg );
+            return False;
+         }
+         else if ( bytesWritten != sizeof( u32 ) )
+         {
+            snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile textures: wrote %lu of %lu bytes", bytesWritten, sizeof( u32 ) );
+            Platform_FatalError( msg );
+            return False;
+         }
+      }
    }
 
    return True;

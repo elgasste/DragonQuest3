@@ -46,6 +46,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    snprintf( g_winGlobals.logFilePath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, LOG_FILENAME );
    snprintf( gameDataPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, GAME_DATA_FILENAME );
 
+   Platform_Log( "----------------- LAUNCH -----------------" );
+
    memArena = CreateMemArena();
    memArenaResult = MemArena_Alloc( memArena, (void**)&( g_winGlobals.game ), sizeof( Game_t ) );
    if ( memArenaResult != MemArenaResult_Success )
