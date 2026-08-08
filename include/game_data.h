@@ -17,6 +17,7 @@ typedef struct GameDataHeader_t
 {
    char magic[4];
    GameDataVersion_t version;
+   u32 tileTexturesOffset;
 }
 GameDataHeader_t;
 

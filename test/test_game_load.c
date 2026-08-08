@@ -20,6 +20,7 @@ PlatformLoadFileToMemoryCall_t;
 
 local_persist PlatformLoadFileToMemoryCall_t g_platformLoadFileToMemoryCall;
 local_persist u8* g_mockFileContents;
+local_persist u32 g_mockFileSize;
 local_persist u32 g_fatalErrorCallCount;
 local_persist u32 g_memArenaFreeCallCount;
 
@@ -30,6 +31,7 @@ void setUp( void )
    g_platformLoadFileToMemoryCall.bytesRead = 0;
    g_platformLoadFileToMemoryCall.callCount = 0;
    g_mockFileContents = 0;
+   g_mockFileSize = 0;
    g_fatalErrorCallCount = 0;
    g_memArenaFreeCallCount = 0;
 }
@@ -50,6 +52,11 @@ u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* 
    g_platformLoadFileToMemoryCall.bytesRead = bytesRead;
    g_platformLoadFileToMemoryCall.callCount++;
 
+   if ( bytesRead )
+   {
+      *bytesRead = g_mockFileSize;
+   }
+
    return g_mockFileContents;
 }
 
@@ -66,6 +73,12 @@ void test_Game_LoadFromFile_CallsPlatformLoadFileToMemory( void )
    const char* testFilePath = "mock.dw3d";
 
    game.memArena = &memArena;
+   g_mockFileSize = sizeof( GameDataHeader_t );
+   g_mockFileContents = (u8*)&( GameDataHeader_t ){
+      .magic = { 'D', 'W', '3', 'D' },
+      .version = { GAME_VERSION_MAJOR, GAME_VERSION_MINOR, GAME_VERSION_MAINT },
+      .tileTexturesOffset = 0
+   };
 
    Game_LoadFromFile( &game, testFilePath );
    TEST_ASSERT_EQUAL_STRING( testFilePath, g_platformLoadFileToMemoryCall.filePath );
@@ -80,6 +93,7 @@ void test_Game_LoadFromFile_LoadFileToMemoryFailsResultsInFatalError( void )
    const char* testFilePath = "mock.dw3d";
 
    game.memArena = &memArena;
+   g_mockFileSize = 0;
 
    Game_LoadFromFile( &game, testFilePath );
    TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
@@ -95,6 +109,7 @@ void test_Game_LoadFromFile_FileTooSmallResultsInFatalError( void )
 
    game.memArena = &memArena;
    g_mockFileContents = smallFileContents;
+   g_mockFileSize = sizeof( smallFileContents );
 
    Game_LoadFromFile( &game, testFilePath );
    TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
@@ -118,6 +133,7 @@ void test_Game_LoadFromFile_InvalidHeaderMagicNumberResultsInFatalError( void )
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&invalidHeader;
+   g_mockFileSize = sizeof( GameDataHeader_t );
 
    Game_LoadFromFile( &game, testFilePath );
    TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
@@ -141,6 +157,7 @@ void test_Game_LoadFromFile_InvalidHeaderVersionResultsInFatalError( void )
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&invalidHeader;
+   g_mockFileSize = sizeof( GameDataHeader_t );
 
    Game_LoadFromFile( &game, testFilePath );
    TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
@@ -161,13 +178,40 @@ void test_Game_LoadFromFile_ValidHeaderAndVersionDoesNotResultInFatalError( void
    validHeader.version.major = GAME_VERSION_MAJOR;
    validHeader.version.minor = GAME_VERSION_MINOR;
    validHeader.version.maint = GAME_VERSION_MAINT;
+   validHeader.tileTexturesOffset = sizeof( GameDataHeader_t );
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&validHeader;
+   g_mockFileSize = sizeof( GameDataHeader_t ) + 1;
 
    Game_LoadFromFile( &game, testFilePath );
    TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
    TEST_ASSERT_EQUAL_INT( 0, g_fatalErrorCallCount );
+}
+
+void test_Game_LoadFromFile_InvalidTileTexturesOffsetResultsInFatalError( void )
+{
+   Game_t game;
+   MemArena_t memArena;
+   GameDataHeader_t invalidHeader;
+   const char* testFilePath = "mock.dw3d";
+
+   invalidHeader.magic[0] = 'D';
+   invalidHeader.magic[1] = 'W';
+   invalidHeader.magic[2] = '3';
+   invalidHeader.magic[3] = 'D';
+   invalidHeader.version.major = GAME_VERSION_MAJOR;
+   invalidHeader.version.minor = GAME_VERSION_MINOR;
+   invalidHeader.version.maint = GAME_VERSION_MAINT;
+   invalidHeader.tileTexturesOffset = sizeof( GameDataHeader_t );
+
+   game.memArena = &memArena;
+   g_mockFileContents = (u8*)&invalidHeader;
+   g_mockFileSize = sizeof( GameDataHeader_t );
+
+   Game_LoadFromFile( &game, testFilePath );
+   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
+   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
 }
 
 void test_Game_LoadFromFile_LoadedSuccessfullyFreesFileBuffer( void )
@@ -184,9 +228,11 @@ void test_Game_LoadFromFile_LoadedSuccessfullyFreesFileBuffer( void )
    validHeader.version.major = GAME_VERSION_MAJOR;
    validHeader.version.minor = GAME_VERSION_MINOR;
    validHeader.version.maint = GAME_VERSION_MAINT;
+   validHeader.tileTexturesOffset = sizeof( GameDataHeader_t );
 
    game.memArena = &memArena;
    g_mockFileContents = (u8*)&validHeader;
+   g_mockFileSize = sizeof( GameDataHeader_t ) + 1;
 
    Game_LoadFromFile( &game, testFilePath );
    TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
@@ -204,6 +250,7 @@ int main( void )
    RUN_TEST( test_Game_LoadFromFile_InvalidHeaderMagicNumberResultsInFatalError );
    RUN_TEST( test_Game_LoadFromFile_InvalidHeaderVersionResultsInFatalError );
    RUN_TEST( test_Game_LoadFromFile_ValidHeaderAndVersionDoesNotResultInFatalError );
+   RUN_TEST( test_Game_LoadFromFile_InvalidTileTexturesOffsetResultsInFatalError );
    RUN_TEST( test_Game_LoadFromFile_LoadedSuccessfullyFreesFileBuffer );
 
    return UNITY_END();

@@ -47,5 +47,12 @@ internal void GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
              header->version.maint != GAME_VERSION_MAINT )
    {
       Platform_FatalError( "game data file has an incompatible version." );
+      return;
+   }
+
+   if ( header->tileTexturesOffset >= fileSize )
+   {
+      Platform_FatalError( "game data file has an invalid tile textures offset." );
+      return;
    }
 }
