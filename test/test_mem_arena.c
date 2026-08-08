@@ -461,6 +461,21 @@ internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalAllocat
    MemArena_Destroy( &arena );
 }
 
+internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForLargestAllocatedBlock( void )
+{
+   MEMARENA_TEST_HELPER_DECLARE_ARENA();
+   size_t blockSize;
+   MemArenaStats_t stats;
+
+   blockSize = 100;
+   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
+
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL( 0, stats.largestAllocatedBlock );
+
+   MemArena_Destroy( &arena );
+}
+
 internal void test_MemArena_GetStats_BlocksExistReturnsTotalAllocatedBlocks( void )
 {
    MEMARENA_TEST_HELPER_DECLARE_ARENA();
@@ -493,6 +508,25 @@ internal void test_MemArena_GetStats_BlocksExistReturnsTotalSizeOfAllBlocksForTo
 
    stats = MemArena_GetStats( arena );
    TEST_ASSERT_EQUAL( blockSize * 2, stats.totalAllocatedSpace );
+
+   MemArena_Destroy( &arena );
+}
+
+internal void test_MemArena_GetStats_BlocksExistReturnsLargestAllocatedBlock( void )
+{
+   MEMARENA_TEST_HELPER_DECLARE_ARENA();
+   u8* mem;
+   size_t blockSize1, blockSize2;
+   MemArenaStats_t stats;
+
+   blockSize1 = 100;
+   blockSize2 = 200;
+   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize1 ) + ( sizeof( MemArenaBlock_t ) + blockSize2 ) ) );
+   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize1 );
+   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize2 );
+
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL( blockSize2, stats.largestAllocatedBlock );
 
    MemArena_Destroy( &arena );
 }
@@ -822,8 +856,10 @@ int main( void )
 
    RUN_TEST( test_memArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalAllocatedBlocks );
    RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalAllocatedSpace );
+   RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForLargestAllocatedBlock );
    RUN_TEST( test_MemArena_GetStats_BlocksExistReturnsTotalAllocatedBlocks );
    RUN_TEST( test_MemArena_GetStats_BlocksExistReturnsTotalSizeOfAllBlocksForTotalAllocatedSpace );
+   RUN_TEST( test_MemArena_GetStats_BlocksExistReturnsLargestAllocatedBlock );
    RUN_TEST( test_MemArena_GetStats_EmptyArenaReturnsCorrectLargestAvailableBlockSize );
    RUN_TEST( test_MemArena_GetStats_SpaceAvailableBeforeFirstBlockIsCountedInLargestAvailableBlockSize );
    RUN_TEST( test_MemArena_GetStats_SpaceBetweenBlocksIsCountedInLargestAvailableBlockSize );

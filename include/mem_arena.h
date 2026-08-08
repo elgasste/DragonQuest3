@@ -41,6 +41,7 @@ typedef struct MemArenaStats_t
 {
    size_t totalAllocatedBlocks;
    size_t totalAllocatedSpace;
+   size_t largestAllocatedBlock;
    size_t largestAvailableBlock;
    size_t totalUnallocatedSpace;
    size_t totalFragmentedSpace;

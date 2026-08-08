@@ -203,6 +203,9 @@ internal void MemArena_DumpStats( MemArena_t* memArena )
    snprintf( msg, STRING_SIZE_DEFAULT, "  total allocated space   : %zu", stats.totalAllocatedSpace );
    Platform_Log( msg );
 
+   snprintf( msg, STRING_SIZE_DEFAULT, "  largest allocated block : %zu", stats.largestAllocatedBlock );
+   Platform_Log( msg );
+
    snprintf( msg, STRING_SIZE_DEFAULT, "  largest available block : %zu", stats.largestAvailableBlock );
    Platform_Log( msg );
 
