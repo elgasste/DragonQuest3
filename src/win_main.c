@@ -8,6 +8,7 @@
 #include "pixel_buffer.h"
 #include "platform.h"
 #include "screen.h"
+#include "version.h"
 #include "win_common.h"
 
 typedef struct Popup_t
@@ -264,9 +265,9 @@ internal void WriteTestGameDataFile( const char* filePath )
    {
       header.magic[i] = GAME_DATA_MAGIC[i];
    }
-   header.version.major = GAME_DATA_VERSION_MAJOR;
-   header.version.minor = GAME_DATA_VERSION_MINOR;
-   header.version.maint = GAME_DATA_VERSION_MAINT;;
+   header.version.major = GAME_VERSION_MAJOR;
+   header.version.minor = GAME_VERSION_MINOR;
+   header.version.maint = GAME_VERSION_MAINT;;
 
    bytesWritten = 0;
    result = WriteFile( hFile, &header, sizeof( GameDataHeader_t ), &bytesWritten, NULL );

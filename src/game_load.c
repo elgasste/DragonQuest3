@@ -3,6 +3,7 @@
 #include "game.h"
 #include "mem_arena.h"
 #include "platform.h"
+#include "version.h"
 
 internal void GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize );
 
@@ -40,9 +41,9 @@ internal void GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
       Platform_FatalError( "game data file has an invalid magic number." );
       return;
    }
-   else if ( header->version.major != GAME_DATA_VERSION_MAJOR ||
-             header->version.minor != GAME_DATA_VERSION_MINOR ||
-             header->version.maint != GAME_DATA_VERSION_MAINT )
+   else if ( header->version.major != GAME_VERSION_MAJOR ||
+             header->version.minor != GAME_VERSION_MINOR ||
+             header->version.maint != GAME_VERSION_MAINT )
    {
       Platform_FatalError( "game data file has an incompatible version." );
    }

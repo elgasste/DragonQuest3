@@ -4,9 +4,6 @@
 #include "common.h"
 
 #define GAME_DATA_MAGIC          "DW3D"
-#define GAME_DATA_VERSION_MAJOR  0
-#define GAME_DATA_VERSION_MINOR  0
-#define GAME_DATA_VERSION_MAINT  1
 
 // TODO: define these values somewhere else
 #define SCREEN_WIDTH    640
