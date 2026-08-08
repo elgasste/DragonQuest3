@@ -102,8 +102,18 @@ MemArenaStats_t MemArena_GetStats( MemArena_t* arena )
    size_t freeSize, smallestBlockSize, availableSize;
    MemArenaStats_t stats;
 
-   stats.largestAvailableBlock = 0;
+   /*
+   size_t totalAllocatedBlocks;
+   size_t totalAllocatedSpace;
+   size_t largestAvailableBlock;
+   size_t totalUnallocatedSpace;
+   size_t totalFragmentedSpace;
+   size_t totalUnusableSpace;
+   */
+
+   stats.totalAllocatedBlocks = 0;
    stats.totalAllocatedSpace = 0;
+   stats.largestAvailableBlock = 0;
    stats.totalUnallocatedSpace = 0;
    stats.totalFragmentedSpace = 0;
    stats.totalUnusableSpace = 0;
@@ -114,6 +124,11 @@ MemArenaStats_t MemArena_GetStats( MemArena_t* arena )
 
    while ( 1 )
    {
+      if ( nextBlock )
+      {
+         stats.totalAllocatedBlocks++;
+      }
+
       freeSize = nextBlock
          ? (u8*)nextBlock - insertionPoint
          : ( (u8*)arena + arena->size ) - insertionPoint;
