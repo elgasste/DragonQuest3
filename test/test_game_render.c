@@ -45,12 +45,25 @@ void Screen_Fill( Screen_t* screen, u32 color )
    g_screenFillCall.callCount++;
 }
 
+void Screen_DrawBuffer( Screen_t* screen, u32* buffer, u32 bufferW, u32 bufferH, i32 screenX, i32 screenY )
+{
+   UNUSED_PARAM( screen );
+   UNUSED_PARAM( buffer );
+   UNUSED_PARAM( bufferW );
+   UNUSED_PARAM( bufferH );
+   UNUSED_PARAM( screenX );
+   UNUSED_PARAM( screenY );
+}
+
 void test_Game_Render_FillsScreenBufferWithBlack( void )
 {
    Game_t game;
    Screen_t screen;
+   u32 tile[16] = { 0 };
 
    game.screen = &screen;
+   game.tileSize = 4;
+   game.tileTextures = tile;
 
    Game_Render( &game );
    TEST_ASSERT_EQUAL_PTR( &screen, g_screenFillCall.screen );
@@ -62,8 +75,11 @@ void test_Game_Render_RendersScreenBuffer( void )
 {
    Game_t game;
    Screen_t screen;
+   u32 tile[16] = { 0 };
 
    game.screen = &screen;
+   game.tileSize = 4;
+   game.tileTextures = tile;
 
    Game_Render( &game );
    TEST_ASSERT_EQUAL_PTR( &screen, g_platformRenderScreenBufferCall.screen );
