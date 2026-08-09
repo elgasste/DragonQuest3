@@ -235,7 +235,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
    Tile_t tile;
 
    // write out the number of tile maps first
-   tileMapCount = 1;
+   tileMapCount = 2;
    bytesWritten = 0;
    result = WriteFile( hFile, &tileMapCount, sizeof( u32 ), &bytesWritten, NULL );
    *filePos += bytesWritten;
@@ -292,7 +292,46 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
       }
    }
 
-   // TOOD: make another tile map with different dimensions and texture indexes
+   // second tile map
+   tileMap.id = 1;
+   tileMap.w = 256;
+   tileMap.h = 256;
+   tileMap.tiles = 0;
+   tileMap.tileTextureSet = 0;
+
+   bytesWritten = 0;
+   result = WriteFile( hFile, &tileMap, sizeof( TileMap_t ), &bytesWritten, NULL );
+   *filePos += bytesWritten;
+
+   if ( !result )
+   {
+      Platform_FatalError( "failed to write test game data file tile maps." );
+      return False;
+   }
+   else if ( bytesWritten != sizeof( TileMap_t ) )
+   {
+      Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
+      return False;
+   }
+
+   tile.textureIndex = 2;
+   for ( i = 0; i < tileMap.w * tileMap.h; i++ )
+   {
+      bytesWritten = 0;
+      result = WriteFile( hFile, &tile, sizeof( Tile_t ), &bytesWritten, NULL );
+      *filePos += bytesWritten;
+
+      if ( !result )
+      {
+         Platform_FatalError( "failed to write test game data file tile maps." );
+         return False;
+      }
+      else if ( bytesWritten != sizeof( Tile_t ) )
+      {
+         Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
+         return False;
+      }
+   }
 
    return True;
 }
