@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "game.h"
 #include "game_data.h"
@@ -34,10 +35,17 @@ local_persist u8* g_mockFileContents;
 local_persist u32 g_mockFileSize;
 local_persist u32 g_fatalErrorCallCount;
 local_persist u32 g_memArenaFreeCallCount;
+local_persist void* g_lastMemArenaAlloc;
 local_persist MockGameDataFile_t g_mockGameDataFile;
 
 void setUp( void )
 {
+   if ( g_lastMemArenaAlloc )
+   {
+      free( g_lastMemArenaAlloc );
+      g_lastMemArenaAlloc = 0;
+   }
+
    g_platformLoadFileToMemoryCall.filePath[0] = '\0';
    g_platformLoadFileToMemoryCall.memArena = 0;
    g_platformLoadFileToMemoryCall.bytesRead = 0;
@@ -48,13 +56,32 @@ void setUp( void )
    g_memArenaFreeCallCount = 0;
 }
 
-void tearDown( void ) {}
+void tearDown( void )
+{
+   if ( g_lastMemArenaAlloc )
+   {
+      free( g_lastMemArenaAlloc );
+      g_lastMemArenaAlloc = 0;
+   }
+}
 
 MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
 {
    UNUSED_PARAM( arena );
-   UNUSED_PARAM( user );
-   UNUSED_PARAM( size );
+
+   if ( !user )
+   {
+      return MemArenaResult_OutOfMemory;
+   }
+
+   g_lastMemArenaAlloc = malloc( size );
+   if ( !g_lastMemArenaAlloc )
+   {
+      return MemArenaResult_OutOfMemory;
+   }
+
+   *user = g_lastMemArenaAlloc;
+
    return MemArenaResult_Success;
 }
 

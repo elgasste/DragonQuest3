@@ -155,7 +155,7 @@ void test_Screen_DrawPixelBuffer_CopiesPixelsWhenFullyVisible( void )
 
    Screen_Init( &screen, 0, 4, 4 );
 
-   Screen_DrawPixelBuffer( &screen, &( PixelBuffer_t ){ .mem = source, .w = 2, .h = 2 }, 1, 1 );
+   Screen_DrawBuffer( &screen, source, 2, 2, 1, 1 );
 
    TEST_ASSERT_EQUAL( 0x11111111u, screen.buffer->mem[ ( 1 * 4 ) + 1 ] );
    TEST_ASSERT_EQUAL( 0x22222222u, screen.buffer->mem[ ( 1 * 4 ) + 2 ] );
@@ -178,7 +178,7 @@ void test_Screen_DrawPixelBuffer_ClipsTopLeftAndCopiesVisiblePixels( void )
 
    Screen_Init( &screen, 0, 4, 4 );
 
-   Screen_DrawPixelBuffer( &screen, &( PixelBuffer_t ){ .mem = source, .w = 3, .h = 3 }, -1, -1 );
+   Screen_DrawBuffer( &screen, source, 3, 3, -1, -1 );
 
    TEST_ASSERT_EQUAL( 5u, screen.buffer->mem[ ( 0 * 4 ) + 0 ] );
    TEST_ASSERT_EQUAL( 6u, screen.buffer->mem[ ( 0 * 4 ) + 1 ] );
@@ -201,7 +201,7 @@ void test_Screen_DrawPixelBuffer_ClipsBottomRightAndCopiesVisiblePixels( void )
 
    Screen_Init( &screen, 0, 4, 4 );
 
-   Screen_DrawPixelBuffer( &screen, &( PixelBuffer_t ){ .mem = source, .w = 3, .h = 3 }, 3, 2 );
+   Screen_DrawBuffer( &screen, source, 3, 3, 3, 2 );
 
    TEST_ASSERT_EQUAL( 1u, screen.buffer->mem[ ( 2 * 4 ) + 3 ] );
    TEST_ASSERT_EQUAL( 4u, screen.buffer->mem[ ( 3 * 4 ) + 3 ] );
@@ -221,7 +221,7 @@ void test_Screen_DrawPixelBuffer_DoesNothingWhenBufferIsFullyOffScreen( void )
 
    Screen_Init( &screen, 0, 4, 4 );
 
-   Screen_DrawPixelBuffer( &screen, &( PixelBuffer_t ){ .mem = source, .w = 2, .h = 2 }, 5, 1 );
+   Screen_DrawBuffer( &screen, source, 2, 2, 5, 1 );
 
    TEST_ASSERT_EQUAL( 0u, screen.buffer->mem[0] );
    TEST_ASSERT_EQUAL( 0u, screen.buffer->mem[ ( 1 * 4 ) + 1 ] );

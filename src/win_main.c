@@ -159,6 +159,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    Game_Run( g_winGlobals.game );
 
    MemArena_Destroy( &( memArena ) );
+   Platform_Log( "-----------------  EXIT  -----------------" );
    return 0;
 }
 

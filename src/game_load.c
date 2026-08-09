@@ -114,6 +114,8 @@ internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, 
 
 internal b32 GameData_LoadTileTextures( Game_t* game, u8* fileContents, u32 tileTexturesHeaderOffset )
 {
+   size_t i, textureBytes;
+   u8 *src, *dst;
    GameDataTileTexturesHeader_t* tileTexturesHeader;
    MemArenaResult_t memArenaResult;
    char msg[STRING_SIZE_DEFAULT];
@@ -122,13 +124,21 @@ internal b32 GameData_LoadTileTextures( Game_t* game, u8* fileContents, u32 tile
 
    game->tileSize = tileTexturesHeader->tileSize;
    game->tileTextureCount = tileTexturesHeader->count;
+   textureBytes = (size_t)tileTexturesHeader->count * (size_t)tileTexturesHeader->tileSize * (size_t)tileTexturesHeader->tileSize * sizeof( u32 );
 
-   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextures ), tileTexturesHeader->count * tileTexturesHeader->tileSize * tileTexturesHeader->tileSize * sizeof( u32 ) );
+   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextures ), textureBytes );
    if ( memArenaResult != MemArenaResult_Success )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile textures: %s", MemArena_GetErrorMessage( memArenaResult ) );
       Platform_FatalError( msg );
       return False;
+   }
+
+   src = fileContents + tileTexturesHeader->texturesOffset;
+   dst = (u8*)game->tileTextures;
+   for ( i = 0; i < textureBytes; i++ )
+   {
+      dst[i] = src[i];
    }
 
    return True;
