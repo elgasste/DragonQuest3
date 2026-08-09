@@ -7,15 +7,19 @@
 #include "version.h"
 #include "win_common.h"
 
-internal b32 WriteTestGameDataHeader( HANDLE hFile );
-internal b32 WriteTestGameDataTileTextures( HANDLE hFile );
+internal b32 WriteTestGameDataHeader( HANDLE hFile, GameDataHeader_t* header, DWORD* filePos );
+internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos );
+internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos );
 
 void WriteTestGameDataFile( const char* filePath )
 {
    HANDLE hFile;
+   DWORD filePos;
+   GameDataHeader_t header;
    char msg[STRING_SIZE_DEFAULT];
 
    hFile = CreateFileA( filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+   filePos = 0;
 
    if ( hFile == INVALID_HANDLE_VALUE )
    {
@@ -23,39 +27,53 @@ void WriteTestGameDataFile( const char* filePath )
       Platform_FatalError( msg );
    }
 
-   if ( !WriteTestGameDataHeader( hFile ) )
+   if ( !WriteTestGameDataHeader( hFile, &header, &filePos ) )
    {
       CloseHandle( hFile );
       return;
    }
-   if ( !WriteTestGameDataTileTextures( hFile ) )
+
+   header.tileTextureSetOffset = filePos;
+   if ( !WriteTestGameDataTileTextureSet( hFile, &filePos ) )
    {
       CloseHandle( hFile );
       return;
    }
+
+   header.tileMapsOffset = filePos;
+   if ( !WriteTestGameDataTileMaps( hFile, &filePos ) )
+   {
+      CloseHandle( hFile );
+      return;
+   }
+
+   // MUFFINS: go back and re-write the header with the correct offsets (will this pre-pend?)
+   SetFilePointer( hFile, 0, NULL, FILE_BEGIN );
+   WriteTestGameDataHeader( hFile, &header, &filePos );
 
    CloseHandle( hFile );
 }
 
-internal b32 WriteTestGameDataHeader( HANDLE hFile )
+internal b32 WriteTestGameDataHeader( HANDLE hFile, GameDataHeader_t* header, DWORD* filePos )
 {
    DWORD bytesWritten;
    BOOL result;
-   GameDataHeader_t header;
    u32 i;
    char msg[STRING_SIZE_DEFAULT];
 
    for ( i = 0; i < 4; i++ )
    {
-      header.magic[i] = GAME_DATA_MAGIC[i];
+      header->magic[i] = GAME_DATA_MAGIC[i];
    }
-   header.version.major = GAME_VERSION_MAJOR;
-   header.version.minor = GAME_VERSION_MINOR;
-   header.version.maint = GAME_VERSION_MAINT;
-   header.tileTextureSetOffset = sizeof( GameDataHeader_t );
+   header->version.major = GAME_VERSION_MAJOR;
+   header->version.minor = GAME_VERSION_MINOR;
+   header->version.maint = GAME_VERSION_MAINT;
+   header->tileTextureSetOffset = 0;
+   header->tileMapsOffset = 0;
 
    bytesWritten = 0;
-   result = WriteFile( hFile, &header, sizeof( GameDataHeader_t ), &bytesWritten, NULL );
+   result = WriteFile( hFile, header, sizeof( GameDataHeader_t ), &bytesWritten, NULL );
+   *filePos += bytesWritten;
 
    if ( !result )
    {
@@ -73,7 +91,7 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile )
    return True;
 }
 
-internal b32 WriteTestGameDataTileTextures( HANDLE hFile )
+internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos )
 {
    DWORD bytesWritten;
    BOOL result;
@@ -88,6 +106,7 @@ internal b32 WriteTestGameDataTileTextures( HANDLE hFile )
 
    bytesWritten = 0;
    result = WriteFile( hFile, &textureSet, sizeof( TileTextureSet_t ), &bytesWritten, NULL );
+   *filePos += bytesWritten;
 
    if ( !result )
    {
@@ -117,6 +136,7 @@ internal b32 WriteTestGameDataTileTextures( HANDLE hFile )
          pixel = tileColors[tileIndex];
          bytesWritten = 0;
          result = WriteFile( hFile, &pixel, sizeof( u32 ), &bytesWritten, NULL );
+         *filePos += bytesWritten;
 
          if ( !result )
          {
@@ -130,6 +150,57 @@ internal b32 WriteTestGameDataTileTextures( HANDLE hFile )
             Platform_FatalError( msg );
             return False;
          }
+      }
+   }
+
+   return True;
+}
+
+internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
+{
+   u32 i;
+   DWORD bytesWritten;
+   BOOL result;
+   TileMap_t tileMap;
+   Tile_t tile;
+
+   tileMap.id = 0;
+   tileMap.w = 10;
+   tileMap.h = 10;
+   tileMap.tiles = 0;
+   tileMap.tileTextureSet = 0;
+
+   bytesWritten = 0;
+   result = WriteFile( hFile, &tileMap, sizeof( TileMap_t ), &bytesWritten, NULL );
+   *filePos += bytesWritten;
+
+   if ( !result )
+   {
+      Platform_FatalError( "failed to write test game data file tile maps." );
+      return False;
+   }
+   else if ( bytesWritten != sizeof( TileMap_t ) )
+   {
+      Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
+      return False;
+   }
+
+   tile.textureIndex = 3;
+   for ( i = 0; i < tileMap.w * tileMap.h; i++ )
+   {
+      bytesWritten = 0;
+      result = WriteFile( hFile, &tile, sizeof( Tile_t ), &bytesWritten, NULL );
+      *filePos += bytesWritten;
+
+      if ( !result )
+      {
+         Platform_FatalError( "failed to write test game data file tile maps." );
+         return False;
+      }
+      else if ( bytesWritten != sizeof( Tile_t ) )
+      {
+         Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
+         return False;
       }
    }
 
