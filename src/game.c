@@ -7,16 +7,14 @@
 #include "platform.h"
 #include "screen.h"
 
-internal b32 Game_AllocObjects( Game_t* game );
+internal b32 Game_AllocInfrastructure( Game_t* game );
 
 void Game_Init( Game_t* game, MemArena_t* memArena )
 {
    game->memArena = memArena;
 
-   if ( !Game_AllocObjects( game ) )
+   if ( !Game_AllocInfrastructure( game ) )
    {
-      // the game should shut down if we've reached this point, but we still
-      // need to do this so the unit tests won't fail.
       return;
    }
 
@@ -48,7 +46,7 @@ void Game_Stop( Game_t* game )
    game->shutdown = True;
 }
 
-internal b32 Game_AllocObjects( Game_t* game )
+internal b32 Game_AllocInfrastructure( Game_t* game )
 {
    MemArenaResult_t memArenaResult;
    char msg[STRING_SIZE_DEFAULT];

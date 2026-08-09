@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "game.h"
 #include "game_data.h"
 #include "platform.h"
 #include "tile_map.h"
