@@ -147,3 +147,13 @@ u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* 
 
    return buffer;
 }
+
+void Platform_Rand_Seed( u32 seed )
+{
+   srand( seed );
+}
+
+u32 Platform_Rand_u32Ranged( u32 min, u32 max )
+{
+   return min + (u32)( rand() % ( max - min + 1 ) );
+}

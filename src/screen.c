@@ -1,6 +1,7 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "screen.h"
+#include "tile_map.h"
 
 void Screen_Init( Screen_t* screen, MemArena_t* memArena, u32 w, u32 h )
 {
@@ -123,4 +124,58 @@ void Screen_DrawBuffer( Screen_t* screen, u32* buffer, u32 bufferW, u32 bufferH,
 
       screenMem += ( screenBuffer->w - ( bufferW - bufferOffsetL - bufferOffsetR ) );
    }
+}
+
+void Screen_DrawTileMapViewport( Screen_t* screen, TileMap_t* tileMap, Vector4i32_t viewport, i32 screenX, i32 screenY )
+{
+   i32 tileX, tileY, viewportR, viewportB;
+   i32 tileWorldX, tileWorldY, drawX, drawY;
+   u32 tileSize, tileIndex;
+   TileTextureSet_t* textureSet;
+   Tile_t* tile;
+   u32* texture;
+
+   textureSet = tileMap->tileTextureSet;
+   viewportR = viewport.x + viewport.w;
+   viewportB = viewport.y + viewport.h;
+   tileSize = textureSet->tileSize;
+
+   for ( tileY = 0; tileY < (i32)tileMap->h; tileY++ )
+   {
+      tileWorldY = tileY * (i32)tileSize;
+      if ( tileWorldY >= viewportB )
+      {
+         break;
+      }
+
+      // TODO: this might be inefficient, we could calculate this in advance
+      if ( ( tileWorldY + (i32)tileSize ) <= viewport.y )
+      {
+         continue;
+      }
+
+      for ( tileX = 0; tileX < (i32)tileMap->w; tileX++ )
+      {
+         tileWorldX = tileX * (i32)tileSize;
+         if ( tileWorldX >= viewportR )
+         {
+            break;
+         }
+
+         // TODO: this might be inefficient, we could calculate this in advance
+         if ( ( tileWorldX + (i32)tileSize ) <= viewport.x )
+         {
+            continue;
+         }
+
+         tileIndex = (u32)tileY * tileMap->w + (u32)tileX;
+         tile = &( tileMap->tiles[tileIndex] );
+
+         texture = textureSet->textures + ( tile->textureIndex * tileSize * tileSize );
+         drawX = screenX + ( tileWorldX - viewport.x );
+         drawY = screenY + ( tileWorldY - viewport.y );
+         Screen_DrawBuffer( screen, texture, tileSize, tileSize, drawX, drawY );
+      }
+   }
+
 }

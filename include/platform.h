@@ -15,4 +15,7 @@ void Platform_RenderScreenBuffer( Screen_t* screen );
 void Platform_SleepMs( u32 ms );
 u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* bytesRead );
 
+void Platform_Rand_Seed( u32 seed );
+u32 Platform_Rand_u32Ranged( u32 min, u32 max );
+
 #endif // PLATFORM_H

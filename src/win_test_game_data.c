@@ -272,9 +272,32 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
       return False;
    }
 
-   tile.textureIndex = 3;
    for ( i = 0; i < tileMap.w * tileMap.h; i++ )
    {
+      // checkerboard
+      if ( ( i / tileMap.w ) % 2 == 0 )
+      {
+         if ( ( i % tileMap.w ) % 2 == 0 )
+         {
+            tile.textureIndex = 1; // white
+         }
+         else
+         {
+            tile.textureIndex = 0; // black
+         }
+      }
+      else
+      {
+         if ( ( i % tileMap.w ) % 2 == 0 )
+         {
+            tile.textureIndex = 0; // black
+         }
+         else
+         {
+            tile.textureIndex = 1; // white
+         }
+      }
+
       bytesWritten = 0;
       result = WriteFile( hFile, &tile, sizeof( Tile_t ), &bytesWritten, NULL );
       *filePos += bytesWritten;
@@ -313,9 +336,11 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
       return False;
    }
 
-   tile.textureIndex = 2;
    for ( i = 0; i < tileMap.w * tileMap.h; i++ )
    {
+      // random texture
+      tile.textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
+
       bytesWritten = 0;
       result = WriteFile( hFile, &tile, sizeof( Tile_t ), &bytesWritten, NULL );
       *filePos += bytesWritten;

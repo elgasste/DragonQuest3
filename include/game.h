@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "common.h"
+#include "vector.h"
 
 // TODO: define these values somewhere else
 #define SCREEN_WIDTH    640
@@ -31,6 +32,8 @@ typedef struct Game_t
 
    TileMap_t *tileMaps;
    u32 tileMapCount;
+   TileMap_t* currentTileMap;
+   Vector4i32_t tileMapViewport;
 
    b32 shutdown;
 }

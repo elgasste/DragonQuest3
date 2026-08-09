@@ -55,6 +55,15 @@ void Screen_DrawBuffer( Screen_t* screen, u32* buffer, u32 bufferW, u32 bufferH,
    UNUSED_PARAM( screenY );
 }
 
+void Screen_DrawTileMapViewport( Screen_t* screen, TileMap_t* tileMap, Vector4i32_t viewport, i32 screenX, i32 screenY )
+{
+   UNUSED_PARAM( screen );
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( viewport );
+   UNUSED_PARAM( screenX );
+   UNUSED_PARAM( screenY );
+}
+
 void test_Game_Render_FillsScreenBufferWithBlack( void )
 {
    Game_t game;
