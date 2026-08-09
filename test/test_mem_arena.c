@@ -730,6 +730,71 @@ internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalFragmen
    MemArena_Destroy( &arena );
 }
 
+internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalFragments( void )
+{
+   MEMARENA_TEST_HELPER_DECLARE_ARENA();
+   MemArenaStats_t stats;
+
+   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1 );
+
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL( 0, stats.totalFragments );
+
+   MemArena_Destroy( &arena );
+}
+
+internal void test_MemArena_GetStats_OneGapBeforeFirstBlockReturnsOneForTotalFragments( void )
+{
+   MemArena_t* arena;
+   size_t arenaSize, blockSize, blockOffset;
+   MemArenaStats_t stats;
+
+   blockSize = 100;
+   arenaSize = sizeof( MemArena_t ) + ( sizeof( MemArenaBlock_t ) + blockSize ) + ( sizeof( MemArenaBlock_t ) + 10 ) + 25;
+   blockOffset = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 10;
+   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, blockOffset, blockSize );
+
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL( 1, stats.totalFragments );
+
+   MemArena_Destroy( &arena );
+}
+
+internal void test_MemArena_GetStats_GapsBeforeAndBetweenBlocksReturnTwoForTotalFragments( void )
+{
+   MemArena_t* arena;
+   size_t arenaSize, blockSize, blockOffset1, blockOffset2;
+   MemArenaStats_t stats;
+
+   blockSize = 100;
+   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) + ( ( sizeof( MemArenaBlock_t ) + 10 ) * 2 ) + 5;
+   blockOffset1 = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 10;
+   blockOffset2 = blockOffset1 + sizeof( MemArenaBlock_t ) + blockSize + sizeof( MemArenaBlock_t ) + 10;
+   arena = MemArenaTestHelper_CreateArenaWithTwoBlocksAtOffsets( arenaSize, blockOffset1, blockSize, blockOffset2, blockSize );
+
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL( 2, stats.totalFragments );
+
+   MemArena_Destroy( &arena );
+}
+
+internal void test_MemArena_GetStats_UnusableGapBeforeFirstBlockIsNotCountedAsFragment( void )
+{
+   MemArena_t* arena;
+   size_t arenaSize, blockSize, blockOffset;
+   MemArenaStats_t stats;
+
+   blockSize = 100;
+   arenaSize = sizeof( MemArena_t ) + ( sizeof( MemArenaBlock_t ) + blockSize ) + sizeof( MemArenaBlock_t );
+   blockOffset = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t );
+   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, blockOffset, blockSize );
+
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL( 0, stats.totalFragments );
+
+   MemArena_Destroy( &arena );
+}
+
 internal void test_MemArena_GetStats_OneOffsetBlockWithSpaceBeforeBlockIncludesSpaceInTotalFragmentedSpace( void )
 {
    MEMARENA_TEST_HELPER_DECLARE_ARENA();
@@ -868,6 +933,10 @@ int main( void )
    RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsEntireArenaInTotalUnallocatedSpace );
    RUN_TEST( test_MemArena_GetStats_OneOffsetBlockIncludesSpaceBeforeBlockInTotalUnallocatedSpace );
    RUN_TEST( test_MemArena_GetStats_MultipleBlocksIncludesAllEmptySpaceInTotalUnallocatedSpace );
+   RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalFragments );
+   RUN_TEST( test_MemArena_GetStats_OneGapBeforeFirstBlockReturnsOneForTotalFragments );
+   RUN_TEST( test_MemArena_GetStats_GapsBeforeAndBetweenBlocksReturnTwoForTotalFragments );
+   RUN_TEST( test_MemArena_GetStats_UnusableGapBeforeFirstBlockIsNotCountedAsFragment );
    RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalFragmentedSpace );
    RUN_TEST( test_MemArena_GetStats_OneOffsetBlockWithSpaceBeforeBlockIncludesSpaceInTotalFragmentedSpace );
    RUN_TEST( test_MemArena_GetStats_MultipleFragmentsReturnsTotalCountForTotalFragmentedSpace );

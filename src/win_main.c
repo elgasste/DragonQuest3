@@ -213,6 +213,9 @@ internal void MemArena_DumpStats( MemArena_t* memArena )
    snprintf( msg, STRING_SIZE_DEFAULT, "  total unallocated space : %zu", stats.totalUnallocatedSpace );
    Platform_Log( msg );
 
+   snprintf( msg, STRING_SIZE_DEFAULT, "  total fragments         : %zu", stats.totalFragments );
+   Platform_Log( msg );
+
    snprintf( msg, STRING_SIZE_DEFAULT, "  total fragmented space  : %zu", stats.totalFragmentedSpace );
    Platform_Log( msg );
 
