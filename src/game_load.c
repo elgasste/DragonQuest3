@@ -114,31 +114,31 @@ internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, 
 
 internal b32 GameData_LoadTileTextures( Game_t* game, u8* fileContents, u32 tileTexturesHeaderOffset )
 {
-   size_t i, textureBytes;
-   u8 *src, *dst;
+   u32 i, pixelCount;
+   u32* fileTextures;
    GameDataTileTexturesHeader_t* tileTexturesHeader;
    MemArenaResult_t memArenaResult;
    char msg[STRING_SIZE_DEFAULT];
 
    tileTexturesHeader = (GameDataTileTexturesHeader_t*)( fileContents + tileTexturesHeaderOffset );
+   pixelCount = tileTexturesHeader->count * tileTexturesHeader->tileSize * tileTexturesHeader->tileSize;
 
-   game->tileSize = tileTexturesHeader->tileSize;
-   game->tileTextureCount = tileTexturesHeader->count;
-   textureBytes = (size_t)tileTexturesHeader->count * (size_t)tileTexturesHeader->tileSize * (size_t)tileTexturesHeader->tileSize * sizeof( u32 );
-
-   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextures ), textureBytes );
+   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextureSet ), sizeof( TileTextureSet_t ) + ( sizeof( u32 ) * pixelCount ) );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile textures: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile texture set: %s", MemArena_GetErrorMessage( memArenaResult ) );
       Platform_FatalError( msg );
       return False;
    }
 
-   src = fileContents + tileTexturesHeader->texturesOffset;
-   dst = (u8*)game->tileTextures;
-   for ( i = 0; i < textureBytes; i++ )
+   game->tileTextureSet->count = tileTexturesHeader->count;
+   game->tileTextureSet->tileSize = tileTexturesHeader->tileSize;
+   game->tileTextureSet->textures = (u32*)( game->tileTextureSet + 1 );
+
+   fileTextures = (u32*)( fileContents + tileTexturesHeader->texturesOffset );
+   for ( i = 0; i < pixelCount; i++ )
    {
-      dst[i] = src[i];
+      game->tileTextureSet->textures[i] = fileTextures[i];
    }
 
    return True;

@@ -59,11 +59,8 @@ void test_Game_Render_FillsScreenBufferWithBlack( void )
 {
    Game_t game;
    Screen_t screen;
-   u32 tile[16] = { 0 };
 
    game.screen = &screen;
-   game.tileSize = 4;
-   game.tileTextures = tile;
 
    Game_Render( &game );
    TEST_ASSERT_EQUAL_PTR( &screen, g_screenFillCall.screen );
@@ -75,11 +72,8 @@ void test_Game_Render_RendersScreenBuffer( void )
 {
    Game_t game;
    Screen_t screen;
-   u32 tile[16] = { 0 };
 
    game.screen = &screen;
-   game.tileSize = 4;
-   game.tileTextures = tile;
 
    Game_Render( &game );
    TEST_ASSERT_EQUAL_PTR( &screen, g_platformRenderScreenBufferCall.screen );

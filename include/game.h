@@ -18,17 +18,21 @@ typedef struct Clock_t Clock_t;
 typedef struct Input_t Input_t;
 typedef struct Screen_t Screen_t;
 
+typedef struct TileTextureSet_t
+{
+   u32 count;
+   u32 tileSize;
+   u32* textures;
+}
+TileTextureSet_t;
+
 typedef struct Game_t
 {
    MemArena_t* memArena;
    Clock_t* clock;
    Input_t* input;
    Screen_t* screen;
-
-   // TODO: this will go in some kind of TileMap_t struct later
-   u32 tileTextureCount;
-   u32 tileSize;
-   void* tileTextures;
+   TileTextureSet_t* tileTextureSet;
 
    b32 shutdown;
 }
