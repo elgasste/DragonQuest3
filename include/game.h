@@ -7,8 +7,8 @@
 #define SCREEN_WIDTH    640
 #define SCREEN_HEIGHT   480
 
-// 512 MB
-#define GAME_MEMORY_SIZE   1024 * 1024 * 512
+// 64 MB
+#define GAME_MEMORY_SIZE   ( 1024 * 1024 * 64 )
 
 // TODO: this should probably also go somewhere else
 #define GAME_DEFAULT_FPS   60
@@ -17,14 +17,7 @@ typedef struct MemArena_t MemArena_t;
 typedef struct Clock_t Clock_t;
 typedef struct Input_t Input_t;
 typedef struct Screen_t Screen_t;
-
-typedef struct TileTextureSet_t
-{
-   u32 count;
-   u32 tileSize;
-   u32* textures;
-}
-TileTextureSet_t;
+typedef struct TileTextureSet_t TileTextureSet_t;
 
 typedef struct Game_t
 {

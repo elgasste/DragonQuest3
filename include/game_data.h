@@ -17,16 +17,8 @@ typedef struct GameDataHeader_t
 {
    char magic[4];
    GameDataVersion_t version;
-   u32 tileTexturesHeaderOffset;
+   u32 tileTextureSetOffset;
 }
 GameDataHeader_t;
-
-typedef struct GameDataTileTexturesHeader_t
-{
-   u32 count;
-   u32 tileSize;
-   u32 texturesOffset;
-}
-GameDataTileTexturesHeader_t;
 
 #endif // GAME_DATA_H

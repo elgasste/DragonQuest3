@@ -12,8 +12,9 @@ add_executable(DragonQuest3
    src/game_render.c
    src/input.c
    src/mem_arena.c
-	src/pixel_buffer.c
+   src/pixel_buffer.c
    src/screen.c
+   src/tile_map.c
 )
 
 set_property(TARGET DragonQuest3 PROPERTY COMPILE_WARNING_AS_ERROR ON)
