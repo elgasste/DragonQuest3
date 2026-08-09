@@ -17,6 +17,7 @@ typedef struct MemArena_t MemArena_t;
 typedef struct Clock_t Clock_t;
 typedef struct Input_t Input_t;
 typedef struct Screen_t Screen_t;
+typedef struct TileMap_t TileMap_t;
 typedef struct TileTextureSet_t TileTextureSet_t;
 
 typedef struct Game_t
@@ -25,7 +26,11 @@ typedef struct Game_t
    Clock_t* clock;
    Input_t* input;
    Screen_t* screen;
+
    TileTextureSet_t* tileTextureSet;
+
+   TileMap_t *tileMaps;
+   u32 tileMapCount;
 
    b32 shutdown;
 }

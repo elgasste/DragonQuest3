@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "game.h"
 #include "game_data.h"
@@ -8,6 +10,7 @@
 #include "win_common.h"
 
 internal b32 WriteTestGameDataHeader( HANDLE hFile, GameDataHeader_t* header, DWORD* filePos );
+internal void InsertUpdatedTestGameDataHeader( const char* filePath, GameDataHeader_t* header );
 internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos );
 internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos );
 
@@ -47,11 +50,9 @@ void WriteTestGameDataFile( const char* filePath )
       return;
    }
 
-   // MUFFINS: go back and re-write the header with the correct offsets (will this pre-pend?)
-   SetFilePointer( hFile, 0, NULL, FILE_BEGIN );
-   WriteTestGameDataHeader( hFile, &header, &filePos );
-
    CloseHandle( hFile );
+
+   InsertUpdatedTestGameDataHeader( filePath, &header );
 }
 
 internal b32 WriteTestGameDataHeader( HANDLE hFile, GameDataHeader_t* header, DWORD* filePos )
@@ -89,6 +90,75 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile, GameDataHeader_t* header, DW
    }
 
    return True;
+}
+
+internal void InsertUpdatedTestGameDataHeader( const char* filePath, GameDataHeader_t* header )
+{
+   HANDLE hFile;
+   LARGE_INTEGER fileSize;
+   DWORD bytesRead, bytesWritten;
+   u32 fileSize32;
+   u8* fileBytes;
+   BOOL result;
+   char msg[STRING_SIZE_DEFAULT];
+
+   hFile = CreateFileA( filePath, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+   if ( hFile == INVALID_HANDLE_VALUE )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to open test game data file for header update: %lu", GetLastError() );
+      Platform_FatalError( msg );
+      return;
+   }
+
+   GetFileSizeEx( hFile, &fileSize );
+   fileSize32 = (u32)fileSize.QuadPart;
+   fileBytes = (u8*)malloc( fileSize32 );
+
+   SetFilePointer( hFile, 0, NULL, FILE_BEGIN );
+   bytesRead = 0;
+   result = ReadFile( hFile, fileBytes, fileSize32, &bytesRead, NULL );
+   if ( !result || bytesRead != fileSize32 )
+   {
+      if ( !result )
+      {
+         snprintf( msg, STRING_SIZE_DEFAULT, "failed to read test game data file for header update: %lu", GetLastError() );
+      }
+      else
+      {
+         snprintf( msg, STRING_SIZE_DEFAULT, "failed to read test game data file for header update: read %lu of %lu bytes", bytesRead, fileSize32 );
+      }
+
+      Platform_FatalError( msg );
+      CloseHandle( hFile );
+      return;
+   }
+
+   for ( u32 i = 0; i < sizeof( GameDataHeader_t ); i++ )
+   {
+      fileBytes[i] = ((u8*)header)[i];
+   }
+
+   SetFilePointer( hFile, 0, NULL, FILE_BEGIN ) != INVALID_SET_FILE_POINTER || GetLastError() == NO_ERROR;
+   bytesWritten = 0;
+   result = WriteFile( hFile, fileBytes, fileSize32, &bytesWritten, NULL );
+   if ( !result || bytesWritten != fileSize32 )
+   {
+      if ( !result )
+      {
+         snprintf( msg, STRING_SIZE_DEFAULT, "failed to write updated test game data file contents: %lu", GetLastError() );
+      }
+      else
+      {
+         snprintf( msg, STRING_SIZE_DEFAULT, "failed to write updated test game data file contents: wrote %lu of %lu bytes", bytesWritten, fileSize32 );
+      }
+
+      Platform_FatalError( msg );
+      CloseHandle( hFile );
+      return;
+   }
+
+   free( fileBytes );
+   CloseHandle( hFile );
 }
 
 internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos )
@@ -158,12 +228,30 @@ internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos )
 
 internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
 {
-   u32 i;
+   u32 tileMapCount, i;
    DWORD bytesWritten;
    BOOL result;
    TileMap_t tileMap;
    Tile_t tile;
 
+   // write out the number of tile maps first
+   tileMapCount = 1;
+   bytesWritten = 0;
+   result = WriteFile( hFile, &tileMapCount, sizeof( u32 ), &bytesWritten, NULL );
+   *filePos += bytesWritten;
+
+   if ( !result )
+   {
+      Platform_FatalError( "failed to write test game data file tile maps." );
+      return False;
+   }
+   else if ( bytesWritten != sizeof( u32 ) )
+   {
+      Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
+      return False;
+   }
+
+   // first tile map
    tileMap.id = 0;
    tileMap.w = 10;
    tileMap.h = 10;
@@ -203,6 +291,8 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
          return False;
       }
    }
+
+   // TOOD: make another tile map with different dimensions and texture indexes
 
    return True;
 }
