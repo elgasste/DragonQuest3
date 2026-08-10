@@ -158,6 +158,23 @@ void test_Game_Init_CreatesGameWithCorrectParameters( void )
    TEST_ASSERT_EQUAL( DISPLAY_HEIGHT, g_displayInitCall.h );
 }
 
+void test_Game_Init_ResetsTileMapAndTileTextureSetFieldsToZero( void )
+{
+   Game_t game;
+
+   game.tileMaps = (TileMap_t*)0x1;
+   game.tileMapCount = 2;
+   game.currentTileMap = (TileMap_t*)0x1;
+   game.tileTextureSet = (TileTextureSet_t*)0x1;
+
+   Game_Init( &game, g_memArena );
+
+   TEST_ASSERT_NULL( game.tileMaps );
+   TEST_ASSERT_EQUAL( 0, game.tileMapCount );
+   TEST_ASSERT_NULL( game.currentTileMap );
+   TEST_ASSERT_NULL( game.tileTextureSet );
+}
+
 void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )
 {
    Game_t game;
@@ -194,6 +211,7 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_Init_CreatesGameWithCorrectParameters );
+   RUN_TEST( test_Game_Init_ResetsTileMapAndTileTextureSetFieldsToZero );
 
    RUN_TEST( test_Game_Run_StopsAfterMultipleMessageHandlerTicks );
    RUN_TEST( test_Game_Run_ResetsInputPressStatesEveryFrame );

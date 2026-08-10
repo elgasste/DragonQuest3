@@ -21,6 +21,11 @@ void Game_Init( Game_t* game, MemArena_t* memArena )
    Clock_Init( game->clock, GAME_DEFAULT_FPS );
    Input_Init( game->input );
    Display_Init( game->display, game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
+
+   game->tileMaps = 0;
+   game->tileMapCount = 0;
+   game->currentTileMap = 0;
+   game->tileTextureSet = 0;
 }
 
 void Game_Run( Game_t* game )
