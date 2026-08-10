@@ -5,11 +5,11 @@
 #include "vector.h"
 
 // TODO: define these values somewhere else
-#define DISPLAY_WIDTH    640
-#define DISPLAY_HEIGHT   480
+#define DISPLAY_WIDTH    320
+#define DISPLAY_HEIGHT   240
 
-// 64 MB
-#define GAME_MEMORY_SIZE   ( 1024 * 1024 * 64 )
+// 32 MB
+#define GAME_MEMORY_SIZE   ( 1024 * 1024 * 32 )
 
 // TODO: this should probably also go somewhere else
 #define GAME_DEFAULT_FPS   60
