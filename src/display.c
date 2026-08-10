@@ -1,29 +1,29 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
-#include "screen.h"
+#include "display.h"
 #include "tile_map.h"
 
-void Screen_Init( Screen_t* screen, MemArena_t* memArena, u32 w, u32 h )
+void Display_Init( Display_t* display, MemArena_t* memArena, u32 w, u32 h )
 {
-   PixelBuffer_Create( &( screen->buffer ), memArena, w, h );
+   PixelBuffer_Create( &( display->buffer ), memArena, w, h );
 }
 
-void Screen_Fill( Screen_t* screen, u32 color )
+void Display_Fill( Display_t* display, u32 color )
 {
-   PixelBuffer_ClearColor( screen->buffer, color );
+   PixelBuffer_ClearColor( display->buffer, color );
 }
 
-void Screen_DrawRect( Screen_t* screen, Vector4i32_t rect, u32 color )
+void Display_DrawRect( Display_t* display, Vector4i32_t rect, u32 color )
 {
    i32 r, b, row, col;
    PixelBuffer_t* buffer;
    u32* mem;
 
-   buffer = screen->buffer;
+   buffer = display->buffer;
    r = rect.x + rect.w;
    b = rect.y + rect.h;
 
-   // make sure the rect is even on the screen
+   // make sure the rect is even on the display
    if ( rect.x >= (i32)( buffer->w ) || rect.y >= (i32)( buffer->h ) || r <= 0 || b <= 0 )
    {
       return;
@@ -31,26 +31,26 @@ void Screen_DrawRect( Screen_t* screen, Vector4i32_t rect, u32 color )
 
    if ( rect.x < 0 )
    {
-      // the left side is off the screen
+      // the left side is off the display
       rect.w += rect.x;
       rect.x = 0;
    }
    if ( r > (i32)( buffer->w ) )
    {
-      // the right side is off the screen
+      // the right side is off the display
       rect.w -= ( r - buffer->w );
       r = buffer->w;
    }
 
    if ( rect.y < 0 )
    {
-      // the top side is off the screen
+      // the top side is off the display
       rect.h += rect.y;
       rect.y = 0;
    }
    if ( b > (i32)( buffer->h ) )
    {
-      // the bottom side is off the screen
+      // the bottom side is off the display
       rect.h -= ( b - buffer->h );
       b = buffer->h;
    }
@@ -68,65 +68,65 @@ void Screen_DrawRect( Screen_t* screen, Vector4i32_t rect, u32 color )
    }
 }
 
-void Screen_DrawBuffer( Screen_t* screen, u32* buffer, u32 bufferW, u32 bufferH, i32 screenX, i32 screenY )
+void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 bufferH, i32 displayX, i32 displayY )
 {
-   i32 screenR, screenB, row, col;
+   i32 displayR, displayB, row, col;
    u32 bufferOffsetL, bufferOffsetR, bufferOffsetT, bufferOffsetB;
-   PixelBuffer_t* screenBuffer;
-   u32* screenMem;
+   PixelBuffer_t* displayBuffer;
+   u32* displayMem;
 
-   screenBuffer = screen->buffer;
-   screenR = screenX + (i32)bufferW;
-   screenB = screenY + (i32)bufferH;
+   displayBuffer = display->buffer;
+   displayR = displayX + (i32)bufferW;
+   displayB = displayY + (i32)bufferH;
 
-   // make sure the rect is even on the screen
-   if ( screenX >= (i32)( screenBuffer->w ) || screenY >= (i32)( screenBuffer->h ) || screenR <= 0 || screenB <= 0 )
+   // make sure the rect is even on the display
+   if ( displayX >= (i32)( displayBuffer->w ) || displayY >= (i32)( displayBuffer->h ) || displayR <= 0 || displayB <= 0 )
    {
       return;
    }
 
    bufferOffsetL = 0;
    bufferOffsetR = 0;
-   if ( screenX < 0 )
+   if ( displayX < 0 )
    {
-      // the left side is off the screen
-      bufferOffsetL += -screenX;
-      screenX = 0;
+      // the left side is off the display
+      bufferOffsetL += -displayX;
+      displayX = 0;
    }
-   if ( screenR > (i32)( screenBuffer->w ) )
+   if ( displayR > (i32)( displayBuffer->w ) )
    {
-      // the right side is off the screen
-      bufferOffsetR += ( screenR - screenBuffer->w );
+      // the right side is off the display
+      bufferOffsetR += ( displayR - displayBuffer->w );
    }
 
    bufferOffsetT = 0;
    bufferOffsetB = 0;
-   if ( screenY < 0 )
+   if ( displayY < 0 )
    {
-      // the top side is off the screen
-      bufferOffsetT += -screenY;
-      screenY = 0;
+      // the top side is off the display
+      bufferOffsetT += -displayY;
+      displayY = 0;
    }
-   if ( screenB > (i32)( screenBuffer->h ) )
+   if ( displayB > (i32)( displayBuffer->h ) )
    {
-      // the bottom side is off the screen
-      bufferOffsetB += ( screenB - screenBuffer->h );
+      // the bottom side is off the display
+      bufferOffsetB += ( displayB - displayBuffer->h );
    }
 
-   screenMem = screenBuffer->mem + ( ( screenY * screenBuffer->w ) + screenX );
+   displayMem = displayBuffer->mem + ( ( displayY * displayBuffer->w ) + displayX );
    for ( row = bufferOffsetT; row < (i32)( bufferH - bufferOffsetB ); row++ )
    {
       for ( col = bufferOffsetL; col < (i32)( bufferW - bufferOffsetR ); col++ )
       {
-         *screenMem = buffer[( row * bufferW ) + col];
-         screenMem++;
+         *displayMem = buffer[( row * bufferW ) + col];
+         displayMem++;
       }
 
-      screenMem += ( screenBuffer->w - ( bufferW - bufferOffsetL - bufferOffsetR ) );
+      displayMem += ( displayBuffer->w - ( bufferW - bufferOffsetL - bufferOffsetR ) );
    }
 }
 
-void Screen_DrawTileMapViewport( Screen_t* screen, TileMap_t* tileMap, Vector4i32_t viewport, i32 screenX, i32 screenY )
+void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector4i32_t viewport, i32 displayX, i32 displayY )
 {
    i32 tileX, tileY, viewportR, viewportB;
    i32 tileWorldX, tileWorldY, drawX, drawY;
@@ -172,9 +172,9 @@ void Screen_DrawTileMapViewport( Screen_t* screen, TileMap_t* tileMap, Vector4i3
          tile = &( tileMap->tiles[tileIndex] );
 
          texture = textureSet->textures + ( tile->textureIndex * tileSize * tileSize );
-         drawX = screenX + ( tileWorldX - viewport.x );
-         drawY = screenY + ( tileWorldY - viewport.y );
-         Screen_DrawBuffer( screen, texture, tileSize, tileSize, drawX, drawY );
+         drawX = displayX + ( tileWorldX - viewport.x );
+         drawY = displayY + ( tileWorldY - viewport.y );
+         Display_DrawBuffer( display, texture, tileSize, tileSize, drawX, drawY );
       }
    }
 

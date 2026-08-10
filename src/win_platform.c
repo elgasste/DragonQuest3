@@ -80,9 +80,9 @@ void Platform_HandleMessages( Game_t* game )
    }
 }
 
-void Platform_RenderScreenBuffer( Screen_t* screen )
+void Platform_RenderDisplayBuffer( Display_t* display )
 {
-   UNUSED_PARAM( screen );
+   UNUSED_PARAM( display );
    
    InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
 }

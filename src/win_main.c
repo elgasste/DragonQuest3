@@ -2,12 +2,12 @@
 #include <stdio.h>
 
 #include "clock.h"
+#include "display.h"
 #include "game.h"
 #include "input.h"
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "platform.h"
-#include "screen.h"
 #include "tile_map.h"
 #include "win_common.h"
 
@@ -92,8 +92,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.game->currentTileMap = g_winGlobals.game->tileMaps;
    g_winGlobals.game->tileMapViewport.x = 0;
    g_winGlobals.game->tileMapViewport.y = 0;
-   g_winGlobals.game->tileMapViewport.w = SCREEN_WIDTH;
-   g_winGlobals.game->tileMapViewport.h = SCREEN_HEIGHT;
+   g_winGlobals.game->tileMapViewport.w = DISPLAY_WIDTH;
+   g_winGlobals.game->tileMapViewport.h = DISPLAY_HEIGHT;
 
    mainWindowClass.cbClsExtra = 0;
    mainWindowClass.cbWndExtra = 0;
@@ -115,8 +115,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    expectedWindowRect.left = 0;
    expectedWindowRect.top = 0;
-   expectedWindowRect.right = SCREEN_WIDTH;
-   expectedWindowRect.bottom = SCREEN_HEIGHT;
+   expectedWindowRect.right = DISPLAY_WIDTH;
+   expectedWindowRect.bottom = DISPLAY_HEIGHT;
 
    windowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE;
    if ( !AdjustWindowRect( &expectedWindowRect, windowStyle, 0 ) )
@@ -125,8 +125,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       return 1;
    }
 
-   g_winGlobals.clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - SCREEN_WIDTH;
-   g_winGlobals.clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - SCREEN_HEIGHT;
+   g_winGlobals.clientPaddingRight = ( expectedWindowRect.right - expectedWindowRect.left ) - DISPLAY_WIDTH;
+   g_winGlobals.clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - DISPLAY_HEIGHT;
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
    g_winGlobals.showDiagnostics = False;
@@ -138,8 +138,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             windowStyle,
                                             CW_USEDEFAULT,
                                             CW_USEDEFAULT,
-                                            (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight,
-                                            (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
+                                            (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight,
+                                            (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
                                             0,
                                             0,
                                             hInstance,
@@ -160,8 +160,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                      "Consolas" );
 
    g_winGlobals.bmpInfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.game->screen->buffer->w;
-   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.game->screen->buffer->h );
+   g_winGlobals.bmpInfo.bmiHeader.biWidth = g_winGlobals.game->display->buffer->w;
+   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( g_winGlobals.game->display->buffer->h );
    g_winGlobals.bmpInfo.bmiHeader.biPlanes = 1;
    g_winGlobals.bmpInfo.bmiHeader.biBitCount = 32;
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
@@ -290,8 +290,8 @@ internal void RenderScreen( void )
    PAINTSTRUCT ps;
    int winWidth, winHeight;
 
-   winWidth = (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale );
-   winHeight = (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale );
+   winWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale );
+   winHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale );
 
    dc = BeginPaint( g_winGlobals.hWndMain, &ps );
 
@@ -303,8 +303,8 @@ internal void RenderScreen( void )
    // actually draw everything
    StretchDIBits( dcMem,
                   0, 0, winWidth, winHeight, // dest
-                  0, 0, g_winGlobals.game->screen->buffer->w, g_winGlobals.game->screen->buffer->h, // src
-                  g_winGlobals.game->screen->buffer->mem,
+                  0, 0, g_winGlobals.game->display->buffer->w, g_winGlobals.game->display->buffer->h, // src
+                  g_winGlobals.game->display->buffer->mem,
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
 
@@ -619,8 +619,8 @@ internal void ResizeScreen( b32 increase )
       SetWindowPos( g_winGlobals.hWndMain,
                     NULL, // No change in Z-order
                     0, 0, // No change in position
-                    (int)( SCREEN_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
-                    (int)( SCREEN_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
+                    (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
+                    (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
                     SWP_NOMOVE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS); 
    }
 }
