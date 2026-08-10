@@ -5,11 +5,12 @@
 #include "game_data.h"
 #include "mem_arena.h"
 #include "platform.h"
+#include "tile_map.h"
 #include "version.h"
 
 internal b32 GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize );
-internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, u32 tileTexturesHeaderOffset );
-internal b32 GameData_LoadTileTextures( Game_t* game, u8* fileContents, u32 tileTexturesHeaderOffset );
+internal b32 GameData_LoadTileTextureSet( Game_t* game, u8* fileContents, u32 fileSize, u32 tileTextureSetOffset );
+internal b32 GameData_LoadTileMaps( Game_t* game, u8* fileContents, u32 fileSize, u32 tileMapsOffset );
 
 void Game_LoadFromFile( Game_t* game, const char* filePath )
 {
@@ -31,13 +32,14 @@ void Game_LoadFromFile( Game_t* game, const char* filePath )
    }
 
    header = (GameDataHeader_t*)fileContents;
-   if ( !GameData_VerifyTileTexturesHeader( fileContents, fileSize, header->tileTexturesHeaderOffset ) )
+
+   if ( !GameData_LoadTileTextureSet( game, fileContents, fileSize, header->tileTextureSetOffset ) )
    {
       MemArena_Free( game->memArena, fileContents );
       return;
    }
 
-   if ( !GameData_LoadTileTextures( game, fileContents, header->tileTexturesHeaderOffset ) )
+   if ( !GameData_LoadTileMaps( game, fileContents, fileSize, header->tileMapsOffset ) )
    {
       MemArena_Free( game->memArena, fileContents );
       return;
@@ -71,7 +73,7 @@ internal b32 GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
       return False;
    }
 
-   if ( header->tileTexturesHeaderOffset >= fileSize )
+   if ( header->tileTextureSetOffset >= fileSize )
    {
       Platform_FatalError( "game data file has an invalid tile textures offset." );
       return False;
@@ -80,65 +82,120 @@ internal b32 GameData_VerifyHeaderAndVersion( u8* fileContents, u32 fileSize )
    return True;
 }
 
-internal b32 GameData_VerifyTileTexturesHeader( u8* fileContents, u32 fileSize, u32 tileTexturesHeaderOffset )
+internal b32 GameData_LoadTileTextureSet( Game_t* game, u8* fileContents, u32 fileSize, u32 tileTextureSetOffset )
 {
-   u32 expectedTexturesSize;
-   GameDataTileTexturesHeader_t* tileTexturesHeader;
+   u32 i, pixelCount, expectedTexturesSize;
+   TileTextureSet_t* fileTextureSet;
+   u32* fileTextures;
+   MemArenaResult_t memArenaResult;
+   char msg[STRING_SIZE_DEFAULT];
 
-   if ( ( tileTexturesHeaderOffset + sizeof( GameDataTileTexturesHeader_t ) ) > fileSize )
+   if ( ( tileTextureSetOffset + sizeof( TileTextureSet_t ) ) > fileSize )
    {
-      Platform_FatalError( "game data file is too small to contain a valid tile textures header." );
+      Platform_FatalError( "game data file is too small to contain a valid tile texture set." );
       return False;
    }
 
-   tileTexturesHeader = (GameDataTileTexturesHeader_t*)( fileContents + tileTexturesHeaderOffset );
+   fileTextureSet = (TileTextureSet_t*)( fileContents + tileTextureSetOffset );
+   pixelCount = fileTextureSet->count * fileTextureSet->tileSize * fileTextureSet->tileSize;
 
-   if ( tileTexturesHeader->texturesOffset >= fileSize )
+   if ( fileTextureSet->count > 0 )
    {
-      Platform_FatalError( "game data file has an invalid textures offset." );
-      return False;
-   }
-
-   if ( tileTexturesHeader->count > 0 )
-   {
-      expectedTexturesSize = tileTexturesHeader->count * tileTexturesHeader->tileSize * tileTexturesHeader->tileSize * sizeof( u32 );
-      if ( ( tileTexturesHeader->texturesOffset + expectedTexturesSize ) > fileSize )
+      expectedTexturesSize = pixelCount * sizeof( u32 );
+      if ( ( tileTextureSetOffset + sizeof( TileTextureSet_t ) + expectedTexturesSize ) > fileSize )
       {
          Platform_FatalError( "game data file is too small to contain all tile textures." );
          return False;
       }
    }
 
-   return True;
-}
-
-internal b32 GameData_LoadTileTextures( Game_t* game, u8* fileContents, u32 tileTexturesHeaderOffset )
-{
-   size_t i, textureBytes;
-   u8 *src, *dst;
-   GameDataTileTexturesHeader_t* tileTexturesHeader;
-   MemArenaResult_t memArenaResult;
-   char msg[STRING_SIZE_DEFAULT];
-
-   tileTexturesHeader = (GameDataTileTexturesHeader_t*)( fileContents + tileTexturesHeaderOffset );
-
-   game->tileSize = tileTexturesHeader->tileSize;
-   game->tileTextureCount = tileTexturesHeader->count;
-   textureBytes = (size_t)tileTexturesHeader->count * (size_t)tileTexturesHeader->tileSize * (size_t)tileTexturesHeader->tileSize * sizeof( u32 );
-
-   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextures ), textureBytes );
+   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextureSet ), sizeof( TileTextureSet_t ) + ( sizeof( u32 ) * pixelCount ) );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile textures: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile texture set: %s", MemArena_GetErrorMessage( memArenaResult ) );
       Platform_FatalError( msg );
       return False;
    }
 
-   src = fileContents + tileTexturesHeader->texturesOffset;
-   dst = (u8*)game->tileTextures;
-   for ( i = 0; i < textureBytes; i++ )
+   game->tileTextureSet->count = fileTextureSet->count;
+   game->tileTextureSet->tileSize = fileTextureSet->tileSize;
+   game->tileTextureSet->textures = (u32*)( game->tileTextureSet + 1 );
+
+   fileTextures = (u32*)( fileContents + tileTextureSetOffset + sizeof( TileTextureSet_t ) );
+   for ( i = 0; i < pixelCount; i++ )
    {
-      dst[i] = src[i];
+      game->tileTextureSet->textures[i] = fileTextures[i];
+   }
+
+   return True;
+}
+
+internal b32 GameData_LoadTileMaps( Game_t* game, u8* fileContents, u32 fileSize, u32 tileMapsOffset )
+{
+   u32 i;
+   size_t totalTileMapsSize;
+   u8 *filePos;
+   TileMap_t *fileTileMap;
+   MemArenaResult_t memArenaResult;
+   char msg[STRING_SIZE_DEFAULT];
+
+   if ( ( tileMapsOffset + sizeof( u32 ) ) > fileSize )
+   {
+      Platform_FatalError( "game data file is too small to contain any tile maps." );
+      return False;
+   }
+
+   game->tileMapCount = *(u32*)( fileContents + tileMapsOffset );
+   filePos = fileContents + tileMapsOffset + sizeof( u32 );
+   totalTileMapsSize = 0;
+
+   // first pass: calculate how much space we need to allocate for all the tile maps
+   for ( i = 0; i < game->tileMapCount; i++ )
+   {
+      if ( ( filePos + sizeof( TileMap_t ) ) > fileContents + fileSize )
+      {
+         Platform_FatalError( "game data file is too small to contain all tile maps." );
+         return False;
+      }
+
+      fileTileMap = (TileMap_t*)filePos;
+      totalTileMapsSize += sizeof( TileMap_t );
+      filePos += sizeof( TileMap_t );
+
+      if ( ( filePos + ( sizeof( Tile_t ) * fileTileMap->w * fileTileMap->h ) ) > fileContents + fileSize )
+      {
+         Platform_FatalError( "game data file is too small to contain all tiles for a tile map." );
+         return False;
+      }
+
+      totalTileMapsSize += sizeof( Tile_t ) * fileTileMap->w * fileTileMap->h;
+      filePos += sizeof( Tile_t ) * fileTileMap->w * fileTileMap->h;
+   }
+
+   // second pass: allocate memory
+   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileMaps ), sizeof( TileMap_t ) * game->tileMapCount );
+   if ( memArenaResult != MemArenaResult_Success )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile maps: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      Platform_FatalError( msg );
+      return False;
+   }
+
+   filePos = fileContents + tileMapsOffset + sizeof( u32 );
+   for ( i = 0; i < game->tileMapCount; i++ )
+   {
+      fileTileMap = (TileMap_t*)filePos;
+      game->tileMaps[i].id = fileTileMap->id;
+      game->tileMaps[i].w = fileTileMap->w;
+      game->tileMaps[i].h = fileTileMap->h;
+      game->tileMaps[i].tileTextureSet = game->tileTextureSet;
+
+      filePos += sizeof( TileMap_t );
+
+      size_t tileCount = fileTileMap->w * fileTileMap->h;
+      game->tileMaps[i].tiles = (Tile_t*)filePos;
+
+      filePos += sizeof( Tile_t ) * tileCount;
    }
 
    return True;

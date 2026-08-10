@@ -7,13 +7,14 @@ include_directories(src)
 
 add_executable(DragonQuest3
    src/clock.c
+   src/display.c
    src/game.c
    src/game_load.c
    src/game_render.c
    src/input.c
    src/mem_arena.c
-	src/pixel_buffer.c
-   src/screen.c
+   src/pixel_buffer.c
+   src/tile_map.c
 )
 
 set_property(TARGET DragonQuest3 PROPERTY COMPILE_WARNING_AS_ERROR ON)

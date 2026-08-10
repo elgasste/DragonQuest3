@@ -1,8 +1,8 @@
 #include "clock.h"
+#include "display.h"
 #include "game.h"
 #include "mem_arena.h"
 #include "platform.h"
-#include "screen.h"
 #include "unity.h"
 
 typedef struct InputInitCall_t
@@ -19,15 +19,15 @@ typedef struct InputResetPressStatesCall_t
 }
 InputResetPressStatesCall_t;
 
-typedef struct ScreenInitCall_t
+typedef struct DisplayInitCall_t
 {
-   Screen_t* screen;
+   Display_t* display;
    MemArena_t* memArena;
    u32 w;
    u32 h;
    int callCount;
 }
-ScreenInitCall_t;
+DisplayInitCall_t;
 
 typedef struct GameRenderCall_t
 {
@@ -39,7 +39,7 @@ GameRenderCall_t;
 local_persist int g_clockInitCallCount;
 local_persist InputInitCall_t g_inputInitCall;
 local_persist InputResetPressStatesCall_t g_inputResetPressStatesCall;
-local_persist ScreenInitCall_t g_screenInitCall;
+local_persist DisplayInitCall_t g_displayInitCall;
 local_persist int g_clockStartFrameCallCount;
 local_persist int g_platformHandleMessagesCallCount;
 local_persist GameRenderCall_t g_gameRenderCall;
@@ -54,11 +54,11 @@ void setUp( void )
    g_inputInitCall.callCount = 0;
    g_inputResetPressStatesCall.input = 0;
    g_inputResetPressStatesCall.callCount = 0;
-   g_screenInitCall.screen = 0;
-   g_screenInitCall.memArena = 0;
-   g_screenInitCall.w = 0;
-   g_screenInitCall.h = 0;
-   g_screenInitCall.callCount = 0;
+   g_displayInitCall.display = 0;
+   g_displayInitCall.memArena = 0;
+   g_displayInitCall.w = 0;
+   g_displayInitCall.h = 0;
+   g_displayInitCall.callCount = 0;
    g_clockStartFrameCallCount = 0;
    g_platformHandleMessagesCallCount = 0;
    g_gameRenderCall.game = 0;
@@ -110,13 +110,13 @@ void Clock_EndFrame( Clock_t* clock )
    g_clockEndFrameCallCount++;
 }
 
-void Screen_Init( Screen_t* screen, MemArena_t* memArena, u32 w, u32 h )
+void Display_Init( Display_t* display, MemArena_t* memArena, u32 w, u32 h )
 {
-   g_screenInitCall.screen = screen;
-   g_screenInitCall.memArena = memArena;
-   g_screenInitCall.w = w;
-   g_screenInitCall.h = h;
-   g_screenInitCall.callCount++;
+   g_displayInitCall.display = display;
+   g_displayInitCall.memArena = memArena;
+   g_displayInitCall.w = w;
+   g_displayInitCall.h = h;
+   g_displayInitCall.callCount++;
 }
 
 void Game_Render( Game_t* game )
@@ -151,11 +151,11 @@ void test_Game_Init_CreatesGameWithCorrectParameters( void )
    TEST_ASSERT_EQUAL( 1, g_clockInitCallCount );
    TEST_ASSERT_EQUAL_PTR( game.input, g_inputInitCall.input );
    TEST_ASSERT_EQUAL( 1, g_inputInitCall.callCount );
-   TEST_ASSERT_EQUAL( 1, g_screenInitCall.callCount );
-   TEST_ASSERT_EQUAL_PTR( game.screen, g_screenInitCall.screen );
-   TEST_ASSERT_EQUAL_PTR( g_memArena, g_screenInitCall.memArena );
-   TEST_ASSERT_EQUAL( SCREEN_WIDTH, g_screenInitCall.w );
-   TEST_ASSERT_EQUAL( SCREEN_HEIGHT, g_screenInitCall.h );
+   TEST_ASSERT_EQUAL( 1, g_displayInitCall.callCount );
+   TEST_ASSERT_EQUAL_PTR( game.display, g_displayInitCall.display );
+   TEST_ASSERT_EQUAL_PTR( g_memArena, g_displayInitCall.memArena );
+   TEST_ASSERT_EQUAL( DISPLAY_WIDTH, g_displayInitCall.w );
+   TEST_ASSERT_EQUAL( DISPLAY_HEIGHT, g_displayInitCall.h );
 }
 
 void test_Game_Run_StopsAfterMultipleMessageHandlerTicks( void )

@@ -1,28 +1,26 @@
 #include <stdio.h>
 
 #include "clock.h"
+#include "display.h"
 #include "game.h"
 #include "input.h"
 #include "mem_arena.h"
 #include "platform.h"
-#include "screen.h"
 
-internal b32 Game_AllocObjects( Game_t* game );
+internal b32 Game_AllocInfrastructure( Game_t* game );
 
 void Game_Init( Game_t* game, MemArena_t* memArena )
 {
    game->memArena = memArena;
 
-   if ( !Game_AllocObjects( game ) )
+   if ( !Game_AllocInfrastructure( game ) )
    {
-      // the game should shut down if we've reached this point, but we still
-      // need to do this so the unit tests won't fail.
       return;
    }
 
    Clock_Init( game->clock, GAME_DEFAULT_FPS );
    Input_Init( game->input );
-   Screen_Init( game->screen, game->memArena, SCREEN_WIDTH, SCREEN_HEIGHT );
+   Display_Init( game->display, game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
 }
 
 void Game_Run( Game_t* game )
@@ -48,7 +46,7 @@ void Game_Stop( Game_t* game )
    game->shutdown = True;
 }
 
-internal b32 Game_AllocObjects( Game_t* game )
+internal b32 Game_AllocInfrastructure( Game_t* game )
 {
    MemArenaResult_t memArenaResult;
    char msg[STRING_SIZE_DEFAULT];
@@ -69,10 +67,10 @@ internal b32 Game_AllocObjects( Game_t* game )
       return False;
    }
 
-   memArenaResult = MemArena_Alloc( game->memArena, &game->screen, sizeof( Screen_t ) );
+   memArenaResult = MemArena_Alloc( game->memArena, &game->display, sizeof( Display_t ) );
    if ( memArenaResult != MemArenaResult_Success )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for screen: %s", MemArena_GetErrorMessage( memArenaResult ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for display: %s", MemArena_GetErrorMessage( memArenaResult ) );
       Platform_FatalError( msg );
       return False;
    }
