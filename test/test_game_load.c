@@ -144,6 +144,7 @@ internal void SetupValidMockGameDataFile( void )
    g_mockGameDataFile.tileMap.id = 0;
    g_mockGameDataFile.tileMap.w = 1;
    g_mockGameDataFile.tileMap.h = 1;
+   g_mockGameDataFile.tileMap.wraps = False;
    g_mockGameDataFile.tileMap.tiles = 0;
    g_mockGameDataFile.tileMap.tileTextureSet = 0;
    g_mockGameDataFile.tileData[0].textureIndex = 0;
@@ -408,6 +409,7 @@ void test_Game_LoadFromFile_ZeroTileTextureCountDoesNotRequireTexturePayload( vo
    tileMap->id = 0;
    tileMap->w = 1;
    tileMap->h = 1;
+   tileMap->wraps = False;
    tileMap->tiles = 0;
    tileMap->tileTextureSet = 0;
 

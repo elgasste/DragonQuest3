@@ -254,6 +254,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
    tileMap.id = 0;
    tileMap.w = 10;
    tileMap.h = 10;
+   tileMap.wraps = False;
    tileMap.tiles = 0;
    tileMap.tileTextureSet = 0;
 
@@ -318,6 +319,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos )
    tileMap.id = 1;
    tileMap.w = 256;
    tileMap.h = 256;
+   tileMap.wraps = True;
    tileMap.tiles = 0;
    tileMap.tileTextureSet = 0;
 

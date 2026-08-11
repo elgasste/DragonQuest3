@@ -188,6 +188,7 @@ internal b32 GameData_LoadTileMaps( Game_t* game, u8* fileContents, u32 fileSize
       game->tileMaps[i].id = fileTileMap->id;
       game->tileMaps[i].w = fileTileMap->w;
       game->tileMaps[i].h = fileTileMap->h;
+      game->tileMaps[i].wraps = fileTileMap->wraps;
       game->tileMaps[i].tileTextureSet = game->tileTextureSet;
 
       filePos += sizeof( TileMap_t );
