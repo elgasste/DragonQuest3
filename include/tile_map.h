@@ -3,13 +3,7 @@
 
 #include "common.h"
 
-typedef struct TileTextureSet_t
-{
-   u32 count;
-   u32 tileSize;
-   u32* textures;
-}
-TileTextureSet_t;
+typedef struct TileTextureSet_t TileTextureSet_t;
 
 typedef struct Tile_t
 {
@@ -27,5 +21,7 @@ typedef struct TileMap_t
    TileTextureSet_t* tileTextureSet;
 }
 TileMap_t;
+
+void TileMap_Cleanup( TileMap_t* tileMap, MemArena_t* memArena );
 
 #endif // TILE_MAP_H

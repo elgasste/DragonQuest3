@@ -50,12 +50,6 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    Platform_Log( "----------------- LAUNCH -----------------" );
 
    memArena = CreateMemArena();
-   memArenaResult = MemArena_Alloc( memArena, (void**)&( g_winGlobals.game ), sizeof( Game_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      Platform_FatalError( "failed to allocate memory for game object." );
-      return 1;
-   }
 
    memArenaResult = MemArena_Alloc( memArena, (void**)&( g_winGlobals.buttonMap ), sizeof( u32 ) * InputButton_Count );
    if ( memArenaResult != MemArenaResult_Success )
@@ -85,11 +79,9 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    WriteTestGameDataFile( gameDataPath );
 
    InitButtonMap();
-   Game_Init( g_winGlobals.game, memArena ); // does not transfer ownership of memory arena
-   Game_LoadFromFile( g_winGlobals.game, gameDataPath );
+   Game_Create( &( g_winGlobals.game ), memArena, gameDataPath ); // does not transfer ownership of memory arena
 
    // TODO: all of this will go somewhere eventually, this is just for testing
-   g_winGlobals.game->currentTileMap = g_winGlobals.game->tileMaps;
    g_winGlobals.game->tileMapViewport.x = 0;
    g_winGlobals.game->tileMapViewport.y = 0;
    g_winGlobals.game->tileMapViewport.w = DISPLAY_WIDTH;
@@ -167,6 +159,15 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
 
    Game_Run( g_winGlobals.game );
+   
+   Game_Destroy( &( g_winGlobals.game ) );
+   MemArena_Free( memArena, g_winGlobals.buttonMap );
+
+   if ( memArena->firstBlock || memArena->lastBlock )
+   {
+      Platform_Log( "WARNING: possible leak in memory arena, not all memory was freed on close." );
+      MemArena_DumpStats( memArena );
+   }
 
    MemArena_Destroy( &( memArena ) );
    Platform_Log( "-----------------  EXIT  -----------------" );

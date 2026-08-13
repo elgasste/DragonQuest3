@@ -1,519 +1,395 @@
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "file.h"
 #include "game.h"
 #include "game_data.h"
 #include "mem_arena.h"
+#include "platform.h"
 #include "tile_map.h"
+#include "tile_texture_set.h"
 #include "unity.h"
 #include "version.h"
 
-#define MAX_PATH 260
-#define MOCK_TILE_TEXTURE_COUNT 1
-#define MOCK_TILE_TEXTURE_SIZE 8
-#define MOCK_TILE_TEXTURE_BYTES ( MOCK_TILE_TEXTURE_COUNT * MOCK_TILE_TEXTURE_SIZE * MOCK_TILE_TEXTURE_SIZE * sizeof( u32 ) )
-
-typedef struct PlatformLoadFileToMemoryCall_t
+PACKED_STRUCT
+typedef struct TestGameDataMetaData_t
 {
-   char filePath[MAX_PATH];
-   MemArena_t* memArena;
-   u32* bytesRead;
-   int callCount;
+   char magic[4];
+   GameDataVersion_t version;
+   i32 tileTextureSetOffset;
+   i32 tileMapsOffset;
 }
-PlatformLoadFileToMemoryCall_t;
+TestGameDataMetaData_t;
+END_PACKED_STRUCT
 
-typedef struct MockGameDataFile_t
+typedef struct TestGameLoadState_t
 {
-   GameDataHeader_t header;
-   TileTextureSet_t tileTextureSet;
-   u8 textureData[MOCK_TILE_TEXTURE_BYTES];
-   u32 tileMapCount;
-   TileMap_t tileMap;
-   Tile_t tileData[1];
+   u8* fileData;
+   i32 fileSize;
+   i32 fileCursor;
+   int allocationCount;
+   int allocationFailureAt;
+   int freeCount;
+   int fatalErrorCount;
+   int openFileCount;
+   int readCount;
+   int seekCount;
+   const char* fatalErrorMessage;
 }
-MockGameDataFile_t;
+TestGameLoadState_t;
 
-local_persist PlatformLoadFileToMemoryCall_t g_platformLoadFileToMemoryCall;
-local_persist u8* g_mockFileContents;
-local_persist u32 g_mockFileSize;
-local_persist u32 g_fatalErrorCallCount;
-local_persist u32 g_memArenaFreeCallCount;
-local_persist void* g_lastMemArenaAlloc;
-local_persist MockGameDataFile_t g_mockGameDataFile;
+local_persist TestGameLoadState_t g_state;
 
 void setUp( void )
 {
-   if ( g_lastMemArenaAlloc )
-   {
-      free( g_lastMemArenaAlloc );
-      g_lastMemArenaAlloc = 0;
-   }
-
-   g_platformLoadFileToMemoryCall.filePath[0] = '\0';
-   g_platformLoadFileToMemoryCall.memArena = 0;
-   g_platformLoadFileToMemoryCall.bytesRead = 0;
-   g_platformLoadFileToMemoryCall.callCount = 0;
-   g_mockFileContents = 0;
-   g_mockFileSize = 0;
-   g_fatalErrorCallCount = 0;
-   g_memArenaFreeCallCount = 0;
+   memset( &g_state, 0, sizeof( g_state ) );
 }
 
-void tearDown( void )
+void tearDown( void ) {}
+
+internal void TestGameLoad_FreeGameData( Game_t* game )
 {
-   if ( g_lastMemArenaAlloc )
+   if ( !game->gameData )
    {
-      free( g_lastMemArenaAlloc );
-      g_lastMemArenaAlloc = 0;
+      return;
    }
+
+   free( game->gameData->file );
+   free( game->gameData->tileMapFileOffsets );
+   free( game->gameData );
+   game->gameData = 0;
+}
+
+internal void TestGameLoad_FreeGameResources( Game_t* game )
+{
+   if ( game->tileMap )
+   {
+      free( game->tileMap->tiles );
+      free( game->tileMap );
+      game->tileMap = 0;
+   }
+   if ( game->tileTextureSet )
+   {
+      free( game->tileTextureSet->textures );
+      free( game->tileTextureSet );
+      game->tileTextureSet = 0;
+   }
+   TestGameLoad_FreeGameData( game );
+}
+
+internal void TestGameLoad_Write( i32 offset, const void* data, size_t size )
+{
+   memcpy( g_state.fileData + offset, data, size );
+}
+
+internal void TestGameLoad_CreateValidFile( void )
+{
+   TestGameDataMetaData_t metaData;
+   TileTextureSet_t textureSet;
+   GameDataTileMapFileOffset_t mapOffsets[2];
+   TileMap_t tileMap;
+   Tile_t tiles[2];
+   i32 textureOffset;
+   i32 mapsOffset;
+   i32 tileMapOffset;
+   u32 mapCount;
+   u32 textures[8];
+
+   textureOffset = sizeof( TestGameDataMetaData_t );
+   mapsOffset = textureOffset + sizeof( TileTextureSet_t ) + ( 2 * 2 * 2 * sizeof( u32 ) );
+   tileMapOffset = mapsOffset + sizeof( u32 ) + ( 2 * sizeof( GameDataTileMapFileOffset_t ) );
+   g_state.fileSize = tileMapOffset + sizeof( TileMap_t ) + sizeof( tiles );
+   g_state.fileData = (u8*)calloc( 1, g_state.fileSize );
+
+   memcpy( metaData.magic, GAME_DATA_MAGIC, sizeof( metaData.magic ) );
+   metaData.version.major = GAME_VERSION_MAJOR;
+   metaData.version.minor = GAME_VERSION_MINOR;
+   metaData.version.maint = GAME_VERSION_MAINT;
+   metaData.tileTextureSetOffset = textureOffset;
+   metaData.tileMapsOffset = mapsOffset;
+   TestGameLoad_Write( 0, &metaData, sizeof( metaData ) );
+
+   textureSet.count = 2;
+   textureSet.tileSize = 2;
+   textureSet.textures = 0;
+   TestGameLoad_Write( textureOffset, &textureSet, sizeof( textureSet ) );
+   textures[0] = 1;
+   textures[1] = 2;
+   textures[2] = 3;
+   textures[3] = 4;
+   textures[4] = 5;
+   textures[5] = 6;
+   textures[6] = 7;
+   textures[7] = 8;
+   TestGameLoad_Write( textureOffset + sizeof( textureSet ), textures, sizeof( textures ) );
+
+   mapCount = 2;
+   TestGameLoad_Write( mapsOffset, &mapCount, sizeof( mapCount ) );
+   mapOffsets[0].id = 7;
+   mapOffsets[0].offset = tileMapOffset;
+   mapOffsets[1].id = 9;
+   mapOffsets[1].offset = tileMapOffset;
+   TestGameLoad_Write( mapsOffset + sizeof( u32 ), mapOffsets, sizeof( mapOffsets ) );
+
+   tileMap.id = 9;
+   tileMap.w = 2;
+   tileMap.h = 1;
+   tileMap.wraps = True;
+   tileMap.tiles = 0;
+   tileMap.tileTextureSet = 0;
+   tiles[0].textureIndex = 1;
+   tiles[1].textureIndex = 0;
+   TestGameLoad_Write( tileMapOffset, &tileMap, sizeof( tileMap ) );
+   TestGameLoad_Write( tileMapOffset + sizeof( tileMap ), tiles, sizeof( tiles ) );
+}
+
+internal void TestGameLoad_CreateGame( Game_t* game )
+{
+   memset( game, 0, sizeof( *game ) );
+   game->memArena = (MemArena_t*)1;
+}
+
+internal void TestGameLoad_DisposeFixture( void )
+{
+   free( g_state.fileData );
+   g_state.fileData = 0;
+}
+
+const char* MemArena_GetErrorMessage( MemArenaResult_t result )
+{
+   UNUSED_PARAM( result );
+   return "stubbed memory arena error";
 }
 
 MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
 {
    UNUSED_PARAM( arena );
 
-   if ( !user )
+   g_state.allocationCount++;
+   if ( g_state.allocationCount == g_state.allocationFailureAt )
    {
       return MemArenaResult_OutOfMemory;
    }
 
-   g_lastMemArenaAlloc = malloc( size );
-   if ( !g_lastMemArenaAlloc )
-   {
-      return MemArenaResult_OutOfMemory;
-   }
-
-   *user = g_lastMemArenaAlloc;
-
-   return MemArenaResult_Success;
+   *user = calloc( 1, size );
+   return *user ? MemArenaResult_Success : MemArenaResult_SystemMemoryAllocFailed;
 }
 
-const char* MemArena_GetErrorMessage( MemArenaResult_t result )
+void MemArena_Free( MemArena_t* arena, void* mem )
 {
-   UNUSED_PARAM( result );
-   return "mock mem arena error";
+   UNUSED_PARAM( arena );
+   if ( mem )
+   {
+      g_state.freeCount++;
+      free( mem );
+   }
 }
 
-void MemArena_Free( MemArena_t* memArena, void* ptr )
+void Platform_FatalError( const char* message )
+{
+   g_state.fatalErrorCount++;
+   g_state.fatalErrorMessage = message;
+}
+
+void Platform_OpenFile( File_t* file, const char* filePath )
+{
+   UNUSED_PARAM( filePath );
+   file->stream = g_state.fileData;
+   file->size = g_state.fileSize;
+   g_state.openFileCount++;
+}
+
+void Platform_ReadFileBytes( File_t* file, u8* buffer, size_t size )
+{
+   UNUSED_PARAM( file );
+   memcpy( buffer, g_state.fileData + g_state.fileCursor, size );
+   g_state.fileCursor += (i32)size;
+   g_state.readCount++;
+}
+
+void Platform_FileSeek( File_t* file, i32 offset, i32 origin )
+{
+   UNUSED_PARAM( file );
+   UNUSED_PARAM( origin );
+   g_state.fileCursor = offset;
+   g_state.seekCount++;
+}
+
+void TileMap_Cleanup( TileMap_t* tileMap, MemArena_t* memArena )
 {
    UNUSED_PARAM( memArena );
-   UNUSED_PARAM( ptr );
-   g_memArenaFreeCallCount++;
-}
-
-u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* bytesRead )
-{
-   strncpy_s( g_platformLoadFileToMemoryCall.filePath, MAX_PATH, filePath, _TRUNCATE );
-   g_platformLoadFileToMemoryCall.memArena = memArena;
-   g_platformLoadFileToMemoryCall.bytesRead = bytesRead;
-   g_platformLoadFileToMemoryCall.callCount++;
-
-   if ( bytesRead )
+   if ( tileMap )
    {
-      *bytesRead = g_mockFileSize;
+      free( tileMap->tiles );
+      tileMap->tiles = 0;
    }
-
-   return g_mockFileContents;
 }
 
-void Platform_FatalError( const char* msg )
-{
-   UNUSED_PARAM( msg );
-   g_fatalErrorCallCount++;
-}
-
-internal void SetupValidMockGameDataFile( void )
-{
-   u32 i;
-
-   g_mockGameDataFile.header.magic[0] = 'D';
-   g_mockGameDataFile.header.magic[1] = 'W';
-   g_mockGameDataFile.header.magic[2] = '3';
-   g_mockGameDataFile.header.magic[3] = 'D';
-   g_mockGameDataFile.header.version.major = GAME_VERSION_MAJOR;
-   g_mockGameDataFile.header.version.minor = GAME_VERSION_MINOR;
-   g_mockGameDataFile.header.version.maint = GAME_VERSION_MAINT;
-   g_mockGameDataFile.header.tileTextureSetOffset = sizeof( GameDataHeader_t );
-
-   g_mockGameDataFile.tileTextureSet.count = MOCK_TILE_TEXTURE_COUNT;
-   g_mockGameDataFile.tileTextureSet.tileSize = MOCK_TILE_TEXTURE_SIZE;
-   g_mockGameDataFile.tileTextureSet.textures = 0;
-
-   g_mockGameDataFile.header.tileMapsOffset = sizeof( GameDataHeader_t ) + sizeof( TileTextureSet_t ) + MOCK_TILE_TEXTURE_BYTES;
-   g_mockGameDataFile.tileMapCount = 1;
-   g_mockGameDataFile.tileMap.id = 0;
-   g_mockGameDataFile.tileMap.w = 1;
-   g_mockGameDataFile.tileMap.h = 1;
-   g_mockGameDataFile.tileMap.wraps = False;
-   g_mockGameDataFile.tileMap.tiles = 0;
-   g_mockGameDataFile.tileMap.tileTextureSet = 0;
-   g_mockGameDataFile.tileData[0].textureIndex = 0;
-
-   for ( i = 0; i < MOCK_TILE_TEXTURE_BYTES; i++ )
-   {
-      g_mockGameDataFile.textureData[i] = (u8)i;
-   }
-
-   g_mockFileContents = (u8*)&g_mockGameDataFile;
-   g_mockFileSize = sizeof( g_mockGameDataFile );
-}
-
-void test_Game_LoadFromFile_CallsPlatformLoadFileToMemory( void )
+void test_Game_LoadGameData_LoadsMetadataTexturesAndMapOffsets( void )
 {
    Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
 
-   game.memArena = &memArena;
-   SetupValidMockGameDataFile();
+   TestGameLoad_CreateValidFile();
+   TestGameLoad_CreateGame( &game );
 
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_STRING( testFilePath, g_platformLoadFileToMemoryCall.filePath );
-   TEST_ASSERT_EQUAL_PTR( &memArena, g_platformLoadFileToMemoryCall.memArena );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
+   Game_LoadGameData( &game, "fixture.dw3d" );
+
+   TEST_ASSERT_NOT_NULL( game.gameData );
+   TEST_ASSERT_EQUAL( GAME_VERSION_MAJOR, game.gameData->version.major );
+   TEST_ASSERT_EQUAL( GAME_VERSION_MINOR, game.gameData->version.minor );
+   TEST_ASSERT_EQUAL( GAME_VERSION_MAINT, game.gameData->version.maint );
+   TEST_ASSERT_EQUAL( 2, game.gameData->tileMapCount );
+   TEST_ASSERT_NOT_NULL( game.gameData->tileMapFileOffsets );
+   TEST_ASSERT_NOT_NULL( game.tileTextureSet );
+   TEST_ASSERT_EQUAL( 2, game.tileTextureSet->count );
+   TEST_ASSERT_EQUAL( 2, game.tileTextureSet->tileSize );
+   TEST_ASSERT_EQUAL( 8, game.tileTextureSet->textures[7] );
+   TEST_ASSERT_EQUAL( 1, g_state.openFileCount );
+   TEST_ASSERT_EQUAL( 0, g_state.fatalErrorCount );
+
+   TestGameLoad_FreeGameResources( &game );
+   TestGameLoad_DisposeFixture();
 }
 
-void test_Game_LoadFromFile_LoadFileToMemoryFailsResultsInFatalError( void )
+void test_Game_LoadGameData_RejectsInvalidMagic( void )
 {
    Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
 
-   game.memArena = &memArena;
-   g_mockFileSize = 0;
+   TestGameLoad_CreateValidFile();
+   g_state.fileData[0] = 'X';
+   TestGameLoad_CreateGame( &game );
 
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
+   Game_LoadGameData( &game, "fixture.dw3d" );
+
+   TEST_ASSERT_EQUAL( 2, g_state.fatalErrorCount );
+   TEST_ASSERT_EQUAL_STRING( "failed to load game data.", g_state.fatalErrorMessage );
+   TEST_ASSERT_NULL( game.tileTextureSet );
+
+   TestGameLoad_FreeGameResources( &game );
+   TestGameLoad_DisposeFixture();
 }
 
-void test_Game_LoadFromFile_FileTooSmallResultsInFatalError( void )
+void test_Game_LoadGameData_RejectsIncompatibleVersion( void )
 {
    Game_t game;
-   MemArena_t memArena;
-   u8 smallFileContents[2] = { 0x00, 0x01 };
-   const char* testFilePath = "mock.dw3d";
 
-   game.memArena = &memArena;
-   g_mockFileContents = smallFileContents;
-   g_mockFileSize = sizeof( smallFileContents );
+   TestGameLoad_CreateValidFile();
+   g_state.fileData[4] = GAME_VERSION_MAJOR + 1;
+   TestGameLoad_CreateGame( &game );
 
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
+   Game_LoadGameData( &game, "fixture.dw3d" );
+
+   TEST_ASSERT_EQUAL( 2, g_state.fatalErrorCount );
+   TEST_ASSERT_EQUAL_STRING( "failed to load game data.", g_state.fatalErrorMessage );
+
+   TestGameLoad_FreeGameResources( &game );
+   TestGameLoad_DisposeFixture();
 }
 
-void test_Game_LoadFromFile_InvalidHeaderMagicNumberResultsInFatalError( void )
+void test_Game_LoadGameData_RejectsTruncatedTextureData( void )
 {
    Game_t game;
-   MemArena_t memArena;
-   GameDataHeader_t invalidHeader;
-   const char* testFilePath = "mock.dw3d";
 
-   invalidHeader.magic[0] = 'B';
-   invalidHeader.magic[1] = 'A';
-   invalidHeader.magic[2] = 'D';
-   invalidHeader.magic[3] = '!';
-   invalidHeader.version.major = GAME_VERSION_MAJOR;
-   invalidHeader.version.minor = GAME_VERSION_MINOR;
-   invalidHeader.version.maint = GAME_VERSION_MAINT;
-   invalidHeader.tileTextureSetOffset = sizeof( GameDataHeader_t );
+   TestGameLoad_CreateValidFile();
+   g_state.fileSize = sizeof( TestGameDataMetaData_t ) + sizeof( TileTextureSet_t ) + ( 2 * 2 * 2 * sizeof( u32 ) ) - 1;
+   TestGameLoad_CreateGame( &game );
 
-   game.memArena = &memArena;
-   g_mockFileContents = (u8*)&invalidHeader;
-   g_mockFileSize = sizeof( GameDataHeader_t ) + sizeof( TileTextureSet_t );
+   Game_LoadGameData( &game, "fixture.dw3d" );
 
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
+   TEST_ASSERT_EQUAL( 2, g_state.fatalErrorCount );
+   TEST_ASSERT_EQUAL_STRING( "failed to load game data.", g_state.fatalErrorMessage );
+
+   TestGameLoad_FreeGameResources( &game );
+   TestGameLoad_DisposeFixture();
 }
 
-void test_Game_LoadFromFile_InvalidHeaderVersionResultsInFatalError( void )
+void test_Game_LoadGameData_ReportsAllocationFailure( void )
 {
    Game_t game;
-   MemArena_t memArena;
-   GameDataHeader_t invalidHeader;
-   const char* testFilePath = "mock.dw3d";
 
-   invalidHeader.magic[0] = 'D';
-   invalidHeader.magic[1] = 'W';
-   invalidHeader.magic[2] = '3';
-   invalidHeader.magic[3] = 'D';
-   invalidHeader.version.major = GAME_VERSION_MAJOR + 1;
-   invalidHeader.version.minor = GAME_VERSION_MINOR;
-   invalidHeader.version.maint = GAME_VERSION_MAINT;
-   invalidHeader.tileTextureSetOffset = sizeof( GameDataHeader_t );
+   TestGameLoad_CreateValidFile();
+   TestGameLoad_CreateGame( &game );
+   g_state.allocationFailureAt = 1;
 
-   game.memArena = &memArena;
-   g_mockFileContents = (u8*)&invalidHeader;
-   g_mockFileSize = sizeof( GameDataHeader_t ) + sizeof( TileTextureSet_t );
+   Game_LoadGameData( &game, "fixture.dw3d" );
 
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
+   TEST_ASSERT_EQUAL( 1, g_state.fatalErrorCount );
+   TEST_ASSERT_EQUAL_STRING( "failed to allocate memory for game data object: stubbed memory arena error", g_state.fatalErrorMessage );
+   TEST_ASSERT_NULL( game.gameData );
+
+   TestGameLoad_DisposeFixture();
 }
 
-void test_Game_LoadFromFile_ValidHeaderAndVersionDoesNotResultInFatalError( void )
+void test_Game_LoadTileMapFromId_LoadsMapAndConnectsTextureSet( void )
 {
    Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
 
-   game.memArena = &memArena;
-   SetupValidMockGameDataFile();
+   TestGameLoad_CreateValidFile();
+   TestGameLoad_CreateGame( &game );
+   Game_LoadGameData( &game, "fixture.dw3d" );
+   Game_LoadTileMapFromId( &game, 9 );
 
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 0, g_fatalErrorCallCount );
+   TEST_ASSERT_NOT_NULL( game.tileMap );
+   TEST_ASSERT_EQUAL( 9, game.tileMap->id );
+   TEST_ASSERT_EQUAL( 2, game.tileMap->w );
+   TEST_ASSERT_EQUAL( 1, game.tileMap->h );
+   TEST_ASSERT_EQUAL( True, game.tileMap->wraps );
+   TEST_ASSERT_EQUAL( 1, game.tileMap->tiles[0].textureIndex );
+   TEST_ASSERT_EQUAL( 0, game.tileMap->tiles[1].textureIndex );
+   TEST_ASSERT_EQUAL_PTR( game.tileTextureSet, game.tileMap->tileTextureSet );
+   TEST_ASSERT_EQUAL( 0, g_state.fatalErrorCount );
+
+   TestGameLoad_FreeGameResources( &game );
+   TestGameLoad_DisposeFixture();
 }
 
-void test_Game_LoadFromFile_InvalidTileTexturesOffsetResultsInFatalError( void )
+void test_Game_LoadTileMapFromId_ReportsMissingMap( void )
 {
    Game_t game;
-   MemArena_t memArena;
-   GameDataHeader_t invalidHeader;
-   const char* testFilePath = "mock.dw3d";
 
-   invalidHeader.magic[0] = 'D';
-   invalidHeader.magic[1] = 'W';
-   invalidHeader.magic[2] = '3';
-   invalidHeader.magic[3] = 'D';
-   invalidHeader.version.major = GAME_VERSION_MAJOR;
-   invalidHeader.version.minor = GAME_VERSION_MINOR;
-   invalidHeader.version.maint = GAME_VERSION_MAINT;
-   invalidHeader.tileTextureSetOffset = sizeof( GameDataHeader_t );
+   TestGameLoad_CreateValidFile();
+   TestGameLoad_CreateGame( &game );
+   Game_LoadGameData( &game, "fixture.dw3d" );
+   Game_LoadTileMapFromId( &game, 99 );
 
-   game.memArena = &memArena;
-   g_mockFileContents = (u8*)&invalidHeader;
-   g_mockFileSize = sizeof( GameDataHeader_t );
+   TEST_ASSERT_EQUAL( 1, g_state.fatalErrorCount );
+   TEST_ASSERT_EQUAL_STRING( "failed to load tile map with ID 99: not found in game data file.", g_state.fatalErrorMessage );
+   TEST_ASSERT_NULL( game.tileMap );
 
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
+   TestGameLoad_FreeGameResources( &game );
+   TestGameLoad_DisposeFixture();
 }
 
-void test_Game_LoadFromFile_LoadedSuccessfullyFreesFileBuffer( void )
+void test_Game_LoadTileMapFromId_RejectsTruncatedTiles( void )
 {
    Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
 
-   game.memArena = &memArena;
-   SetupValidMockGameDataFile();
+   TestGameLoad_CreateValidFile();
+   g_state.fileSize -= sizeof( Tile_t );
+   TestGameLoad_CreateGame( &game );
+   Game_LoadGameData( &game, "fixture.dw3d" );
+   Game_LoadTileMapFromId( &game, 9 );
 
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 0, g_fatalErrorCallCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_memArenaFreeCallCount );
-}
+   TEST_ASSERT_EQUAL( 1, g_state.fatalErrorCount );
+   TEST_ASSERT_EQUAL_STRING( "game data file is too small to contain all the requested tile map tiles.", g_state.fatalErrorMessage );
 
-void test_Game_LoadFromFile_TileTextureSetTooSmallResultsInFatalError( void )
-{
-   Game_t game;
-   MemArena_t memArena;
-   u8 fileContents[sizeof( GameDataHeader_t ) + sizeof( TileTextureSet_t ) - 1];
-   GameDataHeader_t* header;
-   const char* testFilePath = "mock.dw3d";
-
-   memset( fileContents, 0, sizeof( fileContents ) );
-   header = (GameDataHeader_t*)fileContents;
-   header->magic[0] = 'D';
-   header->magic[1] = 'W';
-   header->magic[2] = '3';
-   header->magic[3] = 'D';
-   header->version.major = GAME_VERSION_MAJOR;
-   header->version.minor = GAME_VERSION_MINOR;
-   header->version.maint = GAME_VERSION_MAINT;
-   header->tileTextureSetOffset = sizeof( GameDataHeader_t );
-
-   game.memArena = &memArena;
-   g_mockFileContents = fileContents;
-   g_mockFileSize = sizeof( fileContents );
-
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
-}
-
-void test_Game_LoadFromFile_InvalidTileTexturesDataOffsetResultsInFatalError( void )
-{
-   Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
-
-   SetupValidMockGameDataFile();
-   g_mockFileSize = sizeof( GameDataHeader_t ) + sizeof( TileTextureSet_t );
-
-   game.memArena = &memArena;
-
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
-}
-
-void test_Game_LoadFromFile_TileTexturesPayloadTooSmallResultsInFatalError( void )
-{
-   Game_t game;
-   MemArena_t memArena;
-   u32 expectedTexturesSize;
-   const char* testFilePath = "mock.dw3d";
-
-   SetupValidMockGameDataFile();
-   expectedTexturesSize = g_mockGameDataFile.tileTextureSet.count *
-                          g_mockGameDataFile.tileTextureSet.tileSize *
-                          g_mockGameDataFile.tileTextureSet.tileSize *
-                          sizeof( u32 );
-   g_mockFileSize = sizeof( GameDataHeader_t ) + sizeof( TileTextureSet_t ) + expectedTexturesSize - 1;
-
-   game.memArena = &memArena;
-
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
-}
-
-void test_Game_LoadFromFile_ZeroTileTextureCountDoesNotRequireTexturePayload( void )
-{
-   Game_t game;
-   MemArena_t memArena;
-   u8 fileContents[sizeof( GameDataHeader_t ) + sizeof( TileTextureSet_t ) + sizeof( u32 ) + sizeof( TileMap_t ) + sizeof( Tile_t )];
-   GameDataHeader_t* header;
-   TileTextureSet_t* textureSet;
-   u32* tileMapCount;
-   TileMap_t* tileMap;
-   Tile_t* tile;
-   const char* testFilePath = "mock.dw3d";
-
-   memset( fileContents, 0, sizeof( fileContents ) );
-
-   header = (GameDataHeader_t*)fileContents;
-   header->magic[0] = 'D';
-   header->magic[1] = 'W';
-   header->magic[2] = '3';
-   header->magic[3] = 'D';
-   header->version.major = GAME_VERSION_MAJOR;
-   header->version.minor = GAME_VERSION_MINOR;
-   header->version.maint = GAME_VERSION_MAINT;
-   header->tileTextureSetOffset = sizeof( GameDataHeader_t );
-   header->tileMapsOffset = sizeof( GameDataHeader_t ) + sizeof( TileTextureSet_t );
-
-   textureSet = (TileTextureSet_t*)( fileContents + header->tileTextureSetOffset );
-   textureSet->count = 0;
-   textureSet->tileSize = MOCK_TILE_TEXTURE_SIZE;
-   textureSet->textures = 0;
-
-   tileMapCount = (u32*)( fileContents + header->tileMapsOffset );
-   *tileMapCount = 1;
-
-   tileMap = (TileMap_t*)( fileContents + header->tileMapsOffset + sizeof( u32 ) );
-   tileMap->id = 0;
-   tileMap->w = 1;
-   tileMap->h = 1;
-   tileMap->wraps = False;
-   tileMap->tiles = 0;
-   tileMap->tileTextureSet = 0;
-
-   tile = (Tile_t*)( (u8*)tileMap + sizeof( TileMap_t ) );
-   tile->textureIndex = 0;
-
-   g_mockFileContents = fileContents;
-   g_mockFileSize = sizeof( fileContents );
-
-   game.memArena = &memArena;
-
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 0, g_fatalErrorCallCount );
-}
-
-void test_Game_LoadFromFile_LoadsTileMapData( void )
-{
-   Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
-
-   game.memArena = &memArena;
-   SetupValidMockGameDataFile();
-
-   Game_LoadFromFile( &game, testFilePath );
-
-   TEST_ASSERT_EQUAL_INT( 0, g_fatalErrorCallCount );
-   TEST_ASSERT_EQUAL_UINT32( 1, game.tileMapCount );
-   TEST_ASSERT_EQUAL_UINT32( 0, game.tileMaps[0].id );
-   TEST_ASSERT_EQUAL_UINT32( 1, game.tileMaps[0].w );
-   TEST_ASSERT_EQUAL_UINT32( 1, game.tileMaps[0].h );
-   TEST_ASSERT_EQUAL_PTR( game.tileTextureSet, game.tileMaps[0].tileTextureSet );
-   TEST_ASSERT_EQUAL_UINT32( 0, game.tileMaps[0].tiles[0].textureIndex );
-}
-
-void test_Game_LoadFromFile_InvalidTileMapsOffsetResultsInFatalError( void )
-{
-   Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
-
-   SetupValidMockGameDataFile();
-   g_mockGameDataFile.header.tileMapsOffset = g_mockFileSize;
-
-   game.memArena = &memArena;
-
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
-}
-
-void test_Game_LoadFromFile_TileMapHeaderTooSmallResultsInFatalError( void )
-{
-   Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
-
-   SetupValidMockGameDataFile();
-   g_mockFileSize = g_mockGameDataFile.header.tileMapsOffset + sizeof( u32 ) - 1;
-
-   game.memArena = &memArena;
-
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
-}
-
-void test_Game_LoadFromFile_TileMapTileDataTooSmallResultsInFatalError( void )
-{
-   Game_t game;
-   MemArena_t memArena;
-   const char* testFilePath = "mock.dw3d";
-
-   SetupValidMockGameDataFile();
-   g_mockFileSize = g_mockGameDataFile.header.tileMapsOffset + sizeof( u32 ) + sizeof( TileMap_t );
-
-   game.memArena = &memArena;
-
-   Game_LoadFromFile( &game, testFilePath );
-   TEST_ASSERT_EQUAL_INT( 1, g_platformLoadFileToMemoryCall.callCount );
-   TEST_ASSERT_EQUAL_INT( 1, g_fatalErrorCallCount );
+   TestGameLoad_FreeGameResources( &game );
+   TestGameLoad_DisposeFixture();
 }
 
 int main( void )
 {
    UNITY_BEGIN();
 
-   RUN_TEST( test_Game_LoadFromFile_CallsPlatformLoadFileToMemory );
-   RUN_TEST( test_Game_LoadFromFile_LoadFileToMemoryFailsResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_FileTooSmallResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_InvalidHeaderMagicNumberResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_InvalidHeaderVersionResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_ValidHeaderAndVersionDoesNotResultInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_InvalidTileTexturesOffsetResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_LoadedSuccessfullyFreesFileBuffer );
-   RUN_TEST( test_Game_LoadFromFile_TileTextureSetTooSmallResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_InvalidTileTexturesDataOffsetResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_TileTexturesPayloadTooSmallResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_ZeroTileTextureCountDoesNotRequireTexturePayload );
-   RUN_TEST( test_Game_LoadFromFile_LoadsTileMapData );
-   RUN_TEST( test_Game_LoadFromFile_InvalidTileMapsOffsetResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_TileMapHeaderTooSmallResultsInFatalError );
-   RUN_TEST( test_Game_LoadFromFile_TileMapTileDataTooSmallResultsInFatalError );
+   RUN_TEST( test_Game_LoadGameData_LoadsMetadataTexturesAndMapOffsets );
+   RUN_TEST( test_Game_LoadGameData_RejectsInvalidMagic );
+   RUN_TEST( test_Game_LoadGameData_RejectsIncompatibleVersion );
+   RUN_TEST( test_Game_LoadGameData_RejectsTruncatedTextureData );
+   RUN_TEST( test_Game_LoadGameData_ReportsAllocationFailure );
+   
+   RUN_TEST( test_Game_LoadTileMapFromId_LoadsMapAndConnectsTextureSet );
+   RUN_TEST( test_Game_LoadTileMapFromId_ReportsMissingMap );
+   RUN_TEST( test_Game_LoadTileMapFromId_RejectsTruncatedTiles );
 
    return UNITY_END();
 }

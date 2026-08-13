@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "file.h"
 #include "mem_arena.h"
 #include "platform.h"
 #include "win_common.h"
@@ -156,4 +157,59 @@ void Platform_Rand_Seed( u32 seed )
 u32 Platform_Rand_u32Ranged( u32 min, u32 max )
 {
    return min + (u32)( rand() % ( max - min + 1 ) );
+}
+
+void Platform_OpenFile( File_t* file, const char* filePath )
+{
+   FILE *fileStream;
+   errno_t err;
+   char msg[STRING_SIZE_DEFAULT];
+
+   fileStream = 0;
+   err = fopen_s( &fileStream, filePath, "rb" );
+   if ( err != 0 || !fileStream )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to open file stream for '%s': %d", filePath, err );
+      Platform_FatalError( msg );
+   }
+
+   file->stream = (void*)fileStream;
+   
+   fseek( fileStream, 0, SEEK_END );
+   file->size = ftell( fileStream );
+   fseek( fileStream, 0, SEEK_SET );
+}
+
+void Platform_CloseFile( File_t* file )
+{
+   if ( file )
+   {
+      fclose( (FILE*)file->stream );
+   }
+}
+
+void Platform_ReadFileBytes( File_t* file, u8 *buffer, size_t size )
+{
+   size_t bytesRead;
+   char msg[STRING_SIZE_DEFAULT];
+
+   bytesRead = fread( buffer, size, 1, (FILE*)file->stream );
+   if ( bytesRead != 1 )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to read from file stream: read %zu bytes", bytesRead );
+      Platform_FatalError( msg );
+   }
+}
+
+void Platform_FileSeek( File_t* file, i32 offset, i32 origin )
+{
+   int result;
+   char msg[STRING_SIZE_DEFAULT];
+
+   result = fseek( (FILE*)file->stream, offset, origin );
+   if ( result != 0 )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to seek in file stream: fseek returned %d", result );
+      Platform_FatalError( msg );
+   }
 }

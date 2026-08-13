@@ -2,10 +2,17 @@
 #include "pixel_buffer.h"
 #include "display.h"
 #include "tile_map.h"
+#include "tile_texture_set.h"
 
 void Display_Init( Display_t* display, MemArena_t* memArena, u32 w, u32 h )
 {
    PixelBuffer_Create( &( display->buffer ), memArena, w, h );
+}
+
+void Display_Cleanup( Display_t* display, MemArena_t* memArena )
+{
+   PixelBuffer_Cleanup( display->buffer, memArena );
+   MemArena_Free( memArena, display->buffer );
 }
 
 void Display_Fill( Display_t* display, u32 color )

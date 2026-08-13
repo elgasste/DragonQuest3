@@ -2,9 +2,14 @@
 #define GAME_DATA_H
 
 #include "common.h"
+#include "platform.h"
 
 #define GAME_DATA_MAGIC "DW3D"
 
+typedef struct File_t File_t;
+typedef struct MemArena_t MemArena_t;
+
+PACKED_STRUCT
 typedef struct GameDataVersion_t
 {
    u8 major;
@@ -12,14 +17,37 @@ typedef struct GameDataVersion_t
    u8 maint;
 }
 GameDataVersion_t;
+END_PACKED_STRUCT
 
-typedef struct GameDataHeader_t
+PACKED_STRUCT
+typedef struct GameDataFileOffsets_t
 {
-   char magic[4];
-   GameDataVersion_t version;
-   u32 tileTextureSetOffset;
-   u32 tileMapsOffset;
+   i32 tileTextureSet;
+   i32 tileMaps;
 }
-GameDataHeader_t;
+GameDataFileOffsets_t;
+END_PACKED_STRUCT
+
+PACKED_STRUCT
+typedef struct GameDataTileMapFileOffset_t
+{
+   u32 id;
+   i32 offset;
+}
+GameDataTileMapFileOffset_t;
+END_PACKED_STRUCT
+
+typedef struct GameData_t
+{
+   File_t* file;
+   GameDataVersion_t version;
+   GameDataFileOffsets_t offsets;
+
+   GameDataTileMapFileOffset_t* tileMapFileOffsets;
+   u32 tileMapCount;
+}
+GameData_t;
+
+void GameData_Cleanup( GameData_t* gameData, MemArena_t* memArena );
 
 #endif // GAME_DATA_H
