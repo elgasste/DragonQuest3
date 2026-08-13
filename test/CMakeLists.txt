@@ -14,7 +14,6 @@ add_executable(Test_Display
 
 add_executable(Test_Game
 	../src/game.c
-	../src/mem_arena.c
 	vendor/unity.c
 	test_game.c
 )
@@ -44,8 +43,8 @@ add_executable(Test_MemArena
 )
 
 add_executable(Test_PixelBuffer
-	../src/mem_arena.c
 	../src/pixel_buffer.c
+	../src/mem_arena.c
 	vendor/unity.c
 	test_pixel_buffer.c
 )

@@ -4,6 +4,7 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "tile_map.h"
+#include "tile_texture_set.h"
 #include "unity.h"
 
 typedef struct PixelBufferCreateCall_t
@@ -77,6 +78,18 @@ void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
    g_pixelBufferClearColorCall.buffer = buffer;
    g_pixelBufferClearColorCall.color = color;
    g_pixelBufferClearColorCall.callCount++;
+}
+
+void PixelBuffer_Cleanup( PixelBuffer_t* buffer, MemArena_t* memArena )
+{
+   UNUSED_PARAM( buffer );
+   UNUSED_PARAM( memArena );
+}
+
+void MemArena_Free( MemArena_t* arena, void* mem )
+{
+   UNUSED_PARAM( arena );
+   UNUSED_PARAM( mem );
 }
 
 void test_Display_Init_CreatesPixelBufferWithCorrectParameters( void )

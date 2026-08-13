@@ -5,8 +5,8 @@
 
 typedef struct File_t
 {
-   void *stream;
-   size_t size;
+   void* stream;
+   i32 size;
 }
 File_t;
 

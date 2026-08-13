@@ -159,21 +159,11 @@ u32 Platform_Rand_u32Ranged( u32 min, u32 max )
    return min + (u32)( rand() % ( max - min + 1 ) );
 }
 
-File_t* Platform_OpenFile( const char* filePath, MemArena_t* memArena )
+void Platform_OpenFile( File_t* file, const char* filePath )
 {
-   File_t *file;
    FILE *fileStream;
    errno_t err;
-   MemArenaResult_t memArenaResult;
    char msg[STRING_SIZE_DEFAULT];
-
-   memArenaResult = MemArena_Alloc( memArena, (void**)&file, sizeof( File_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for File_t: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return 0;
-   }
 
    fileStream = 0;
    err = fopen_s( &fileStream, filePath, "rb" );
@@ -181,7 +171,6 @@ File_t* Platform_OpenFile( const char* filePath, MemArena_t* memArena )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "failed to open file stream for '%s': %d", filePath, err );
       Platform_FatalError( msg );
-      return 0;
    }
 
    file->stream = (void*)fileStream;
@@ -189,14 +178,14 @@ File_t* Platform_OpenFile( const char* filePath, MemArena_t* memArena )
    fseek( fileStream, 0, SEEK_END );
    file->size = ftell( fileStream );
    fseek( fileStream, 0, SEEK_SET );
-
-   return file;
 }
 
-void Platform_CloseFile( File_t* file, MemArena_t* memArena )
+void Platform_CloseFile( File_t* file )
 {
-   fclose( (FILE*)file->stream );
-   MemArena_Free( memArena, file );
+   if ( file )
+   {
+      fclose( (FILE*)file->stream );
+   }
 }
 
 void Platform_ReadFileBytes( File_t* file, u8 *buffer, size_t size )
