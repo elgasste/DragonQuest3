@@ -5,6 +5,7 @@
 
 typedef struct MemArena_t MemArena_t;
 typedef struct TileTextureSet_t TileTextureSet_t;
+typedef struct Vector4i32_t Vector4i32_t;
 
 typedef struct Tile_t
 {
@@ -24,5 +25,6 @@ typedef struct TileMap_t
 TileMap_t;
 
 void TileMap_Cleanup( TileMap_t* tileMap, MemArena_t* memArena );
+void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y );
 
 #endif // TILE_MAP_H
