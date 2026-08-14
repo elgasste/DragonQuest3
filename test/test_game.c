@@ -116,6 +116,19 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
    UNUSED_PARAM( id );
 }
 
+void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( x );
+   UNUSED_PARAM( y );
+
+   if ( viewport )
+   {
+      viewport->x = 0;
+      viewport->y = 0;
+   }
+}
+
 void Game_Render( Game_t* game )
 {
    UNUSED_PARAM( game );

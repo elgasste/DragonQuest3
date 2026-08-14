@@ -19,7 +19,11 @@ void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, 
 
    if ( !tileMap->wraps )
    {
-      if ( newViewportX < 0 )
+      if ( (u32)viewport->w >= tileMap->w )
+      {
+         newViewportX = (i32)( ( viewport->w - tileMap->w ) / 2 );
+      }
+      else if ( newViewportX < 0 )
       {
          newViewportX = 0;
       }
@@ -28,7 +32,11 @@ void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, 
          newViewportX = (i32)( tileMap->w - viewport->w );
       }
 
-      if ( newViewportY < 0 )
+      if ( (u32)viewport->h >= tileMap->h )
+      {
+         newViewportY = (i32)( ( viewport->h - tileMap->h ) / 2 );
+      }
+      else if ( newViewportY < 0 )
       {
          newViewportY = 0;
       }

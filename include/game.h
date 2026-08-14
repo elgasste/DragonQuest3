@@ -36,6 +36,9 @@ typedef struct Game_t
    TileMap_t *tileMap;
    Vector4i32_t tileMapViewport;
 
+   // TODO: this is the player, temporarily
+   Vector4i32_t playerPos;
+
    b32 shutdown;
 }
 Game_t;

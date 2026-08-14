@@ -80,14 +80,33 @@ internal void test_TileMap_AnchorViewportToPoint_DoesNotClampWhenWrapping( void 
    TEST_ASSERT_EQUAL( 19, viewport.y );
 }
 
+internal void test_TileMap_AnchorViewportToPoint_CentersSmallMapInViewport( void )
+{
+   TileMap_t tileMap;
+   Vector4i32_t viewport;
+
+   tileMap.w = 3;
+   tileMap.h = 3;
+   tileMap.wraps = False;
+
+   viewport.x = 0;
+   viewport.y = 0;
+   viewport.w = 5;
+   viewport.h = 5;
+
+   TileMap_AnchorViewportToPoint( &tileMap, &viewport, 100, 100 );
+   TEST_ASSERT_EQUAL( 1, viewport.x );
+   TEST_ASSERT_EQUAL( 1, viewport.y );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
 
    RUN_TEST( test_TileMap_Cleanup_FreesAllocatedTileMemory );
-   
    RUN_TEST( test_TileMap_AnchorViewportToPoint_ClampsToMapBoundsWhenNotWrapping );
    RUN_TEST( test_TileMap_AnchorViewportToPoint_DoesNotClampWhenWrapping );
+   RUN_TEST( test_TileMap_AnchorViewportToPoint_CentersSmallMapInViewport );
 
    return UNITY_END();
 }

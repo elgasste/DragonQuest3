@@ -10,6 +10,8 @@
 #include "tile_map.h"
 #include "tile_texture_set.h"
 
+internal void Game_Tic( Game_t* game );
+
 void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFilePath )
 {
    Game_t* game;
@@ -38,10 +40,12 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    game->tileMapViewport.y = 0;
    game->tileMapViewport.w = DISPLAY_WIDTH;
    game->tileMapViewport.h = DISPLAY_HEIGHT;
+   game->playerPos.x = 0;
+   game->playerPos.y = 0;
 
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = 0;
-   Game_LoadTileMapFromId( game, 1 );
+   Game_LoadTileMapFromId( game, 0 );
 }
 
 void Game_Destroy( Game_t** pGame )
@@ -79,10 +83,7 @@ void Game_Run( Game_t* game )
       Clock_StartFrame( game->clock );
       Input_ResetPressStates( game->input );
       Platform_HandleMessages( game );
-
-      // TODO
-      //Game_Tic( game );
-
+      Game_Tic( game );
       Game_Render( game );
       Clock_EndFrame( game->clock );
    }
@@ -91,4 +92,9 @@ void Game_Run( Game_t* game )
 void Game_Stop( Game_t* game )
 {
    game->shutdown = True;
+}
+
+internal void Game_Tic( Game_t* game )
+{
+   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, game->playerPos.x, game->playerPos.y );
 }

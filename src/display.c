@@ -137,50 +137,69 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
 {
    i32 tileX, tileY, viewportR, viewportB;
    i32 tileWorldX, tileWorldY, drawX, drawY;
+   i32 mapOffsetX, mapOffsetY;
    u32 tileSize, tileIndex;
    TileTextureSet_t* textureSet;
    Tile_t* tile;
    u32* texture;
+   b32 smallMapCentered;
 
    textureSet = tileMap->tileTextureSet;
    viewportR = viewport.x + viewport.w;
    viewportB = viewport.y + viewport.h;
    tileSize = textureSet->tileSize;
 
+   mapOffsetX = 0;
+   mapOffsetY = 0;
+   smallMapCentered = False;
+
+   if ( !tileMap->wraps && (u32)viewport.w >= ( tileMap->w * tileSize ) && (u32)viewport.h >= ( tileMap->h * tileSize ) )
+   {
+      mapOffsetX = ( viewport.w - (i32)( tileMap->w * tileSize ) ) / 2;
+      mapOffsetY = ( viewport.h - (i32)( tileMap->h * tileSize ) ) / 2;
+      smallMapCentered = True;
+   }
+
    for ( tileY = 0; tileY < (i32)tileMap->h; tileY++ )
    {
       tileWorldY = tileY * (i32)tileSize;
-      if ( tileWorldY >= viewportB )
-      {
-         break;
-      }
 
-      // TODO: this might be inefficient, we could calculate this in advance
-      if ( ( tileWorldY + (i32)tileSize ) <= viewport.y )
+      if ( !smallMapCentered )
       {
-         continue;
+         if ( tileWorldY >= viewportB )
+         {
+            break;
+         }
+
+         if ( ( tileWorldY + (i32)tileSize ) <= viewport.y )
+         {
+            continue;
+         }
       }
 
       for ( tileX = 0; tileX < (i32)tileMap->w; tileX++ )
       {
          tileWorldX = tileX * (i32)tileSize;
-         if ( tileWorldX >= viewportR )
-         {
-            break;
-         }
 
-         // TODO: this might be inefficient, we could calculate this in advance
-         if ( ( tileWorldX + (i32)tileSize ) <= viewport.x )
+         if ( !smallMapCentered )
          {
-            continue;
+            if ( tileWorldX >= viewportR )
+            {
+               break;
+            }
+
+            if ( ( tileWorldX + (i32)tileSize ) <= viewport.x )
+            {
+               continue;
+            }
          }
 
          tileIndex = (u32)tileY * tileMap->w + (u32)tileX;
          tile = &( tileMap->tiles[tileIndex] );
 
          texture = textureSet->textures + ( tile->textureIndex * tileSize * tileSize );
-         drawX = displayX + ( tileWorldX - viewport.x );
-         drawY = displayY + ( tileWorldY - viewport.y );
+         drawX = displayX + ( smallMapCentered ? ( mapOffsetX + tileWorldX ) : ( tileWorldX - viewport.x ) );
+         drawY = displayY + ( smallMapCentered ? ( mapOffsetY + tileWorldY ) : ( tileWorldY - viewport.y ) );
          Display_DrawBuffer( display, texture, tileSize, tileSize, drawX, drawY );
       }
    }
