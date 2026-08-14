@@ -15,31 +15,13 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    Game_t* game;
 
    MemArena_Alloc( memArena, (void**)pGame, sizeof( Game_t ) );
-   if ( !*pGame )
-   {
-      return;
-   }
 
    game = *pGame;
    game->memArena = memArena;
    
    MemArena_Alloc( game->memArena, &game->clock, sizeof( Clock_t ) );
-   if ( !game->clock )
-   {
-      return;
-   }
-
    MemArena_Alloc( game->memArena, &game->input, sizeof( Input_t ) );
-   if ( !game->input )
-   {
-      return;
-   }
-
    MemArena_Alloc( game->memArena, &game->display, sizeof( Display_t ) );
-   if ( !game->display )
-   {
-      return;
-   }
 
    Clock_Init( game->clock, GAME_DEFAULT_FPS );
    Input_Init( game->input );

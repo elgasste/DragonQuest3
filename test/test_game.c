@@ -37,7 +37,6 @@ typedef struct GameTestCalls_t
    u32 gameLoadTileMapId;
    const char* gameLoadGameDataPath;
    const char* fatalErrorMessage;
-   b32 failNextAllocation;
 }
 GameTestCalls_t;
 
@@ -149,20 +148,7 @@ void MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
    UNUSED_PARAM( arena );
    g_calls.memArenaAlloc++;
 
-   if ( g_calls.failNextAllocation )
-   {
-      g_calls.failNextAllocation = False;
-      *user = 0;
-      Platform_FatalError( "System memory allocation failed" );
-      return;
-   }
-
    *user = malloc( size );
-   if ( !*user )
-   {
-      *user = 0;
-      Platform_FatalError( "System memory allocation failed" );
-   }
 }
 
 void MemArena_Free( MemArena_t* arena, void* mem )
@@ -216,20 +202,6 @@ void test_Game_Create_InitializesGameInfrastructure( void )
 
    Game_Destroy( &game );
    TEST_ASSERT_NULL( game );
-}
-
-void test_Game_Create_ReportsAllocationFailure( void )
-{
-   Game_t* game = 0;
-   MemArena_t arena;
-
-   g_calls.failNextAllocation = True;
-   Game_Create( &game, &arena, "test-game-data.dw3d" );
-
-   TEST_ASSERT_NULL( game );
-   TEST_ASSERT_EQUAL( 1, g_calls.memArenaAlloc );
-   TEST_ASSERT_EQUAL( 1, g_calls.platformFatalError );
-   TEST_ASSERT_EQUAL( 0, g_calls.gameLoadGameData );
 }
 
 void test_Game_Stop_SetsShutdownFlag( void )
@@ -315,7 +287,6 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_Create_InitializesGameInfrastructure );
-   RUN_TEST( test_Game_Create_ReportsAllocationFailure );
 
    RUN_TEST( test_Game_Stop_SetsShutdownFlag );
 

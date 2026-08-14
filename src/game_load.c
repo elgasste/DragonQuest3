@@ -28,16 +28,7 @@ internal b32 GameData_LoadTileMapOffsets( Game_t* game );
 void Game_LoadGameData( Game_t* game, const char* gameDataFilePath )
 {
    MemArena_Alloc( game->memArena, (void**)&( game->gameData ), sizeof( GameData_t ) );
-   if ( !game->gameData )
-   {
-      return;
-   }
-
    MemArena_Alloc( game->memArena, (void**)&( game->gameData->file ), sizeof( File_t ) );
-   if ( !game->gameData->file )
-   {
-      return;
-   }
 
    Platform_OpenFile( game->gameData->file, gameDataFilePath );
 
@@ -75,11 +66,6 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
          }
 
          MemArena_Alloc( game->memArena, (void**)&( game->tileMap ), sizeof( TileMap_t ) );
-         if ( !game->tileMap )
-         {
-            return;
-         }
-
          Platform_FileSeek( game->gameData->file, tileMapOffset, 0 );
          Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap ), sizeof( TileMap_t ) );
          game->tileMap->tiles = 0;
@@ -93,11 +79,6 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
          }
 
          MemArena_Alloc( game->memArena, (void**)&( game->tileMap->tiles ), tileCount * sizeof( Tile_t ) );
-         if ( !game->tileMap->tiles )
-         {
-            return;
-         }
-
          Platform_FileSeek( game->gameData->file, tilesOffset, 0 );
          Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap->tiles ), tileCount * sizeof( Tile_t ) );
          game->tileMap->tileTextureSet = game->tileTextureSet;
@@ -165,11 +146,6 @@ internal b32 GameData_LoadTileTextureSet( Game_t* game )
    }
 
    MemArena_Alloc( game->memArena, (void**)&( game->tileTextureSet ), sizeof( TileTextureSet_t ) );
-   if ( !game->tileTextureSet )
-   {
-      return False;
-   }
-
    Platform_FileSeek( game->gameData->file, headerOffset, 0 );
    Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet ), sizeof( TileTextureSet_t ) );
    game->tileTextureSet->textures = 0;
@@ -185,11 +161,6 @@ internal b32 GameData_LoadTileTextureSet( Game_t* game )
       }
 
       MemArena_Alloc( game->memArena, (void**)&( game->tileTextureSet->textures ), textureDataSize );
-      if ( !game->tileTextureSet->textures )
-      {
-         return False;
-      }
-
       Platform_FileSeek( game->gameData->file, textureDataOffset, 0 );
       Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet->textures ), textureDataSize );
    }
@@ -222,10 +193,6 @@ internal b32 GameData_LoadTileMapOffsets( Game_t* game )
    }
 
    MemArena_Alloc( game->memArena, (void**)&( game->gameData->tileMapFileOffsets ), game->gameData->tileMapCount * sizeof( GameDataTileMapFileOffset_t ) );
-   if ( !game->gameData->tileMapFileOffsets )
-   {
-      return False;
-   }
 
    for ( i = 0; i < game->gameData->tileMapCount; i++ )
    {
