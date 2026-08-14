@@ -211,7 +211,7 @@ void test_Game_Create_InitializesGameInfrastructure( void )
    TEST_ASSERT_EQUAL( 1, g_calls.gameLoadGameData );
    TEST_ASSERT_EQUAL_PTR( gameDataPath, g_calls.gameLoadGameDataPath );
    TEST_ASSERT_EQUAL( 1, g_calls.gameLoadTileMapFromId );
-   TEST_ASSERT_EQUAL( 1, g_calls.gameLoadTileMapId );
+   TEST_ASSERT_EQUAL( 0, g_calls.gameLoadTileMapId );
 
    Game_Destroy( &game );
    TEST_ASSERT_NULL( game );

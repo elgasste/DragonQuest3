@@ -93,7 +93,7 @@ internal void Game_Init( Game_t* game, const char* gameDataFilePath )
    
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = 0;
-   Game_LoadTileMapFromId( game, 1 );
+   Game_LoadTileMapFromId( game, 0 );
 }
 
 internal b32 Game_AllocInfrastructure( Game_t* game )
