@@ -54,8 +54,7 @@ void MemArena_Destroy( MemArena_t** pArena );
 void MemArena_Reset( MemArena_t* arena );
 const char* MemArena_GetErrorMessage( MemArenaResult_t result );
 
-void MemArena_Alloc( MemArena_t* arena, void** user, size_t size );
-void MemArena_AllocSubArena( MemArena_t* arena, MemArena_t** subArena, size_t size );
+void* MemArena_Alloc( MemArena_t* arena, size_t size );
 void MemArena_Free( MemArena_t* arena, void* mem );
 
 MemArenaStats_t MemArena_GetStats( MemArena_t* arena );

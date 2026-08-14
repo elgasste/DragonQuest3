@@ -153,11 +153,11 @@ internal void TestGameLoad_DisposeFixture( void )
    g_state.fileData = 0;
 }
 
-void MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
+void* MemArena_Alloc( MemArena_t* arena, size_t size )
 {
    UNUSED_PARAM( arena );
 
-   *user = calloc( 1, size );
+   return calloc( 1, size );
 }
 
 void MemArena_Free( MemArena_t* arena, void* mem )

@@ -143,12 +143,12 @@ const char* MemArena_GetErrorMessage( MemArenaResult_t result )
    return "stubbed memory arena error";
 }
 
-void MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
+void* MemArena_Alloc( MemArena_t* arena, size_t size )
 {
    UNUSED_PARAM( arena );
    g_calls.memArenaAlloc++;
 
-   *user = malloc( size );
+   return malloc( size );
 }
 
 void MemArena_Free( MemArena_t* arena, void* mem )

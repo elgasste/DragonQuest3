@@ -116,7 +116,7 @@ u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* 
       return 0;
    }
 
-   MemArena_Alloc( memArena, (void**)&buffer, (u32)( fileSize.QuadPart ) );
+   buffer = (u8*)MemArena_Alloc( memArena, (u32)( fileSize.QuadPart ) );
 
    if ( !ReadFile( hFile, buffer, (u32)( fileSize.QuadPart ), &bytesReadFromFile, NULL ) )
    {

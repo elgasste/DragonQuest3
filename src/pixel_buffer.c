@@ -6,7 +6,7 @@
 
 void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u32 h )
 {
-   MemArena_Alloc( memArena, (void**)pBuffer, sizeof( PixelBuffer_t ) + ( w * h * sizeof( u32 ) ) );
+   *pBuffer = (PixelBuffer_t*)MemArena_Alloc( memArena, sizeof( PixelBuffer_t ) + ( w * h * sizeof( u32 ) ) );
 
    ( *pBuffer )->w = w;
    ( *pBuffer )->h = h;
