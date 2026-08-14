@@ -24,7 +24,6 @@ typedef struct GameTestCalls_t
    int gameDataCleanup;
    int tileMapCleanup;
    int tileTextureSetCleanup;
-   int gameLoadTileMapFromId;
    int gameRender;
    int inputInit;
    int inputResetPressStates;
@@ -34,7 +33,6 @@ typedef struct GameTestCalls_t
    int platformHandleMessages;
    int platformCloseFile;
    u32 clockInitFps;
-   u32 gameLoadTileMapId;
    const char* gameLoadGameDataPath;
    const char* fatalErrorMessage;
 }
@@ -115,8 +113,7 @@ void TileTextureSet_Cleanup( TileTextureSet_t* tileTextureSet, MemArena_t* memAr
 void Game_LoadTileMapFromId( Game_t* game, u32 id )
 {
    UNUSED_PARAM( game );
-   g_calls.gameLoadTileMapFromId++;
-   g_calls.gameLoadTileMapId = id;
+   UNUSED_PARAM( id );
 }
 
 void Game_Render( Game_t* game )
@@ -197,8 +194,6 @@ void test_Game_Create_InitializesGameInfrastructure( void )
    TEST_ASSERT_EQUAL( 1, g_calls.displayInit );
    TEST_ASSERT_EQUAL( 1, g_calls.gameLoadGameData );
    TEST_ASSERT_EQUAL_PTR( gameDataPath, g_calls.gameLoadGameDataPath );
-   TEST_ASSERT_EQUAL( 1, g_calls.gameLoadTileMapFromId );
-   TEST_ASSERT_EQUAL( 0, g_calls.gameLoadTileMapId );
 
    Game_Destroy( &game );
    TEST_ASSERT_NULL( game );

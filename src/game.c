@@ -35,7 +35,7 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = 0;
-   Game_LoadTileMapFromId( game, 0 );
+   Game_LoadTileMapFromId( game, 1 );
 }
 
 void Game_Destroy( Game_t** pGame )
