@@ -317,6 +317,7 @@ int main( void )
    RUN_TEST( test_Game_Create_ReportsAllocationFailure );
 
    RUN_TEST( test_Game_Stop_SetsShutdownFlag );
+   
    RUN_TEST( test_Game_Run_ProcessesMultipleFramesUntilShutdown );
    RUN_TEST( test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame );
 

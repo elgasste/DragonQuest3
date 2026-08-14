@@ -94,6 +94,7 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_Render_FillsDisplayBufferWithBlack );
+   
    RUN_TEST( test_Game_Render_RendersDisplayBuffer );
 
    return UNITY_END();
