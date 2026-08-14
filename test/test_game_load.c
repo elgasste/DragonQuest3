@@ -27,8 +27,6 @@ typedef struct TestGameLoadState_t
    u8* fileData;
    i32 fileSize;
    i32 fileCursor;
-   int allocationCount;
-   int allocationFailureAt;
    int freeCount;
    int fatalErrorCount;
    int openFileCount;
@@ -155,24 +153,11 @@ internal void TestGameLoad_DisposeFixture( void )
    g_state.fileData = 0;
 }
 
-const char* MemArena_GetErrorMessage( MemArenaResult_t result )
-{
-   UNUSED_PARAM( result );
-   return "stubbed memory arena error";
-}
-
-MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
+void* MemArena_Alloc( MemArena_t* arena, size_t size )
 {
    UNUSED_PARAM( arena );
 
-   g_state.allocationCount++;
-   if ( g_state.allocationCount == g_state.allocationFailureAt )
-   {
-      return MemArenaResult_OutOfMemory;
-   }
-
-   *user = calloc( 1, size );
-   return *user ? MemArenaResult_Success : MemArenaResult_SystemMemoryAllocFailed;
+   return calloc( 1, size );
 }
 
 void MemArena_Free( MemArena_t* arena, void* mem )
@@ -303,23 +288,6 @@ void test_Game_LoadGameData_RejectsTruncatedTextureData( void )
    TestGameLoad_DisposeFixture();
 }
 
-void test_Game_LoadGameData_ReportsAllocationFailure( void )
-{
-   Game_t game;
-
-   TestGameLoad_CreateValidFile();
-   TestGameLoad_CreateGame( &game );
-   g_state.allocationFailureAt = 1;
-
-   Game_LoadGameData( &game, "fixture.dw3d" );
-
-   TEST_ASSERT_EQUAL( 1, g_state.fatalErrorCount );
-   TEST_ASSERT_EQUAL_STRING( "failed to allocate memory for game data object: stubbed memory arena error", g_state.fatalErrorMessage );
-   TEST_ASSERT_NULL( game.gameData );
-
-   TestGameLoad_DisposeFixture();
-}
-
 void test_Game_LoadTileMapFromId_LoadsMapAndConnectsTextureSet( void )
 {
    Game_t game;
@@ -385,7 +353,6 @@ int main( void )
    RUN_TEST( test_Game_LoadGameData_RejectsInvalidMagic );
    RUN_TEST( test_Game_LoadGameData_RejectsIncompatibleVersion );
    RUN_TEST( test_Game_LoadGameData_RejectsTruncatedTextureData );
-   RUN_TEST( test_Game_LoadGameData_ReportsAllocationFailure );
    
    RUN_TEST( test_Game_LoadTileMapFromId_LoadsMapAndConnectsTextureSet );
    RUN_TEST( test_Game_LoadTileMapFromId_ReportsMissingMap );

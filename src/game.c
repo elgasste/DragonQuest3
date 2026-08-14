@@ -10,45 +10,58 @@
 #include "tile_map.h"
 #include "tile_texture_set.h"
 
-internal void Game_Init( Game_t* game, const char* gameDataFilePath );
-internal b32 Game_AllocInfrastructure( Game_t* game );
-
-void Game_Create( Game_t** game, MemArena_t* memArena, const char* gameDataFilePath )
+void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFilePath )
 {
-   MemArenaResult_t memArenaResult;
-   char msg[STRING_SIZE_DEFAULT];
+   Game_t* game;
 
-   memArenaResult = MemArena_Alloc( memArena, (void**)game, sizeof( Game_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
+   *pGame = (Game_t*)MemArena_Alloc( memArena, sizeof( Game_t ) );
+
+   game = *pGame;
+   game->memArena = memArena;
+   
+   game->clock = (Clock_t*)MemArena_Alloc( game->memArena, sizeof( Clock_t ) );
+   game->input = (Input_t*)MemArena_Alloc( game->memArena, sizeof( Input_t ) );
+   game->display = (Display_t*)MemArena_Alloc( game->memArena, sizeof( Display_t ) );
+
+   Clock_Init( game->clock, GAME_DEFAULT_FPS );
+   Input_Init( game->input );
+   Display_Init( game->display, game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
+
+   game->gameData = 0;
+   game->tileMap = 0;
+   game->tileTextureSet = 0;
+
+   Game_LoadGameData( game, gameDataFilePath );
+   
+   // TODO: temporary, this will eventually be part of the game data file
+   game->tileMap = 0;
+   Game_LoadTileMapFromId( game, 0 );
+}
+
+void Game_Destroy( Game_t** pGame )
+{
+   if ( !pGame || !*pGame )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for game object: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
       return;
    }
 
-   ( *game )->memArena = memArena;
-   Game_Init( *game, gameDataFilePath );
-}
+   MemArena_Free( ( *pGame )->memArena, ( *pGame )->clock );
+   MemArena_Free( ( *pGame )->memArena, ( *pGame )->input );
 
-void Game_Destroy( Game_t** game )
-{
-   MemArena_Free( ( *game )->memArena, ( *game )->clock );
-   MemArena_Free( ( *game )->memArena, ( *game )->input );
+   Display_Cleanup( ( *pGame )->display, ( *pGame )->memArena );
+   MemArena_Free( ( *pGame )->memArena, ( *pGame )->display );
 
-   Display_Cleanup( ( *game )->display, ( *game )->memArena );
-   MemArena_Free( ( *game )->memArena, ( *game )->display );
+   GameData_Cleanup( ( *pGame )->gameData, ( *pGame )->memArena );
+   MemArena_Free( ( *pGame )->memArena, ( *pGame )->gameData );
 
-   GameData_Cleanup( ( *game )->gameData, ( *game )->memArena );
-   MemArena_Free( ( *game )->memArena, ( *game )->gameData );
+   TileMap_Cleanup( ( *pGame )->tileMap, ( *pGame )->memArena );
+   MemArena_Free( ( *pGame )->memArena, ( *pGame )->tileMap );
 
-   TileMap_Cleanup( ( *game )->tileMap, ( *game )->memArena );
-   MemArena_Free( ( *game )->memArena, ( *game )->tileMap );
+   TileTextureSet_Cleanup( ( *pGame )->tileTextureSet, ( *pGame )->memArena );
+   MemArena_Free( ( *pGame )->memArena, ( *pGame )->tileTextureSet );
 
-   TileTextureSet_Cleanup( ( *game )->tileTextureSet, ( *game )->memArena );
-   MemArena_Free( ( *game )->memArena, ( *game )->tileTextureSet );
-
-   MemArena_Free( ( *game )->memArena, *game );
-   *game = 0;
+   MemArena_Free( ( *pGame )->memArena, *pGame );
+   *pGame = 0;
 }
 
 void Game_Run( Game_t* game )
@@ -72,58 +85,4 @@ void Game_Run( Game_t* game )
 void Game_Stop( Game_t* game )
 {
    game->shutdown = True;
-}
-
-internal void Game_Init( Game_t* game, const char* gameDataFilePath )
-{
-   if ( !Game_AllocInfrastructure( game ) )
-   {
-      return;
-   }
-
-   Clock_Init( game->clock, GAME_DEFAULT_FPS );
-   Input_Init( game->input );
-   Display_Init( game->display, game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
-
-   game->gameData = 0;
-   game->tileMap = 0;
-   game->tileTextureSet = 0;
-
-   Game_LoadGameData( game, gameDataFilePath );
-   
-   // TODO: temporary, this will eventually be part of the game data file
-   game->tileMap = 0;
-   Game_LoadTileMapFromId( game, 0 );
-}
-
-internal b32 Game_AllocInfrastructure( Game_t* game )
-{
-   MemArenaResult_t memArenaResult;
-   char msg[STRING_SIZE_DEFAULT];
-
-   memArenaResult = MemArena_Alloc( game->memArena, &game->clock, sizeof( Clock_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for clock: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return False;
-   }
-
-   memArenaResult = MemArena_Alloc( game->memArena, &game->input, sizeof( Input_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for input: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return False;
-   }
-
-   memArenaResult = MemArena_Alloc( game->memArena, &game->display, sizeof( Display_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to create memory arena for display: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return False;
-   }
-
-   return True;
 }

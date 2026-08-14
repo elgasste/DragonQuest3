@@ -49,11 +49,6 @@ add_executable(Test_PixelBuffer
 	test_pixel_buffer.c
 )
 
-add_executable(MemArena_Perf
-	../src/mem_arena.c
-	mem_arena_perf.c
-)
-
 set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Load PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -72,7 +67,6 @@ if(MSVC)
    target_compile_options(Test_MemArena PRIVATE /W4)
    target_compile_options(Test_PixelBuffer PRIVATE /W4)
 	target_compile_options(Test_Display PRIVATE /W4)
-   target_compile_options(MemArena_Perf PRIVATE /W4)
 endif()
 
 target_include_directories(Test_Clock PRIVATE vendor)
@@ -106,9 +100,6 @@ target_include_directories(Test_PixelBuffer PRIVATE ../src)
 target_include_directories(Test_Display PRIVATE vendor)
 target_include_directories(Test_Display PRIVATE ../include)
 target_include_directories(Test_Display PRIVATE ../src)
-
-target_include_directories(MemArena_Perf PRIVATE ../include)
-target_include_directories(MemArena_Perf PRIVATE ../src)
 
 add_test( NAME Unity_Clock_Tests COMMAND Test_Clock)
 add_test( NAME Unity_Game_Tests COMMAND Test_Game)

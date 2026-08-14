@@ -27,24 +27,8 @@ internal b32 GameData_LoadTileMapOffsets( Game_t* game );
 
 void Game_LoadGameData( Game_t* game, const char* gameDataFilePath )
 {
-   MemArenaResult_t memArenaResult;
-   char msg[STRING_SIZE_DEFAULT];
-
-   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->gameData ), sizeof( GameData_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for game data object: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return;
-   }
-
-   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->gameData->file ), sizeof( File_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for game data file object: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return;
-   }
+   game->gameData = (GameData_t*)MemArena_Alloc( game->memArena, sizeof( GameData_t ) );
+   game->gameData->file = (File_t*)MemArena_Alloc( game->memArena, sizeof( File_t ) );
 
    Platform_OpenFile( game->gameData->file, gameDataFilePath );
 
@@ -61,7 +45,6 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
 {
    u32 i;
    i32 tileMapOffset, tilesOffset, tileCount;
-   MemArenaResult_t memArenaResult;
    char msg[STRING_SIZE_DEFAULT];
 
    if ( game->tileMap )
@@ -82,13 +65,7 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
             return;
          }
 
-         memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileMap ), sizeof( TileMap_t ) );
-         if ( memArenaResult != MemArenaResult_Success )
-         {
-            snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile map: %s", MemArena_GetErrorMessage( memArenaResult ) );
-            Platform_FatalError( msg );
-            return;
-         }
+         game->tileMap = (TileMap_t*)MemArena_Alloc( game->memArena, sizeof( TileMap_t ) );
          Platform_FileSeek( game->gameData->file, tileMapOffset, 0 );
          Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap ), sizeof( TileMap_t ) );
          game->tileMap->tiles = 0;
@@ -101,13 +78,7 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
             return;
          }
 
-         memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileMap->tiles ), tileCount * sizeof( Tile_t ) );
-         if ( memArenaResult != MemArenaResult_Success )
-         {
-            snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile map tiles: %s", MemArena_GetErrorMessage( memArenaResult ) );
-            Platform_FatalError( msg );
-            return;
-         }
+         game->tileMap->tiles = (Tile_t*)MemArena_Alloc( game->memArena, tileCount * sizeof( Tile_t ) );
          Platform_FileSeek( game->gameData->file, tilesOffset, 0 );
          Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap->tiles ), tileCount * sizeof( Tile_t ) );
          game->tileMap->tileTextureSet = game->tileTextureSet;
@@ -166,8 +137,6 @@ internal b32 GameData_LoadMetaData( GameData_t* gameData )
 internal b32 GameData_LoadTileTextureSet( Game_t* game )
 {
    i32 headerOffset, textureDataOffset, textureDataSize;
-   MemArenaResult_t memArenaResult;
-   char msg[STRING_SIZE_DEFAULT];
 
    headerOffset = game->gameData->offsets.tileTextureSet;
    if ( (i32)( headerOffset + sizeof( TileTextureSet_t ) ) > game->gameData->file->size )
@@ -176,14 +145,7 @@ internal b32 GameData_LoadTileTextureSet( Game_t* game )
       return False;
    }
 
-   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextureSet ), sizeof( TileTextureSet_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile texture set: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return False;
-   }
-
+   game->tileTextureSet = (TileTextureSet_t*)MemArena_Alloc( game->memArena, sizeof( TileTextureSet_t ) );
    Platform_FileSeek( game->gameData->file, headerOffset, 0 );
    Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet ), sizeof( TileTextureSet_t ) );
    game->tileTextureSet->textures = 0;
@@ -198,14 +160,7 @@ internal b32 GameData_LoadTileTextureSet( Game_t* game )
          return False;
       }
 
-      memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->tileTextureSet->textures ), textureDataSize );
-      if ( memArenaResult != MemArenaResult_Success )
-      {
-         snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile textures: %s", MemArena_GetErrorMessage( memArenaResult ) );
-         Platform_FatalError( msg );
-         return False;
-      }
-
+      game->tileTextureSet->textures = (u32*)MemArena_Alloc( game->memArena, textureDataSize );
       Platform_FileSeek( game->gameData->file, textureDataOffset, 0 );
       Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet->textures ), textureDataSize );
    }
@@ -218,8 +173,6 @@ internal b32 GameData_LoadTileTextureSet( Game_t* game )
 internal b32 GameData_LoadTileMapOffsets( Game_t* game )
 {
    u32 tileMapOffsetsOffset, i;
-   MemArenaResult_t memArenaResult;
-   char msg[STRING_SIZE_DEFAULT];
 
    if ( (i32)( game->gameData->offsets.tileMaps + sizeof( u32 ) ) > game->gameData->file->size )
    {
@@ -239,13 +192,7 @@ internal b32 GameData_LoadTileMapOffsets( Game_t* game )
       return False;
    }
 
-   memArenaResult = MemArena_Alloc( game->memArena, (void**)&( game->gameData->tileMapFileOffsets ), game->gameData->tileMapCount * sizeof( GameDataTileMapFileOffset_t ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to allocate memory for tile map file offsets: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return False;
-   }
+   game->gameData->tileMapFileOffsets = (GameDataTileMapFileOffset_t*)MemArena_Alloc( game->memArena, game->gameData->tileMapCount * sizeof( GameDataTileMapFileOffset_t ) );
 
    for ( i = 0; i < game->gameData->tileMapCount; i++ )
    {
