@@ -282,7 +282,6 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t*
    Tile_t* tile;
    GameDataTileMapFileOffset_t* offsets;
 
-   // write out the number of tile maps first
    bytesWritten = 0;
    result = WriteFile( hFile, &tileMapCount, sizeof( u32 ), &bytesWritten, NULL );
    *filePos += bytesWritten;
