@@ -25,7 +25,6 @@ void WriteTestGameDataFile( const char* filePath )
    u32 tileMapCount, i;
    char msg[STRING_SIZE_DEFAULT];
 
-   // create the file
    hFile = CreateFileA( filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
    filePos = 0;
 
