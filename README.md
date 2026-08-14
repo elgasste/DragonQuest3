@@ -43,7 +43,9 @@ The next step is creating a `launch.json` file in the `.vscode` directory in the
         "--build",
         "${workspaceFolder}/build",
         "--config",
-        "Debug"
+        "Debug",
+        "--target",
+        "DragonQuest3"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
