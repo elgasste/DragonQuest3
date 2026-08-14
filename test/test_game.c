@@ -144,7 +144,7 @@ const char* MemArena_GetErrorMessage( MemArenaResult_t result )
    return "stubbed memory arena error";
 }
 
-MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
+void MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
 {
    UNUSED_PARAM( arena );
    g_calls.memArenaAlloc++;
@@ -152,16 +152,17 @@ MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
    if ( g_calls.failNextAllocation )
    {
       g_calls.failNextAllocation = False;
-      return MemArenaResult_OutOfMemory;
+      *user = 0;
+      Platform_FatalError( "System memory allocation failed" );
+      return;
    }
 
    *user = malloc( size );
    if ( !*user )
    {
-      return MemArenaResult_SystemMemoryAllocFailed;
+      *user = 0;
+      Platform_FatalError( "System memory allocation failed" );
    }
-
-   return MemArenaResult_Success;
 }
 
 void MemArena_Free( MemArena_t* arena, void* mem )
@@ -317,7 +318,7 @@ int main( void )
    RUN_TEST( test_Game_Create_ReportsAllocationFailure );
 
    RUN_TEST( test_Game_Stop_SetsShutdownFlag );
-   
+
    RUN_TEST( test_Game_Run_ProcessesMultipleFramesUntilShutdown );
    RUN_TEST( test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame );
 

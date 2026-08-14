@@ -161,18 +161,19 @@ const char* MemArena_GetErrorMessage( MemArenaResult_t result )
    return "stubbed memory arena error";
 }
 
-MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
+void MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
 {
    UNUSED_PARAM( arena );
 
    g_state.allocationCount++;
    if ( g_state.allocationCount == g_state.allocationFailureAt )
    {
-      return MemArenaResult_OutOfMemory;
+      *user = 0;
+      Platform_FatalError( "failed to allocate memory for game data object: stubbed memory arena error" );
+      return;
    }
 
    *user = calloc( 1, size );
-   return *user ? MemArenaResult_Success : MemArenaResult_SystemMemoryAllocFailed;
 }
 
 void MemArena_Free( MemArena_t* arena, void* mem )

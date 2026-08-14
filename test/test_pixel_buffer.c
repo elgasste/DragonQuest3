@@ -45,7 +45,7 @@ internal void test_PixelBuffer_Create_NotEnoughMemoryFailsToCreateBuffer( void )
    PixelBuffer_Create( &buffer, arena, 10, 20 );
 
    TEST_ASSERT_EQUAL( 1, g_fatalErrorCallCount );
-   TEST_ASSERT_EQUAL( 0, strcmp( g_fatalErrorMessage, "failed to create memory arena for pixel buffer: arena is out of memory" ) );
+   TEST_ASSERT_EQUAL( 0, strcmp( g_fatalErrorMessage, "arena is out of memory" ) );
 
    MemArena_Destroy( &arena );
 }

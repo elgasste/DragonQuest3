@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "mem_arena.h"
+#include "platform.h"
 
 internal b32 MemArena_AllocTryAppend( MemArena_t* arena, void** user, size_t size );
 internal b32 MemArena_AllocTryInsert( MemArena_t* arena, void** user, size_t size );
@@ -48,35 +50,28 @@ const char* MemArena_GetErrorMessage( MemArenaResult_t result )
 
       case MemArenaResult_ArenaTooSmall: return "requested arena size is too small";
       case MemArenaResult_SystemMemoryAllocFailed: return "system memory allocation failed";
-      case MemArenaResult_OutOfMemory: return "arena is out of memory";
 
       default: return "undefined error";
    }
 }
 
-MemArenaResult_t MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
+void MemArena_Alloc( MemArena_t* arena, void** user, size_t size )
 {
-   if ( MemArena_AllocTryAppend( arena, user, size ) ||
-        MemArena_AllocTryInsert( arena, user, size ) )
-   {
-      return MemArenaResult_Success;
-   }
+   char msg[STRING_SIZE_DEFAULT];
 
-   return MemArenaResult_OutOfMemory;
+   if ( !MemArena_AllocTryAppend( arena, user, size ) &&
+        !MemArena_AllocTryInsert( arena, user, size ) )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "arena is out of memory" );
+      Platform_FatalError( msg );
+   }
 }
 
-MemArenaResult_t MemArena_AllocSubArena( MemArena_t* arena, MemArena_t** subArena, size_t size )
+void MemArena_AllocSubArena( MemArena_t* arena, MemArena_t** subArena, size_t size )
 {
-   MemArenaResult_t result;
-
-   result = MemArena_Alloc( arena, subArena, size );
-   if ( result == MemArenaResult_Success )
-   {
-      ( *subArena )->size = size;
-      MemArena_Reset( *subArena );
-   }
-
-   return result;
+   MemArena_Alloc( arena, subArena, size );
+   ( *subArena )->size = size;
+   MemArena_Reset( *subArena );
 }
 
 void MemArena_Free( MemArena_t* arena, void* mem )

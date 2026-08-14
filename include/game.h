@@ -41,8 +41,8 @@ typedef struct Game_t
 Game_t;
 
 // game.c
-void Game_Create( Game_t** game, MemArena_t* memArena, const char* gameDataFilePath );
-void Game_Destroy( Game_t** game );
+void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFilePath );
+void Game_Destroy( Game_t** pGame );
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
 

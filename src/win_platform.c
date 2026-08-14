@@ -99,7 +99,6 @@ u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* 
    LARGE_INTEGER fileSize;
    DWORD bytesReadFromFile;
    u8* buffer;
-   MemArenaResult_t memArenaResult;
    char msg[STRING_SIZE_DEFAULT];
 
    hFile = CreateFile( filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
@@ -117,13 +116,7 @@ u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* 
       return 0;
    }
 
-   memArenaResult = MemArena_Alloc( memArena, (void**)&buffer, (u32)( fileSize.QuadPart ) );
-   if ( memArenaResult != MemArenaResult_Success )
-   {
-      snprintf( msg, STRING_SIZE_DEFAULT, "could not allocate memory for file buffer: %s", MemArena_GetErrorMessage( memArenaResult ) );
-      Platform_FatalError( msg );
-      return 0;
-   }
+   MemArena_Alloc( memArena, (void**)&buffer, (u32)( fileSize.QuadPart ) );
 
    if ( !ReadFile( hFile, buffer, (u32)( fileSize.QuadPart ), &bytesReadFromFile, NULL ) )
    {
