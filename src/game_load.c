@@ -136,20 +136,20 @@ internal b32 GameData_LoadMetaData( GameData_t* gameData )
 
 internal b32 GameData_LoadTileTextureSet( Game_t* game )
 {
-   i32 headerOffset, textureDataOffset, textureDataSize;
+   i32 tileTextureSetOffset, textureDataOffset, textureDataSize;
 
-   headerOffset = game->gameData->offsets.tileTextureSet;
-   if ( (i32)( headerOffset + sizeof( TileTextureSet_t ) ) > game->gameData->file->size )
+   tileTextureSetOffset = game->gameData->offsets.tileTextureSet;
+   if ( (i32)( tileTextureSetOffset + sizeof( TileTextureSet_t ) ) > game->gameData->file->size )
    {
       Platform_FatalError( "game data file is too small to contain a valid tile texture set header." );
       return False;
    }
 
    game->tileTextureSet = (TileTextureSet_t*)MemArena_Alloc( game->memArena, sizeof( TileTextureSet_t ) );
-   Platform_FileSeek( game->gameData->file, headerOffset, 0 );
+   Platform_FileSeek( game->gameData->file, tileTextureSetOffset, 0 );
    Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet ), sizeof( TileTextureSet_t ) );
    game->tileTextureSet->textures = 0;
-   textureDataOffset = headerOffset + sizeof( TileTextureSet_t );
+   textureDataOffset = tileTextureSetOffset + sizeof( TileTextureSet_t );
 
    if ( game->tileTextureSet->count > 0 )
    {
