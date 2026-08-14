@@ -75,12 +75,6 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    Game_Create( &( g_winGlobals.game ), memArena, gameDataPath ); // does not transfer ownership of memory arena
 
-   // TODO: all of this will go somewhere eventually, this is just for testing
-   g_winGlobals.game->tileMapViewport.x = 0;
-   g_winGlobals.game->tileMapViewport.y = 0;
-   g_winGlobals.game->tileMapViewport.w = DISPLAY_WIDTH;
-   g_winGlobals.game->tileMapViewport.h = DISPLAY_HEIGHT;
-
    mainWindowClass.cbClsExtra = 0;
    mainWindowClass.cbWndExtra = 0;
    mainWindowClass.hbrBackground = 0;

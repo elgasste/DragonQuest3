@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+typedef struct MemArena_t MemArena_t;
 typedef struct TileTextureSet_t TileTextureSet_t;
 
 typedef struct Tile_t

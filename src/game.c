@@ -33,6 +33,12 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
 
    Game_LoadGameData( game, gameDataFilePath );
    
+   // TODO: should this come from the game data file? or is it too integral to the game engine?
+   game->tileMapViewport.x = 0;
+   game->tileMapViewport.y = 0;
+   game->tileMapViewport.w = DISPLAY_WIDTH;
+   game->tileMapViewport.h = DISPLAY_HEIGHT;
+
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = 0;
    Game_LoadTileMapFromId( game, 1 );
