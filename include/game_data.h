@@ -29,12 +29,12 @@ GameDataFileOffsets_t;
 END_PACKED_STRUCT
 
 PACKED_STRUCT
-typedef struct GameDataTileMapFileOffset_t
+typedef struct GameDataTileMapOffset_t
 {
    u32 id;
    i32 offset;
 }
-GameDataTileMapFileOffset_t;
+GameDataTileMapOffset_t;
 END_PACKED_STRUCT
 
 typedef struct GameData_t
@@ -43,7 +43,7 @@ typedef struct GameData_t
    GameDataVersion_t version;
    GameDataFileOffsets_t offsets;
 
-   GameDataTileMapFileOffset_t* tileMapFileOffsets;
+   GameDataTileMapOffset_t* tileMapOffsets;
    u32 tileMapCount;
 }
 GameData_t;

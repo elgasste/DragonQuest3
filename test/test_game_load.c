@@ -53,7 +53,7 @@ internal void TestGameLoad_FreeGameData( Game_t* game )
    }
 
    free( game->gameData->file );
-   free( game->gameData->tileMapFileOffsets );
+   free( game->gameData->tileMapOffsets );
    free( game->gameData );
    game->gameData = 0;
 }
@@ -84,7 +84,7 @@ internal void TestGameLoad_CreateValidFile( void )
 {
    TestGameDataMetaData_t metaData;
    TileTextureSet_t textureSet;
-   GameDataTileMapFileOffset_t mapOffsets[2];
+   GameDataTileMapOffset_t mapOffsets[2];
    TileMap_t tileMap;
    Tile_t tiles[2];
    i32 textureOffset;
@@ -95,7 +95,7 @@ internal void TestGameLoad_CreateValidFile( void )
 
    textureOffset = sizeof( TestGameDataMetaData_t );
    mapsOffset = textureOffset + sizeof( TileTextureSet_t ) + ( 2 * 2 * 2 * sizeof( u32 ) );
-   tileMapOffset = mapsOffset + sizeof( u32 ) + ( 2 * sizeof( GameDataTileMapFileOffset_t ) );
+   tileMapOffset = mapsOffset + sizeof( u32 ) + ( 2 * sizeof( GameDataTileMapOffset_t ) );
    g_state.fileSize = tileMapOffset + sizeof( TileMap_t ) + sizeof( tiles );
    g_state.fileData = (u8*)calloc( 1, g_state.fileSize );
 
@@ -124,9 +124,9 @@ internal void TestGameLoad_CreateValidFile( void )
    mapCount = 2;
    TestGameLoad_Write( mapsOffset, &mapCount, sizeof( mapCount ) );
    mapOffsets[0].id = 7;
-   mapOffsets[0].offset = tileMapOffset;
+   mapOffsets[0].offset = tileMapOffset - mapsOffset;
    mapOffsets[1].id = 9;
-   mapOffsets[1].offset = tileMapOffset;
+   mapOffsets[1].offset = tileMapOffset - mapsOffset;
    TestGameLoad_Write( mapsOffset + sizeof( u32 ), mapOffsets, sizeof( mapOffsets ) );
 
    tileMap.id = 9;
@@ -224,7 +224,7 @@ void test_Game_LoadGameData_LoadsMetadataTexturesAndMapOffsets( void )
    TEST_ASSERT_EQUAL( GAME_VERSION_MINOR, game.gameData->version.minor );
    TEST_ASSERT_EQUAL( GAME_VERSION_MAINT, game.gameData->version.maint );
    TEST_ASSERT_EQUAL( 2, game.gameData->tileMapCount );
-   TEST_ASSERT_NOT_NULL( game.gameData->tileMapFileOffsets );
+   TEST_ASSERT_NOT_NULL( game.gameData->tileMapOffsets );
    TEST_ASSERT_NOT_NULL( game.tileTextureSet );
    TEST_ASSERT_EQUAL( 2, game.tileTextureSet->count );
    TEST_ASSERT_EQUAL( 2, game.tileTextureSet->tileSize );

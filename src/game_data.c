@@ -7,5 +7,5 @@ void GameData_Cleanup( GameData_t* gameData, MemArena_t* memArena )
    Platform_CloseFile( gameData->file );
 
    MemArena_Free( memArena, gameData->file );
-   MemArena_Free( memArena, gameData->tileMapFileOffsets );
+   MemArena_Free( memArena, gameData->tileMapOffsets );
 }
