@@ -97,7 +97,7 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    u32 i;
    TileMap_t *tileMaps, *curTileMap;
 
-   *tileMapCount = 3;
+   *tileMapCount = 4;
    tileMaps = (TileMap_t*)malloc( *tileMapCount * sizeof( TileMap_t ) );
 
    // first
@@ -164,6 +164,20 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    {
       // random
       curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
+   }
+
+   // fourth
+   curTileMap++;
+   curTileMap->id = 3;
+   curTileMap->tilesX = 3;
+   curTileMap->tilesY = 3;
+   curTileMap->wraps = False;
+   curTileMap->tiles = 0;
+   curTileMap->tiles = (Tile_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( Tile_t ) );
+
+   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
+   {
+      curTileMap->tiles[i].textureIndex = 1;
    }
 
    return tileMaps;

@@ -185,7 +185,6 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
       smallMapCentered = True;
    }
 
-   // MUFFINS: this is the part I need to understand
    if ( tileMap->wraps )
    {
       repeatStartX = Display_FloorDiv( viewport.x, tileMapSizeX );
