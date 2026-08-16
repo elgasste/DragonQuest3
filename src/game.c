@@ -85,8 +85,7 @@ void Game_Run( Game_t* game )
       Clock_StartFrame( game->clock );
       Input_ResetPressStates( game->input );
       Platform_HandleMessages( game );
-      // MUFFINS: let's handle input here, which at the moment means we should move the
-      // player position and update the tile map viewport. we should also draw a dot for the player.P
+      Game_HandleInput( game );
       Game_Tic( game );
       Game_Render( game );
       Clock_EndFrame( game->clock );

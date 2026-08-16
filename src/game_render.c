@@ -18,6 +18,5 @@ void Game_Render( Game_t* game )
 
 internal void GameRender_DrawPlayer( Game_t* game )
 {
-   // MUFFINS
    Display_DrawRect( game->display, game->playerRect.x - game->tileMapViewport.x, game->playerRect.y - game->tileMapViewport.y, game->playerRect.w, game->playerRect.h, 0x00666666u );
 }
