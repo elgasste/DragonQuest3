@@ -138,7 +138,6 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
    }
 }
 
-// MUFFINS: I need to understand this before I check it in
 static i32 Display_FloorDiv( i32 value, i32 divisor )
 {
    if ( divisor == 0 )
@@ -273,5 +272,4 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
          Display_DrawBuffer( display, texture, tileSize, tileSize, drawX, drawY );
       }
    }
-
 }
