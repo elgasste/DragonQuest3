@@ -87,6 +87,34 @@ void test_Input_ReleaseButton_SetsReleasedAndDownStates( void )
    TEST_ASSERT_EQUAL( True, input.buttonStates[InputButton_Select].released );
 }
 
+void test_Input_IsButtonDown_ReturnsTrueIfButtonIsDown( void )
+{
+   Input_t input;
+
+   Input_Init( &input );
+   TEST_ASSERT_EQUAL( False, Input_IsButtonDown( &input, InputButton_A ) );
+
+   Input_PressButton( &input, InputButton_A );
+   TEST_ASSERT_EQUAL( True, Input_IsButtonDown( &input, InputButton_A ) );
+
+   Input_ReleaseButton( &input, InputButton_A );
+   TEST_ASSERT_EQUAL( False, Input_IsButtonDown( &input, InputButton_A ) );
+}
+
+void test_Input_IsButtonDown_ReturnsFalseIfButtonIsNotDown( void )
+{
+   Input_t input;
+
+   Input_Init( &input );
+   TEST_ASSERT_EQUAL( False, Input_IsButtonDown( &input, InputButton_B ) );
+
+   Input_PressButton( &input, InputButton_B );
+   TEST_ASSERT_EQUAL( True, Input_IsButtonDown( &input, InputButton_B ) );
+
+   Input_ReleaseButton( &input, InputButton_B );
+   TEST_ASSERT_EQUAL( False, Input_IsButtonDown( &input, InputButton_B ) );
+}
+
 void test_Input_AnyButtonPressed_ReturnsTrueIfAnyButtonIsPressed( void )
 {
    Input_t input;
@@ -130,6 +158,9 @@ int main( void )
    RUN_TEST( test_Input_PressButton_SetsPressedAndDownStates );
 
    RUN_TEST( test_Input_ReleaseButton_SetsReleasedAndDownStates );
+
+   RUN_TEST( test_Input_IsButtonDown_ReturnsTrueIfButtonIsDown );
+   RUN_TEST( test_Input_IsButtonDown_ReturnsFalseIfButtonIsNotDown );
 
    RUN_TEST( test_Input_AnyButtonPressed_ReturnsTrueIfAnyButtonIsPressed );
    RUN_TEST( test_Input_AnyButtonPressed_ReturnsFalseIfNoButtonsArePressed );

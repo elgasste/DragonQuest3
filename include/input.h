@@ -37,6 +37,7 @@ void Input_ResetAllStates( Input_t* input );
 void Input_ResetPressStates( Input_t* input );
 void Input_PressButton( Input_t* input, InputButton_t button );
 void Input_ReleaseButton( Input_t* input, InputButton_t button );
+b32 Input_IsButtonDown( Input_t* input, InputButton_t button );
 b32 Input_AnyButtonPressed( Input_t* input );
 
 #endif // INPUT_H

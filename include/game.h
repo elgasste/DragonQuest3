@@ -36,6 +36,9 @@ typedef struct Game_t
    TileMap_t *tileMap;
    Vector4i32_t tileMapViewport;
 
+   // TODO: this is the player, temporarily
+   Vector4i32_t playerRect;
+
    b32 shutdown;
 }
 Game_t;
@@ -49,6 +52,9 @@ void Game_Stop( Game_t* game );
 // game_load.c
 void Game_LoadGameData( Game_t* game, const char* gameDataFilePath );
 void Game_LoadTileMapFromId( Game_t* game, u32 id );
+
+// game_input.c
+void Game_HandleInput( Game_t* game );
 
 // game_render.c
 void Game_Render( Game_t* game );

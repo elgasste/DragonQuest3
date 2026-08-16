@@ -54,6 +54,11 @@ void Input_ReleaseButton( Input_t* input, InputButton_t button )
    }
 }
 
+b32 Input_IsButtonDown( Input_t* input, InputButton_t button )
+{
+   return input->buttonStates[button].down;
+}
+
 b32 Input_AnyButtonPressed( Input_t* input )
 {
    u32 i;

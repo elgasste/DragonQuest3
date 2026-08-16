@@ -24,6 +24,7 @@ typedef struct GameTestCalls_t
    int gameDataCleanup;
    int tileMapCleanup;
    int tileTextureSetCleanup;
+   int gameHandleInput;
    int gameRender;
    int inputInit;
    int inputResetPressStates;
@@ -114,6 +115,25 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
 {
    UNUSED_PARAM( game );
    UNUSED_PARAM( id );
+}
+
+void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( x );
+   UNUSED_PARAM( y );
+
+   if ( viewport )
+   {
+      viewport->x = 0;
+      viewport->y = 0;
+   }
+}
+
+void Game_HandleInput( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   g_calls.gameHandleInput++;
 }
 
 void Game_Render( Game_t* game )
@@ -228,6 +248,7 @@ void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
    TEST_ASSERT_EQUAL( 1, g_calls.inputResetPressStates );
    TEST_ASSERT_EQUAL( 1, g_calls.platformHandleMessages );
    TEST_ASSERT_EQUAL( 1, g_calls.gameRender );
+   TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
    TEST_ASSERT_EQUAL( 1, g_calls.clockEndFrame );
 }
 
@@ -251,6 +272,7 @@ void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
    TEST_ASSERT_EQUAL( True, game.shutdown );
    TEST_ASSERT_EQUAL( 1, g_calls.platformHandleMessages );
    TEST_ASSERT_EQUAL( 1, g_calls.gameRender );
+   TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
 }
 
 void test_Game_Destroy_CleansUpAllOwnedResources( void )

@@ -130,8 +130,7 @@ void test_Display_DrawRect_WritesPixelsInsideTheRect( void )
 
    Display_Init( &display, 0, 4, 4 );
 
-   Display_DrawRect( &display, rect, color );
-
+   Display_DrawRect( &display, rect.x, rect.y, rect.w, rect.h, color );
    TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
    TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 2 ] );
    TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 1 ] );
@@ -150,8 +149,42 @@ void test_Display_DrawRect_ClampsToVisibleArea( void )
 
    Display_Init( &display, 0, 4, 4 );
 
-   Display_DrawRect( &display, rect, color );
+   Display_DrawRect( &display, rect.x, rect.y, rect.w, rect.h, color );
+   TEST_ASSERT_EQUAL( color, display.buffer->mem[0] );
+   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
 
+   FreeDisplayBuffer( &display );
+}
+
+void test_Display_DrawVector4i_WritesPixelsInsideTheRect( void )
+{
+   Display_t display;
+   Vector4i32_t rect = { 1, 1, 2, 2 };
+   const u32 color = 0x12345678u;
+
+   Display_Init( &display, 0, 4, 4 );
+
+   Display_DrawVector4i( &display, rect, color );
+   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
+   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
+
+   FreeDisplayBuffer( &display );
+}
+
+void test_Display_DrawVector4i_ClampsToVisibleArea( void )
+{
+   Display_t display;
+   Vector4i32_t rect = { -2, -1, 6, 4 };
+   const u32 color = 0x9abcdef0u;
+
+   Display_Init( &display, 0, 4, 4 );
+
+   Display_DrawVector4i( &display, rect, color );
    TEST_ASSERT_EQUAL( color, display.buffer->mem[0] );
    TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 3 ] );
    TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
@@ -268,8 +301,8 @@ void test_Display_DrawTileMapViewport_DrawsVisibleTiles( void )
    tiles[3].textureIndex = 3;
 
    tileMap.id = 0;
-   tileMap.w = 2;
-   tileMap.h = 2;
+   tileMap.tilesX = 2;
+   tileMap.tilesY = 2;
    tileMap.tiles = tiles;
    tileMap.tileTextureSet = &textureSet;
 
@@ -313,8 +346,8 @@ void test_Display_DrawTileMapViewport_UsesViewportOffset( void )
    tiles[3].textureIndex = 3;
 
    tileMap.id = 0;
-   tileMap.w = 2;
-   tileMap.h = 2;
+   tileMap.tilesX = 2;
+   tileMap.tilesY = 2;
    tileMap.tiles = tiles;
    tileMap.tileTextureSet = &textureSet;
 
@@ -354,8 +387,8 @@ void test_Display_DrawTileMapViewport_ClipsWhenDisplayPositionIsOffscreen( void 
    tiles[3].textureIndex = 3;
 
    tileMap.id = 0;
-   tileMap.w = 2;
-   tileMap.h = 2;
+   tileMap.tilesX = 2;
+   tileMap.tilesY = 2;
    tileMap.tiles = tiles;
    tileMap.tileTextureSet = &textureSet;
 
@@ -371,6 +404,48 @@ void test_Display_DrawTileMapViewport_ClipsWhenDisplayPositionIsOffscreen( void 
    FreeDisplayBuffer( &display );
 }
 
+void test_Display_DrawTileMapViewport_CentersSmallMapInViewport( void )
+{
+   Display_t display;
+   u32 textures[9] = {
+      0x01010101u, 0x02020202u, 0x03030303u,
+      0x04040404u, 0x05050505u, 0x06060606u,
+      0x07070707u, 0x08080808u, 0x09090909u,
+   };
+   TileTextureSet_t textureSet;
+   Tile_t tiles[9];
+   TileMap_t tileMap;
+   Vector4i32_t viewport = { 1, 1, 5, 5 };
+   u32 tileIndex;
+
+   textureSet.count = 9;
+   textureSet.tileSize = 1;
+   textureSet.textures = textures;
+
+   for ( tileIndex = 0; tileIndex < 9; tileIndex++ )
+   {
+      tiles[tileIndex].textureIndex = (u32)tileIndex;
+   }
+
+   tileMap.id = 0;
+   tileMap.tilesX = 3;
+   tileMap.tilesY = 3;
+   tileMap.tiles = tiles;
+   tileMap.tileTextureSet = &textureSet;
+   tileMap.wraps = False;
+
+   Display_Init( &display, 0, 5, 5 );
+
+   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
+
+   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[ ( 1 * 5 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[ ( 1 * 5 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0x04040404u, display.buffer->mem[ ( 2 * 5 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x05050505u, display.buffer->mem[ ( 2 * 5 ) + 2 ] );
+
+   FreeDisplayBuffer( &display );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -382,6 +457,9 @@ int main( void )
    RUN_TEST( test_Display_DrawRect_WritesPixelsInsideTheRect );
    RUN_TEST( test_Display_DrawRect_ClampsToVisibleArea );
 
+   RUN_TEST( test_Display_DrawVector4i_WritesPixelsInsideTheRect );
+   RUN_TEST( test_Display_DrawVector4i_ClampsToVisibleArea );
+
    RUN_TEST( test_Display_DrawPixelBuffer_CopiesPixelsWhenFullyVisible );
    RUN_TEST( test_Display_DrawPixelBuffer_ClipsTopLeftAndCopiesVisiblePixels );
    RUN_TEST( test_Display_DrawPixelBuffer_ClipsBottomRightAndCopiesVisiblePixels );
@@ -390,6 +468,7 @@ int main( void )
    RUN_TEST( test_Display_DrawTileMapViewport_DrawsVisibleTiles );
    RUN_TEST( test_Display_DrawTileMapViewport_UsesViewportOffset );
    RUN_TEST( test_Display_DrawTileMapViewport_ClipsWhenDisplayPositionIsOffscreen );
+   RUN_TEST( test_Display_DrawTileMapViewport_CentersSmallMapInViewport );
 
    return UNITY_END();
 }

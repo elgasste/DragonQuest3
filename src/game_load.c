@@ -70,7 +70,7 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
          Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap ), sizeof( TileMap_t ) );
          game->tileMap->tiles = 0;
 
-         tileCount = (i32)( game->tileMap->w * game->tileMap->h );
+         tileCount = (i32)( game->tileMap->tilesX * game->tileMap->tilesY );
          tilesOffset = tileMapOffset + sizeof( TileMap_t );
          if ( tilesOffset + (i32)( tileCount * sizeof( Tile_t ) ) > game->gameData->file->size )
          {

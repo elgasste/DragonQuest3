@@ -130,8 +130,8 @@ internal void TestGameLoad_CreateValidFile( void )
    TestGameLoad_Write( mapsOffset + sizeof( u32 ), mapOffsets, sizeof( mapOffsets ) );
 
    tileMap.id = 9;
-   tileMap.w = 2;
-   tileMap.h = 1;
+   tileMap.tilesX = 2;
+   tileMap.tilesY = 1;
    tileMap.wraps = True;
    tileMap.tiles = 0;
    tileMap.tileTextureSet = 0;
@@ -299,8 +299,8 @@ void test_Game_LoadTileMapFromId_LoadsMapAndConnectsTextureSet( void )
 
    TEST_ASSERT_NOT_NULL( game.tileMap );
    TEST_ASSERT_EQUAL( 9, game.tileMap->id );
-   TEST_ASSERT_EQUAL( 2, game.tileMap->w );
-   TEST_ASSERT_EQUAL( 1, game.tileMap->h );
+   TEST_ASSERT_EQUAL( 2, game.tileMap->tilesX );
+   TEST_ASSERT_EQUAL( 1, game.tileMap->tilesY );
    TEST_ASSERT_EQUAL( True, game.tileMap->wraps );
    TEST_ASSERT_EQUAL( 1, game.tileMap->tiles[0].textureIndex );
    TEST_ASSERT_EQUAL( 0, game.tileMap->tiles[1].textureIndex );

@@ -49,29 +49,42 @@ add_executable(Test_PixelBuffer
 	test_pixel_buffer.c
 )
 
+add_executable(Test_TileMap
+	../src/mem_arena.c
+	../src/tile_map.c
+	vendor/unity.c
+	test_tile_map.c
+)
+
 set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Display PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Load PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Render PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Input PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_MemArena PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_PixelBuffer PROPERTY COMPILE_WARNING_AS_ERROR ON)
-set_property(TARGET Test_Display PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_TileMap PROPERTY COMPILE_WARNING_AS_ERROR ON)
 
 if(MSVC)
 	target_compile_options(Test_Clock PRIVATE /W4)
+	target_compile_options(Test_Display PRIVATE /W4)
    target_compile_options(Test_Game PRIVATE /W4)
    target_compile_options(Test_Game_Load PRIVATE /W4)
 	target_compile_options(Test_Game_Render PRIVATE /W4)
    target_compile_options(Test_Input PRIVATE /W4)
    target_compile_options(Test_MemArena PRIVATE /W4)
    target_compile_options(Test_PixelBuffer PRIVATE /W4)
-	target_compile_options(Test_Display PRIVATE /W4)
+	target_compile_options(Test_TileMap PRIVATE /W4)
 endif()
 
 target_include_directories(Test_Clock PRIVATE vendor)
 target_include_directories(Test_Clock PRIVATE ../include)
 target_include_directories(Test_Clock PRIVATE ../src)
+
+target_include_directories(Test_Display PRIVATE vendor)
+target_include_directories(Test_Display PRIVATE ../include)
+target_include_directories(Test_Display PRIVATE ../src)
 
 target_include_directories(Test_Game PRIVATE vendor)
 target_include_directories(Test_Game PRIVATE ../include)
@@ -97,15 +110,16 @@ target_include_directories(Test_PixelBuffer PRIVATE vendor)
 target_include_directories(Test_PixelBuffer PRIVATE ../include)
 target_include_directories(Test_PixelBuffer PRIVATE ../src)
 
-target_include_directories(Test_Display PRIVATE vendor)
-target_include_directories(Test_Display PRIVATE ../include)
-target_include_directories(Test_Display PRIVATE ../src)
+target_include_directories(Test_TileMap PRIVATE vendor)
+target_include_directories(Test_TileMap PRIVATE ../include)
+target_include_directories(Test_TileMap PRIVATE ../src)
 
 add_test( NAME Unity_Clock_Tests COMMAND Test_Clock)
+add_test( NAME Unity_Display_Tests COMMAND Test_Display)
 add_test( NAME Unity_Game_Tests COMMAND Test_Game)
 add_test( NAME Unity_Game_Load_Tests COMMAND Test_Game_Load)
 add_test( NAME Unity_Game_Render_Tests COMMAND Test_Game_Render)
 add_test( NAME Unity_Input_Tests COMMAND Test_Input)
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)
 add_test( NAME Unity_PixelBuffer_Tests COMMAND Test_PixelBuffer)
-add_test( NAME Unity_Display_Tests COMMAND Test_Display)
+add_test( NAME Unity_TileMap_Tests COMMAND Test_TileMap)
