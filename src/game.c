@@ -100,5 +100,9 @@ void Game_Stop( Game_t* game )
 
 internal void Game_Tic( Game_t* game )
 {
-   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, game->playerRect.x, game->playerRect.y );
+   i32 centerX, centerY;
+
+   centerX = game->playerRect.x + ( game->playerRect.w / 2 );
+   centerY = game->playerRect.y + ( game->playerRect.h / 2 );
+   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY );
 }
