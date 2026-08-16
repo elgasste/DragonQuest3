@@ -34,7 +34,10 @@ void Game_HandleInput( Game_t* game )
       if ( game->playerRect.x + game->playerRect.w > (i32)( game->tileMap->tilesX * game->tileTextureSet->tileSize ) )
       {
          if ( game->tileMap->wraps )
-            game->playerRect.x = ( game->tileMap->tilesX * game->tileTextureSet->tileSize ) + game->playerRect.x;
+         {
+            if ( game->playerRect.x > (i32)( game->tileMap->tilesX * game->tileTextureSet->tileSize ) )
+               game->playerRect.x = 0;
+         }
          else
             game->playerRect.x = ( game->tileMap->tilesX * game->tileTextureSet->tileSize ) - game->playerRect.w;
       }
@@ -45,7 +48,10 @@ void Game_HandleInput( Game_t* game )
       if ( game->playerRect.y + game->playerRect.h > (i32)( game->tileMap->tilesY * game->tileTextureSet->tileSize ) )
       {
          if ( game->tileMap->wraps )
-            game->playerRect.y = ( game->tileMap->tilesY * game->tileTextureSet->tileSize ) + game->playerRect.y;
+         {
+            if ( game->playerRect.y > (i32)( game->tileMap->tilesY * game->tileTextureSet->tileSize ) )
+               game->playerRect.y = 0;
+         }
          else
             game->playerRect.y = ( game->tileMap->tilesY * game->tileTextureSet->tileSize ) - game->playerRect.h;
       }

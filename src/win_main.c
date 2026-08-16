@@ -469,6 +469,10 @@ internal void DrawDiagnostics( HDC* dcMem )
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
+   sprintf_s( str, STRING_SIZE_DEFAULT, "  Player Position: (%d, %d)", game->playerRect.x, game->playerRect.y );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
    r.top += 16;
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
