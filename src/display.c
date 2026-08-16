@@ -20,59 +20,64 @@ void Display_Fill( Display_t* display, u32 color )
    PixelBuffer_ClearColor( display->buffer, color );
 }
 
-void Display_DrawRect( Display_t* display, Vector4i32_t rect, u32 color )
+void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color )
 {
    i32 r, b, row, col;
    PixelBuffer_t* buffer;
    u32* mem;
 
    buffer = display->buffer;
-   r = rect.x + rect.w;
-   b = rect.y + rect.h;
+   r = x + w;
+   b = y + h;
 
    // make sure the rect is even on the display
-   if ( rect.x >= (i32)( buffer->w ) || rect.y >= (i32)( buffer->h ) || r <= 0 || b <= 0 )
+   if ( x >= (i32)( buffer->w ) || y >= (i32)( buffer->h ) || r <= 0 || b <= 0 )
    {
       return;
    }
 
-   if ( rect.x < 0 )
+   if ( x < 0 )
    {
       // the left side is off the display
-      rect.w += rect.x;
-      rect.x = 0;
+      w += x;
+      x = 0;
    }
    if ( r > (i32)( buffer->w ) )
    {
       // the right side is off the display
-      rect.w -= ( r - buffer->w );
+      w -= ( r - buffer->w );
       r = buffer->w;
    }
 
-   if ( rect.y < 0 )
+   if ( y < 0 )
    {
       // the top side is off the display
-      rect.h += rect.y;
-      rect.y = 0;
+      h += y;
+      y = 0;
    }
    if ( b > (i32)( buffer->h ) )
    {
       // the bottom side is off the display
-      rect.h -= ( b - buffer->h );
+      h -= ( b - buffer->h );
       b = buffer->h;
    }
 
-   mem = buffer->mem + ( ( rect.y * buffer->w ) + rect.x );
-   for ( row = 0; row < rect.h; row++ )
+   mem = buffer->mem + ( ( y * buffer->w ) + x );
+   for ( row = 0; row < h; row++ )
    {
-      for ( col = 0; col < rect.w; col++ )
+      for ( col = 0; col < w; col++ )
       {
          *mem = color;
          mem++;
       }
 
-      mem += ( buffer->w - rect.w );
+      mem += ( buffer->w - w );
    }
+}
+
+void Display_DrawVector4i( Display_t* display, Vector4i32_t rect, u32 color )
+{
+   Display_DrawRect( display, rect.x, rect.y, rect.w, rect.h, color );
 }
 
 void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 bufferH, i32 displayX, i32 displayY )
@@ -135,7 +140,7 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
 
 void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector4i32_t viewport, i32 displayX, i32 displayY )
 {
-   i32 tileX, tileY, viewportR, viewportB;
+   i32 tileX, tileY, viewportR, viewportB, tileMapSizeX, tileMapSizeY;
    i32 tileWorldX, tileWorldY, drawX, drawY;
    i32 mapOffsetX, mapOffsetY;
    u32 tileSize, tileIndex;
@@ -153,14 +158,17 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
    mapOffsetY = 0;
    smallMapCentered = False;
 
-   if ( !tileMap->wraps && (u32)viewport.w >= ( tileMap->w * tileSize ) && (u32)viewport.h >= ( tileMap->h * tileSize ) )
+   tileMapSizeX = (i32)( tileMap->tilesX * tileSize );
+   tileMapSizeY = (i32)( tileMap->tilesY * tileSize );
+
+   if ( !tileMap->wraps && viewport.w >= tileMapSizeX && viewport.h >= tileMapSizeY )
    {
-      mapOffsetX = ( viewport.w - (i32)( tileMap->w * tileSize ) ) / 2;
-      mapOffsetY = ( viewport.h - (i32)( tileMap->h * tileSize ) ) / 2;
+      mapOffsetX = ( viewport.w - tileMapSizeX ) / 2;
+      mapOffsetY = ( viewport.h - tileMapSizeY ) / 2;
       smallMapCentered = True;
    }
 
-   for ( tileY = 0; tileY < (i32)tileMap->h; tileY++ )
+   for ( tileY = 0; tileY < (i32)tileMap->tilesY; tileY++ )
    {
       tileWorldY = tileY * (i32)tileSize;
 
@@ -177,7 +185,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
          }
       }
 
-      for ( tileX = 0; tileX < (i32)tileMap->w; tileX++ )
+      for ( tileX = 0; tileX < (i32)tileMap->tilesX; tileX++ )
       {
          tileWorldX = tileX * (i32)tileSize;
 
@@ -194,7 +202,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
             }
          }
 
-         tileIndex = (u32)tileY * tileMap->w + (u32)tileX;
+         tileIndex = (u32)tileY * tileMap->tilesX + (u32)tileX;
          tile = &( tileMap->tiles[tileIndex] );
 
          texture = textureSet->textures + ( tile->textureIndex * tileSize * tileSize );

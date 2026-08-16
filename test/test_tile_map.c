@@ -3,6 +3,7 @@
 #include "mem_arena.h"
 #include "platform.h"
 #include "tile_map.h"
+#include "tile_texture_set.h"
 #include "unity.h"
 #include "vector.h"
 
@@ -42,10 +43,13 @@ internal void test_TileMap_AnchorViewportToPoint_ClampsToMapBoundsWhenNotWrappin
 {
    TileMap_t tileMap;
    Vector4i32_t viewport;
+   TileTextureSet_t textureSet;
 
-   tileMap.w = 20;
-   tileMap.h = 10;
+   tileMap.tilesX = 20;
+   tileMap.tilesY = 10;
    tileMap.wraps = False;
+   textureSet.tileSize = 1;
+   tileMap.tileTextureSet = &textureSet;
 
    viewport.x = 0;
    viewport.y = 0;
@@ -65,10 +69,13 @@ internal void test_TileMap_AnchorViewportToPoint_DoesNotClampWhenWrapping( void 
 {
    TileMap_t tileMap;
    Vector4i32_t viewport;
+   TileTextureSet_t textureSet;
 
-   tileMap.w = 20;
-   tileMap.h = 10;
+   tileMap.tilesX = 20;
+   tileMap.tilesY = 10;
    tileMap.wraps = True;
+   textureSet.tileSize = 1;
+   tileMap.tileTextureSet = &textureSet;
 
    viewport.x = 0;
    viewport.y = 0;
@@ -84,10 +91,13 @@ internal void test_TileMap_AnchorViewportToPoint_CentersSmallMapInViewport( void
 {
    TileMap_t tileMap;
    Vector4i32_t viewport;
+   TileTextureSet_t textureSet;
 
-   tileMap.w = 3;
-   tileMap.h = 3;
+   tileMap.tilesX = 3;
+   tileMap.tilesY = 3;
    tileMap.wraps = False;
+   textureSet.tileSize = 1;
+   tileMap.tileTextureSet = &textureSet;
 
    viewport.x = 0;
    viewport.y = 0;
@@ -95,8 +105,8 @@ internal void test_TileMap_AnchorViewportToPoint_CentersSmallMapInViewport( void
    viewport.h = 5;
 
    TileMap_AnchorViewportToPoint( &tileMap, &viewport, 100, 100 );
-   TEST_ASSERT_EQUAL( 1, viewport.x );
-   TEST_ASSERT_EQUAL( 1, viewport.y );
+   TEST_ASSERT_EQUAL( -1, viewport.x );
+   TEST_ASSERT_EQUAL( -1, viewport.y );
 }
 
 int main( void )

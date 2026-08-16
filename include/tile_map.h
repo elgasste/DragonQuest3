@@ -16,8 +16,8 @@ Tile_t;
 typedef struct TileMap_t
 {
    u32 id;
-   u32 w;
-   u32 h;
+   u32 tilesX;
+   u32 tilesY;
    b32 wraps;
    Tile_t* tiles;
    TileTextureSet_t* tileTextureSet;

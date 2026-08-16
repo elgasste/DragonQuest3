@@ -40,12 +40,14 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    game->tileMapViewport.y = 0;
    game->tileMapViewport.w = DISPLAY_WIDTH;
    game->tileMapViewport.h = DISPLAY_HEIGHT;
-   game->playerPos.x = 0;
-   game->playerPos.y = 0;
+   game->playerRect.x = 10;
+   game->playerRect.y = 10;
+   game->playerRect.w = 12;
+   game->playerRect.h = 14;
 
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = 0;
-   Game_LoadTileMapFromId( game, 0 );
+   Game_LoadTileMapFromId( game, 1 );
 }
 
 void Game_Destroy( Game_t** pGame )
@@ -83,6 +85,8 @@ void Game_Run( Game_t* game )
       Clock_StartFrame( game->clock );
       Input_ResetPressStates( game->input );
       Platform_HandleMessages( game );
+      // MUFFINS: let's handle input here, which at the moment means we should move the
+      // player position and update the tile map viewport. we should also draw a dot for the player.P
       Game_Tic( game );
       Game_Render( game );
       Clock_EndFrame( game->clock );
@@ -96,5 +100,5 @@ void Game_Stop( Game_t* game )
 
 internal void Game_Tic( Game_t* game )
 {
-   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, game->playerPos.x, game->playerPos.y );
+   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, game->playerRect.x, game->playerRect.y );
 }

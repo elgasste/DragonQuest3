@@ -1,5 +1,6 @@
 #include "display.h"
 #include "game.h"
+#include "tile_map.h"
 #include "unity.h"
 
 typedef struct DisplayFillCall_t
@@ -64,6 +65,23 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
    UNUSED_PARAM( displayY );
 }
 
+void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color )
+{
+   UNUSED_PARAM( display );
+   UNUSED_PARAM( x );
+   UNUSED_PARAM( y );
+   UNUSED_PARAM( w );
+   UNUSED_PARAM( h );
+   UNUSED_PARAM( color );
+}
+
+void Display_DrawVector4i( Display_t* display, Vector4i32_t rect, u32 color )
+{
+   UNUSED_PARAM( display );
+   UNUSED_PARAM( rect );
+   UNUSED_PARAM( color );
+}
+
 void test_Game_Render_FillsDisplayBufferWithBlack( void )
 {
    Game_t game;
@@ -94,7 +112,7 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_Render_FillsDisplayBufferWithBlack );
-   
+
    RUN_TEST( test_Game_Render_RendersDisplayBuffer );
 
    return UNITY_END();

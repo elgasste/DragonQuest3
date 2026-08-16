@@ -103,18 +103,18 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    // first
    curTileMap = tileMaps;
    curTileMap->id = 0;
-   curTileMap->w = 10;
-   curTileMap->h = 10;
+   curTileMap->tilesX = 10;
+   curTileMap->tilesY = 10;
    curTileMap->wraps = False;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (Tile_t*)malloc( curTileMap->w * curTileMap->h * sizeof( Tile_t ) );
+   curTileMap->tiles = (Tile_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( Tile_t ) );
 
-   for ( i = 0; i < curTileMap->w * curTileMap->h; i++ )
+   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
       // checkerboard
-      if ( ( i / curTileMap->w ) % 2 == 0 )
+      if ( ( i / curTileMap->tilesX ) % 2 == 0 )
       {
-         if ( ( i % curTileMap->w ) % 2 == 0 )
+         if ( ( i % curTileMap->tilesX ) % 2 == 0 )
          {
             curTileMap->tiles[i].textureIndex = 1; // white
          }
@@ -125,7 +125,7 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
       }
       else
       {
-         if ( ( i % curTileMap->w ) % 2 == 0 )
+         if ( ( i % curTileMap->tilesX ) % 2 == 0 )
          {
             curTileMap->tiles[i].textureIndex = 0; // black
          }
@@ -139,13 +139,13 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    // second
    curTileMap++;
    curTileMap->id = 1;
-   curTileMap->w = 256;
-   curTileMap->h = 256;
+   curTileMap->tilesX = 256;
+   curTileMap->tilesY = 256;
    curTileMap->wraps = True;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (Tile_t*)malloc( curTileMap->w * curTileMap->h * sizeof( Tile_t ) );
+   curTileMap->tiles = (Tile_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( Tile_t ) );
 
-   for ( i = 0; i < curTileMap->w * curTileMap->h; i++ )
+   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
       // random
       curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
@@ -306,7 +306,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t*
          + ( tileMapCount * sizeof( GameDataTileMapFileOffset_t ) )
          + ( i * sizeof( TileMap_t ) )
          + ( tileAccum * sizeof( Tile_t ) );
-      tileAccum += tileMaps[i].w * tileMaps[i].h;
+      tileAccum += tileMaps[i].tilesX * tileMaps[i].tilesY;
    }
 
    result = WriteFile( hFile, offsets, tileMapCount * sizeof( GameDataTileMapFileOffset_t ), &bytesWritten, NULL );
@@ -339,7 +339,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t*
          return False;
       }
 
-      for ( j = 0; j < tileMaps[i].w * tileMaps[i].h; j++ )
+      for ( j = 0; j < tileMaps[i].tilesX * tileMaps[i].tilesY; j++ )
       {
          tile = &( tileMaps[i].tiles[j] );
          
