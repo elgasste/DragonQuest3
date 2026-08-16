@@ -44,7 +44,7 @@ void Game_LoadGameData( Game_t* game, const char* gameDataFilePath )
 void Game_LoadTileMapFromId( Game_t* game, u32 id )
 {
    u32 i;
-   i32 tileMapOffset, tilesOffset, tileCount;
+   i32 tileMapsChunkOffset, tileMapOffset, tilesOffset, tileCount;
    char msg[STRING_SIZE_DEFAULT];
 
    if ( game->tileMap )
@@ -56,9 +56,10 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
 
    for ( i = 0; i < game->gameData->tileMapCount; i++ )
    {
-      if ( game->gameData->tileMapFileOffsets[i].id == id )
+      if ( game->gameData->tileMapOffsets[i].id == id )
       {
-         tileMapOffset = game->gameData->tileMapFileOffsets[i].offset;
+         tileMapsChunkOffset = game->gameData->offsets.tileMaps;
+         tileMapOffset = tileMapsChunkOffset + game->gameData->tileMapOffsets[i].offset;
          if ( (i32)( tileMapOffset + sizeof( TileMap_t ) ) > game->gameData->file->size )
          {
             Platform_FatalError( "game data file is too small to contain the requested tile map header." );
@@ -184,21 +185,21 @@ internal b32 GameData_LoadTileMapOffsets( Game_t* game )
    Platform_FileSeek( game->gameData->file, game->gameData->offsets.tileMaps, 0 );
    Platform_ReadFileBytes( game->gameData->file, (u8*)&( game->gameData->tileMapCount ), sizeof( u32 ) );
 
-   // next series of bytes are a mapping of tile map IDs to file offsets
+   // next series of bytes are a mapping of tile map IDs to chunk offsets
    tileMapOffsetsOffset = game->gameData->offsets.tileMaps + sizeof( u32 );
-   if ( (i32)( tileMapOffsetsOffset + ( game->gameData->tileMapCount * sizeof( GameDataTileMapFileOffset_t ) ) ) > game->gameData->file->size )
+   if ( (i32)( tileMapOffsetsOffset + ( game->gameData->tileMapCount * sizeof( GameDataTileMapOffset_t ) ) ) > game->gameData->file->size )
    {
-      Platform_FatalError( "game data file is too small to contain tile map file offsets." );
+      Platform_FatalError( "game data file is too small to contain tile map chunk offsets." );
       return False;
    }
 
-   game->gameData->tileMapFileOffsets = (GameDataTileMapFileOffset_t*)MemArena_Alloc( game->memArena, game->gameData->tileMapCount * sizeof( GameDataTileMapFileOffset_t ) );
+   game->gameData->tileMapOffsets = (GameDataTileMapOffset_t*)MemArena_Alloc( game->memArena, game->gameData->tileMapCount * sizeof( GameDataTileMapOffset_t ) );
 
    for ( i = 0; i < game->gameData->tileMapCount; i++ )
    {
-      Platform_ReadFileBytes( game->gameData->file, (u8*)&( game->gameData->tileMapFileOffsets[i] ), sizeof( GameDataTileMapFileOffset_t ) );
+      Platform_ReadFileBytes( game->gameData->file, (u8*)&( game->gameData->tileMapOffsets[i] ), sizeof( GameDataTileMapOffset_t ) );
 
-      if ( game->gameData->tileMapFileOffsets[i].offset >= game->gameData->file->size )
+      if ( game->gameData->offsets.tileMaps + game->gameData->tileMapOffsets[i].offset >= game->gameData->file->size )
       {
          Platform_FatalError( "game data file has an invalid tile map offset." );
          return False;
