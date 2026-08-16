@@ -111,10 +111,9 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
    g_winGlobals.showDiagnostics = False;
 
-   // TODO: put the window title somewhere else
    g_winGlobals.hWndMain = CreateWindowExA( 0,
                                             mainWindowClass.lpszClassName,
-                                            "Dragon Quest 3",
+                                            STR_WINDOW_TITLE,
                                             windowStyle,
                                             CW_USEDEFAULT,
                                             CW_USEDEFAULT,
