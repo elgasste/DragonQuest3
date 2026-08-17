@@ -4,14 +4,37 @@
 #include "tile_map.h"
 #include "tile_texture_set.h"
 
-void Display_Init( Display_t* display, MemArena_t* memArena, u32 w, u32 h )
+struct Display_t
 {
+   PixelBuffer_t* buffer;
+};
+
+Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
+{
+   Display_t* display = (Display_t*)MemArena_Alloc( memArena, sizeof( Display_t ) );
    display->buffer = PixelBuffer_Create( memArena, w, h );
+   return display;
 }
 
-void Display_Cleanup( Display_t* display, MemArena_t* memArena )
+void Display_Free( Display_t* display, MemArena_t* memArena )
 {
    PixelBuffer_Free( display->buffer, memArena );
+   MemArena_Free( memArena, display );
+}
+
+u32 Display_GetWidth( Display_t* display )
+{
+   return PixelBuffer_GetWidth( display->buffer );
+}
+
+u32 Display_GetHeight( Display_t* display )
+{
+   return PixelBuffer_GetHeight( display->buffer );
+}
+
+u32* Display_GetPixels( Display_t* display )
+{
+   return PixelBuffer_GetPixels( display->buffer );
 }
 
 void Display_Fill( Display_t* display, u32 color )

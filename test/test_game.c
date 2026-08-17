@@ -82,20 +82,22 @@ void Clock_EndFrame( Clock_t* clock )
    g_calls.clockEndFrame++;
 }
 
-void Display_Init( Display_t* display, MemArena_t* memArena, u32 w, u32 h )
+Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 {
-   UNUSED_PARAM( display );
    UNUSED_PARAM( memArena );
    UNUSED_PARAM( w );
    UNUSED_PARAM( h );
    g_calls.displayInit++;
+   g_calls.memArenaAlloc++;
+   return (Display_t*)malloc( 1 );
 }
 
-void Display_Cleanup( Display_t* display, MemArena_t* memArena )
+void Display_Free( Display_t* display, MemArena_t* memArena )
 {
-   UNUSED_PARAM( display );
    UNUSED_PARAM( memArena );
    g_calls.displayCleanup++;
+   g_calls.memArenaFree++;
+   free( display );
 }
 
 void Game_LoadGameData( Game_t* game, const char* gameDataFilePath )
@@ -249,13 +251,14 @@ void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
    Game_t game;
    Clock_t* clock;
    Input_t input;
-   Display_t display;
+   Display_t* display;
 
    memset( &game, 0, sizeof( game ) );
    clock = Clock_Create( 0 );
+   display = Display_Create( 0, 0, 0 );
    game.clock = clock;
    game.input = &input;
-   game.display = &display;
+   game.display = display;
 
    Game_Run( &game );
 
@@ -268,6 +271,7 @@ void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
    TEST_ASSERT_EQUAL( 1, g_calls.clockEndFrame );
 
    Clock_Free( clock, 0 );
+   Display_Free( display, 0 );
 }
 
 void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
@@ -275,13 +279,14 @@ void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
    Game_t game;
    Clock_t* clock;
    Input_t input;
-   Display_t display;
+   Display_t* display;
 
    memset( &game, 0, sizeof( game ) );
    clock = Clock_Create( 0 );
+   display = Display_Create( 0, 0, 0 );
    game.clock = clock;
    game.input = &input;
-   game.display = &display;
+   game.display = display;
 
    g_calls.platformHandleMessages = 0;
    g_calls.gameRender = 0;
@@ -294,6 +299,7 @@ void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
    TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
 
    Clock_Free( clock, 0 );
+   Display_Free( display, 0 );
 }
 
 void test_Game_Destroy_CleansUpAllOwnedResources( void )
@@ -303,9 +309,9 @@ void test_Game_Destroy_CleansUpAllOwnedResources( void )
 
    game = (Game_t*)malloc( sizeof( Game_t ) );
    game->memArena = &arena;
-   game->clock = (Clock_t*)malloc( sizeof( Clock_t ) );
+   game->clock = Clock_Create( 0 );
    game->input = (Input_t*)malloc( sizeof( Input_t ) );
-   game->display = (Display_t*)malloc( sizeof( Display_t ) );
+   game->display = Display_Create( 0, 0, 0 );
    game->gameData = (GameData_t*)malloc( sizeof( GameData_t ) );
    game->tileMap = (TileMap_t*)malloc( sizeof( TileMap_t ) );
    game->tileTextureSet = (TileTextureSet_t*)malloc( sizeof( TileTextureSet_t ) );

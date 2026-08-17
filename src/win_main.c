@@ -139,8 +139,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                      "Consolas" );
 
    g_winGlobals.bmpInfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-   g_winGlobals.bmpInfo.bmiHeader.biWidth = PixelBuffer_GetWidth( g_winGlobals.game->display->buffer );
-   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( PixelBuffer_GetHeight( g_winGlobals.game->display->buffer ) );
+   g_winGlobals.bmpInfo.bmiHeader.biWidth = Display_GetWidth( g_winGlobals.game->display );
+   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( Display_GetHeight( g_winGlobals.game->display ) );
    g_winGlobals.bmpInfo.bmiHeader.biPlanes = 1;
    g_winGlobals.bmpInfo.bmiHeader.biBitCount = 32;
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
@@ -282,9 +282,9 @@ internal void RenderScreen( void )
 
    winWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale );
    winHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale );
-   displayBufferW = PixelBuffer_GetWidth( g_winGlobals.game->display->buffer );
-   displayBufferH = PixelBuffer_GetHeight( g_winGlobals.game->display->buffer );
-   pixels = PixelBuffer_GetPixels( g_winGlobals.game->display->buffer );
+   displayBufferW = Display_GetWidth( g_winGlobals.game->display );
+   displayBufferH = Display_GetHeight( g_winGlobals.game->display );
+   pixels = Display_GetPixels( g_winGlobals.game->display );
 
    dc = BeginPaint( g_winGlobals.hWndMain, &ps );
 

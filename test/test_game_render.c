@@ -33,6 +33,14 @@ void setUp( void )
 
 void tearDown( void ) {}
 
+Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
+{
+   UNUSED_PARAM( memArena );
+   UNUSED_PARAM( w );
+   UNUSED_PARAM( h );
+   return (Display_t*)1;
+}
+
 void Platform_RenderDisplayBuffer( Display_t* display )
 {
    g_platformRenderDisplayBufferCall.display = display;
@@ -85,12 +93,13 @@ void Display_DrawVector4i( Display_t* display, Vector4i32_t rect, u32 color )
 void test_Game_Render_FillsDisplayBufferWithBlack( void )
 {
    Game_t game;
-   Display_t display;
+   Display_t* display;
 
-   game.display = &display;
+   display = Display_Create( 0, 0, 0 );
+   game.display = display;
 
    Game_Render( &game );
-   TEST_ASSERT_EQUAL_PTR( &display, g_displayFillCall.display );
+   TEST_ASSERT_EQUAL_PTR( display, g_displayFillCall.display );
    TEST_ASSERT_EQUAL_HEX32( 0x00000000, g_displayFillCall.color );
    TEST_ASSERT_EQUAL_INT( 1, g_displayFillCall.callCount );
 }
@@ -98,12 +107,13 @@ void test_Game_Render_FillsDisplayBufferWithBlack( void )
 void test_Game_Render_RendersDisplayBuffer( void )
 {
    Game_t game;
-   Display_t display;
+   Display_t* display;
 
-   game.display = &display;
+   display = Display_Create( 0, 0, 0 );
+   game.display = display;
 
    Game_Render( &game );
-   TEST_ASSERT_EQUAL_PTR( &display, g_platformRenderDisplayBufferCall.display );
+   TEST_ASSERT_EQUAL_PTR( display, g_platformRenderDisplayBufferCall.display );
    TEST_ASSERT_EQUAL_INT( 1, g_platformRenderDisplayBufferCall.callCount );
 }
 

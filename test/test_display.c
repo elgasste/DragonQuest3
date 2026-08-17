@@ -28,18 +28,6 @@ PixelBufferClearColorCall_t;
 local_persist PixelBufferCreateCall_t g_pixelBufferCreateCall;
 local_persist PixelBufferClearColorCall_t g_pixelBufferClearColorCall;
 
-void FreeDisplayBuffer( Display_t* display )
-{
-   if ( !display || !display->buffer )
-   {
-      return;
-   }
-
-   free( display->buffer->mem );
-   free( display->buffer );
-   display->buffer = 0;
-}
-
 void setUp( void )
 {
    g_pixelBufferCreateCall.memArena = 0;
@@ -53,6 +41,18 @@ void setUp( void )
 }
 
 void tearDown( void ) {}
+
+void* MemArena_Alloc( MemArena_t* arena, size_t size )
+{
+   UNUSED_PARAM( arena );
+   return malloc( size );
+}
+
+void MemArena_Free( MemArena_t* arena, void* mem )
+{
+   UNUSED_PARAM( arena );
+   free( mem );
+}
 
 PixelBuffer_t* PixelBuffer_Create( MemArena_t* memArena, u32 w, u32 h )
 {
@@ -104,189 +104,189 @@ void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
 
 void test_Display_Init_CreatesPixelBufferWithCorrectParameters( void )
 {
-   Display_t display;
+   Display_t* display;
    MemArena_t memArena;
 
-   Display_Init( &display, &memArena, 20, 45 );
+   display = Display_Create( &memArena, 20, 45 );
    TEST_ASSERT_EQUAL( 1, g_pixelBufferCreateCall.callCount );
    TEST_ASSERT_EQUAL( &memArena, g_pixelBufferCreateCall.memArena );
    TEST_ASSERT_EQUAL( 20, g_pixelBufferCreateCall.w );
    TEST_ASSERT_EQUAL( 45, g_pixelBufferCreateCall.h );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, &memArena );
 }
 
 void test_Display_Fill_FillsPixelBufferWithColor( void )
 {
-   Display_t display;
+   Display_t* display;
 
-   Display_Init( &display, 0, 10, 10 );
+   display = Display_Create( 0, 10, 10 );
 
-   Display_Fill( &display, 50 );
+   Display_Fill( display, 50 );
    TEST_ASSERT_EQUAL( 1, g_pixelBufferClearColorCall.callCount );
    TEST_ASSERT_EQUAL( 50, g_pixelBufferClearColorCall.color );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawRect_WritesPixelsInsideTheRect( void )
 {
-   Display_t display;
+   Display_t* display;
    Vector4i32_t rect = { 1, 1, 2, 2 };
    const u32 color = 0x12345678u;
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawRect( &display, rect.x, rect.y, rect.w, rect.h, color );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
+   Display_DrawRect( display, rect.x, rect.y, rect.w, rect.h, color );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 1 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 1 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 2 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 2 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[0] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 3 * 4 ) + 3 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawRect_ClampsToVisibleArea( void )
 {
-   Display_t display;
+   Display_t* display;
    Vector4i32_t rect = { -2, -1, 6, 4 };
    const u32 color = 0x9abcdef0u;
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawRect( &display, rect.x, rect.y, rect.w, rect.h, color );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
+   Display_DrawRect( display, rect.x, rect.y, rect.w, rect.h, color );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[0] );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 2 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 3 * 4 ) + 3 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawVector4i_WritesPixelsInsideTheRect( void )
 {
-   Display_t display;
+   Display_t* display;
    Vector4i32_t rect = { 1, 1, 2, 2 };
    const u32 color = 0x12345678u;
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawVector4i( &display, rect, color );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
+   Display_DrawVector4i( display, rect, color );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 1 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 1 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 2 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 2 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[0] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 3 * 4 ) + 3 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawVector4i_ClampsToVisibleArea( void )
 {
-   Display_t display;
+   Display_t* display;
    Vector4i32_t rect = { -2, -1, 6, 4 };
    const u32 color = 0x9abcdef0u;
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawVector4i( &display, rect, color );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
+   Display_DrawVector4i( display, rect, color );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[0] );
+   TEST_ASSERT_EQUAL( color, Display_GetPixels( display )[ ( 2 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 3 * 4 ) + 3 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawPixelBuffer_CopiesPixelsWhenFullyVisible( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 source[4] = {
       0x11111111u, 0x22222222u,
       0x33333333u, 0x44444444u,
    };
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawBuffer( &display, source, 2, 2, 1, 1 );
+   Display_DrawBuffer( display, source, 2, 2, 1, 1 );
 
-   TEST_ASSERT_EQUAL( 0x11111111u, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x22222222u, display.buffer->mem[ ( 1 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0x33333333u, display.buffer->mem[ ( 2 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x44444444u, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0x11111111u, Display_GetPixels( display )[ ( 1 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x22222222u, Display_GetPixels( display )[ ( 1 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0x33333333u, Display_GetPixels( display )[ ( 2 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x44444444u, Display_GetPixels( display )[ ( 2 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[0] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 3 * 4 ) + 3 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawPixelBuffer_ClipsTopLeftAndCopiesVisiblePixels( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 source[9] = {
       1u, 2u, 3u,
       4u, 5u, 6u,
       7u, 8u, 9u,
    };
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawBuffer( &display, source, 3, 3, -1, -1 );
+   Display_DrawBuffer( display, source, 3, 3, -1, -1 );
 
-   TEST_ASSERT_EQUAL( 5u, display.buffer->mem[ ( 0 * 4 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 6u, display.buffer->mem[ ( 0 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 8u, display.buffer->mem[ ( 1 * 4 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 9u, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 0 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 2 * 4 ) + 0 ] );
+   TEST_ASSERT_EQUAL( 5u, Display_GetPixels( display )[ ( 0 * 4 ) + 0 ] );
+   TEST_ASSERT_EQUAL( 6u, Display_GetPixels( display )[ ( 0 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 8u, Display_GetPixels( display )[ ( 1 * 4 ) + 0 ] );
+   TEST_ASSERT_EQUAL( 9u, Display_GetPixels( display )[ ( 1 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 0 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 2 * 4 ) + 0 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawPixelBuffer_ClipsBottomRightAndCopiesVisiblePixels( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 source[9] = {
       1u, 2u, 3u,
       4u, 5u, 6u,
       7u, 8u, 9u,
    };
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawBuffer( &display, source, 3, 3, 3, 2 );
+   Display_DrawBuffer( display, source, 3, 3, 3, 2 );
 
-   TEST_ASSERT_EQUAL( 1u, display.buffer->mem[ ( 2 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 4u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 1u, Display_GetPixels( display )[ ( 2 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 4u, Display_GetPixels( display )[ ( 3 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 2 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 3 * 4 ) + 2 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawPixelBuffer_DoesNothingWhenBufferIsFullyOffScreen( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 source[4] = {
       0xaaaaaaaau, 0xbbbbbbbbu,
       0xccccccccu, 0xddddddddu,
    };
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawBuffer( &display, source, 2, 2, 5, 1 );
+   Display_DrawBuffer( display, source, 2, 2, 5, 1 );
 
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[0] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 1 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 3 * 4 ) + 3 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawTileMapViewport_DrawsVisibleTiles( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 textures[16] = {
       0x01010101u, 0x01010101u, 0x01010101u, 0x01010101u,
       0x02020202u, 0x02020202u, 0x02020202u, 0x02020202u,
@@ -313,25 +313,25 @@ void test_Display_DrawTileMapViewport_DrawsVisibleTiles( void )
    tileMap.tiles = tiles;
    tileMap.tileTextureSet = &textureSet;
 
-   Display_Init( &display, 0, 4, 4 );
+   display = Display_Create( 0, 4, 4 );
 
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
+   Display_DrawTileMapViewport( display, &tileMap, viewport, 0, 0 );
 
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[ ( 0 * 4 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[ ( 0 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[ ( 1 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 0x03030303u, display.buffer->mem[ ( 2 * 4 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0x03030303u, display.buffer->mem[ ( 3 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x04040404u, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0x04040404u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0x01010101u, Display_GetPixels( display )[ ( 0 * 4 ) + 0 ] );
+   TEST_ASSERT_EQUAL( 0x01010101u, Display_GetPixels( display )[ ( 1 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x02020202u, Display_GetPixels( display )[ ( 0 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0x02020202u, Display_GetPixels( display )[ ( 1 * 4 ) + 3 ] );
+   TEST_ASSERT_EQUAL( 0x03030303u, Display_GetPixels( display )[ ( 2 * 4 ) + 0 ] );
+   TEST_ASSERT_EQUAL( 0x03030303u, Display_GetPixels( display )[ ( 3 * 4 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x04040404u, Display_GetPixels( display )[ ( 2 * 4 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0x04040404u, Display_GetPixels( display )[ ( 3 * 4 ) + 3 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawTileMapViewport_UsesViewportOffset( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 textures[16] = {
       0x11111111u, 0x11111111u, 0x11111111u, 0x11111111u,
       0x22222222u, 0x22222222u, 0x22222222u, 0x22222222u,
@@ -358,21 +358,21 @@ void test_Display_DrawTileMapViewport_UsesViewportOffset( void )
    tileMap.tiles = tiles;
    tileMap.tileTextureSet = &textureSet;
 
-   Display_Init( &display, 0, 2, 2 );
+   display = Display_Create( 0, 2, 2 );
 
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
+   Display_DrawTileMapViewport( display, &tileMap, viewport, 0, 0 );
 
-   TEST_ASSERT_EQUAL( 0x11111111u, display.buffer->mem[ ( 0 * 2 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0x22222222u, display.buffer->mem[ ( 0 * 2 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x33333333u, display.buffer->mem[ ( 1 * 2 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0x44444444u, display.buffer->mem[ ( 1 * 2 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x11111111u, Display_GetPixels( display )[ ( 0 * 2 ) + 0 ] );
+   TEST_ASSERT_EQUAL( 0x22222222u, Display_GetPixels( display )[ ( 0 * 2 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x33333333u, Display_GetPixels( display )[ ( 1 * 2 ) + 0 ] );
+   TEST_ASSERT_EQUAL( 0x44444444u, Display_GetPixels( display )[ ( 1 * 2 ) + 1 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawTileMapViewport_ClipsWhenDisplayPositionIsOffscreen( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 textures[16] = {
       0xabcdef01u, 0xabcdef01u, 0xabcdef01u, 0xabcdef01u,
       0x12345678u, 0x12345678u, 0x12345678u, 0x12345678u,
@@ -399,21 +399,21 @@ void test_Display_DrawTileMapViewport_ClipsWhenDisplayPositionIsOffscreen( void 
    tileMap.tiles = tiles;
    tileMap.tileTextureSet = &textureSet;
 
-   Display_Init( &display, 0, 3, 3 );
+   display = Display_Create( 0, 3, 3 );
 
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 2, 2 );
+   Display_DrawTileMapViewport( display, &tileMap, viewport, 2, 2 );
 
-   TEST_ASSERT_EQUAL( 0xabcdef01u, display.buffer->mem[ ( 2 * 3 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 0 * 3 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 1 * 3 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 2 * 3 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0xabcdef01u, Display_GetPixels( display )[ ( 2 * 3 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 0 * 3 ) + 0 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 1 * 3 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0u, Display_GetPixels( display )[ ( 2 * 3 ) + 1 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawTileMapViewport_CentersSmallMapInViewport( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 textures[9] = {
       0x01010101u, 0x02020202u, 0x03030303u,
       0x04040404u, 0x05050505u, 0x06060606u,
@@ -441,21 +441,21 @@ void test_Display_DrawTileMapViewport_CentersSmallMapInViewport( void )
    tileMap.tileTextureSet = &textureSet;
    tileMap.wraps = False;
 
-   Display_Init( &display, 0, 5, 5 );
+   display = Display_Create( 0, 5, 5 );
 
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
+   Display_DrawTileMapViewport( display, &tileMap, viewport, 0, 0 );
 
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[ ( 1 * 5 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[ ( 1 * 5 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0x04040404u, display.buffer->mem[ ( 2 * 5 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x05050505u, display.buffer->mem[ ( 2 * 5 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0x01010101u, Display_GetPixels( display )[ ( 1 * 5 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x02020202u, Display_GetPixels( display )[ ( 1 * 5 ) + 2 ] );
+   TEST_ASSERT_EQUAL( 0x04040404u, Display_GetPixels( display )[ ( 2 * 5 ) + 1 ] );
+   TEST_ASSERT_EQUAL( 0x05050505u, Display_GetPixels( display )[ ( 2 * 5 ) + 2 ] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 void test_Display_DrawTileMapViewport_RepeatsWrappedMap( void )
 {
-   Display_t display;
+   Display_t* display;
    u32 textures[2] = {
       0x01010101u, 0x02020202u,
    };
@@ -478,16 +478,16 @@ void test_Display_DrawTileMapViewport_RepeatsWrappedMap( void )
    tileMap.tileTextureSet = &textureSet;
    tileMap.wraps = True;
 
-   Display_Init( &display, 0, 4, 1 );
+   display = Display_Create( 0, 4, 1 );
 
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
+   Display_DrawTileMapViewport( display, &tileMap, viewport, 0, 0 );
 
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[1] );
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[2] );
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[3] );
+   TEST_ASSERT_EQUAL( 0x02020202u, Display_GetPixels( display )[0] );
+   TEST_ASSERT_EQUAL( 0x01010101u, Display_GetPixels( display )[1] );
+   TEST_ASSERT_EQUAL( 0x02020202u, Display_GetPixels( display )[2] );
+   TEST_ASSERT_EQUAL( 0x01010101u, Display_GetPixels( display )[3] );
 
-   FreeDisplayBuffer( &display );
+   Display_Free( display, 0 );
 }
 
 int main( void )
