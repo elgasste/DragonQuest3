@@ -1,8 +1,9 @@
 #include <stdlib.h>
 
+#include "mocks/mock_pixel_buffer.h"
+
 #include "display.h"
 #include "mem_arena.h"
-#include "pixel_buffer.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
 #include "unity.h"
@@ -10,7 +11,6 @@
 typedef struct PixelBufferCreateCall_t
 {
    MemArena_t* memArena;
-   PixelBuffer_t** pBuffer;
    u32 w;
    u32 h;
    int callCount;
@@ -42,7 +42,6 @@ void FreeDisplayBuffer( Display_t* display )
 
 void setUp( void )
 {
-   g_pixelBufferCreateCall.pBuffer = 0;
    g_pixelBufferCreateCall.memArena = 0;
    g_pixelBufferCreateCall.w = 0;
    g_pixelBufferCreateCall.h = 0;
@@ -55,22 +54,45 @@ void setUp( void )
 
 void tearDown( void ) {}
 
-void PixelBuffer_Create( PixelBuffer_t** buffer, MemArena_t* memArena, u32 w, u32 h )
+PixelBuffer_t* PixelBuffer_Create( MemArena_t* memArena, u32 w, u32 h )
 {
-   PixelBuffer_t* newBuffer;
+   PixelBuffer_t* buffer;
 
-   newBuffer = (PixelBuffer_t*)malloc( sizeof( PixelBuffer_t ) );
-   newBuffer->w = w;
-   newBuffer->h = h;
-   newBuffer->mem = (u32*)calloc( w * h, sizeof( u32 ) );
+   UNUSED_PARAM( memArena );
 
-   *buffer = newBuffer;
+   buffer = (PixelBuffer_t*)malloc( sizeof( PixelBuffer_t ) );
+   buffer->w = w;
+   buffer->h = h;
+   buffer->mem = (u32*)calloc( w * h, sizeof( u32 ) );
 
-   g_pixelBufferCreateCall.pBuffer = buffer;
    g_pixelBufferCreateCall.memArena = memArena;
    g_pixelBufferCreateCall.w = w;
    g_pixelBufferCreateCall.h = h;
    g_pixelBufferCreateCall.callCount++;
+
+   return buffer;
+}
+
+void PixelBuffer_Free( PixelBuffer_t* buffer, MemArena_t* memArena )
+{
+   UNUSED_PARAM( memArena );
+   free( buffer->mem );
+   free( buffer );
+}
+
+u32 PixelBuffer_GetWidth( PixelBuffer_t* buffer )
+{
+   return buffer->w;
+}
+
+u32 PixelBuffer_GetHeight( PixelBuffer_t* buffer )
+{
+   return buffer->h;
+}
+
+u32* PixelBuffer_GetPixels( PixelBuffer_t* buffer )
+{
+   return buffer->mem;
 }
 
 void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
@@ -80,28 +102,13 @@ void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
    g_pixelBufferClearColorCall.callCount++;
 }
 
-void PixelBuffer_Cleanup( PixelBuffer_t* buffer, MemArena_t* memArena )
-{
-   UNUSED_PARAM( buffer );
-   UNUSED_PARAM( memArena );
-}
-
-void MemArena_Free( MemArena_t* arena, void* mem )
-{
-   UNUSED_PARAM( arena );
-   UNUSED_PARAM( mem );
-}
-
 void test_Display_Init_CreatesPixelBufferWithCorrectParameters( void )
 {
    Display_t display;
    MemArena_t memArena;
 
-   display.buffer = (PixelBuffer_t*)malloc( sizeof( PixelBuffer_t ) );
-
    Display_Init( &display, &memArena, 20, 45 );
    TEST_ASSERT_EQUAL( 1, g_pixelBufferCreateCall.callCount );
-   TEST_ASSERT_EQUAL( &( display.buffer ), g_pixelBufferCreateCall.pBuffer );
    TEST_ASSERT_EQUAL( &memArena, g_pixelBufferCreateCall.memArena );
    TEST_ASSERT_EQUAL( 20, g_pixelBufferCreateCall.w );
    TEST_ASSERT_EQUAL( 45, g_pixelBufferCreateCall.h );

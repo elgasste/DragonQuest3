@@ -44,7 +44,6 @@ add_executable(Test_MemArena
 
 add_executable(Test_PixelBuffer
 	../src/pixel_buffer.c
-	../src/mem_arena.c
 	vendor/unity.c
 	test_pixel_buffer.c
 )
@@ -83,6 +82,7 @@ target_include_directories(Test_Clock PRIVATE ../include)
 target_include_directories(Test_Clock PRIVATE ../src)
 
 target_include_directories(Test_Display PRIVATE vendor)
+target_include_directories(Test_Display PRIVATE mocks)
 target_include_directories(Test_Display PRIVATE ../include)
 target_include_directories(Test_Display PRIVATE ../src)
 

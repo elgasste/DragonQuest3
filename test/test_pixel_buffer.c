@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "mem_arena.h"
@@ -17,43 +18,51 @@ void setUp( void )
 
 void tearDown( void ) {}
 
-internal void test_PixelBuffer_Create_CreatesBufferWithCorrectDimensions( void )
+void* MemArena_Alloc( MemArena_t* arena, size_t size )
 {
-   MemArena_t* arena;
+   UNUSED_PARAM( arena );
+   return malloc( size );
+}
+
+void MemArena_Free( MemArena_t* arena, void* mem )
+{
+   UNUSED_PARAM( arena );
+   free( mem );
+}
+
+internal void test_PixelBuffer_Init_SetsCorrectDimensions( void )
+{
    PixelBuffer_t* buffer;
 
-   MemArena_Create( &arena, 1024 );
-   PixelBuffer_Create( &buffer, arena, 10, 20 );
+   buffer = PixelBuffer_Create( 0, 10, 20 );
 
-   TEST_ASSERT_EQUAL( 10, buffer->w );
-   TEST_ASSERT_EQUAL( 20, buffer->h );
-   TEST_ASSERT_NOT_NULL( buffer->mem );
+   TEST_ASSERT_EQUAL( 10, PixelBuffer_GetWidth( buffer ) );
+   TEST_ASSERT_EQUAL( 20, PixelBuffer_GetHeight( buffer ) );
+   TEST_ASSERT_NOT_NULL( PixelBuffer_GetPixels( buffer ) );
 
-   MemArena_Destroy( &arena );
+   PixelBuffer_Free( buffer, 0 );
 }
 
 internal void test_PixelBuffer_ClearColor_ClearsColor( void )
 {
-   MemArena_t* arena;
    PixelBuffer_t* buffer;
    u32 color;
    size_t x, y;
 
-   MemArena_Create( &arena, 1024 );
-   PixelBuffer_Create( &buffer, arena, 10, 10 );
+   buffer = PixelBuffer_Create( 0, 10, 10 );
 
    color = 0xFF00FF00;
    PixelBuffer_ClearColor( buffer, color );
 
-   for ( y = 0; y < buffer->h; y++ )
+   for ( y = 0; y < PixelBuffer_GetHeight( buffer ); y++ )
    {
-      for ( x = 0; x < buffer->w; x++ )
+      for ( x = 0; x < PixelBuffer_GetWidth( buffer ); x++ )
       {
-         TEST_ASSERT_EQUAL( color, buffer->mem[y * buffer->w + x] );
+         TEST_ASSERT_EQUAL( color, ((u32*)PixelBuffer_GetPixels( buffer ))[y * PixelBuffer_GetWidth( buffer ) + x] );
       }
    }
 
-   MemArena_Destroy( &arena );
+   PixelBuffer_Free( buffer, 0 );
 }
 
 void Platform_FatalError( const char* message )
@@ -70,7 +79,7 @@ int main( void )
 {
    UNITY_BEGIN();
    
-   RUN_TEST( test_PixelBuffer_Create_CreatesBufferWithCorrectDimensions );
+   RUN_TEST( test_PixelBuffer_Init_SetsCorrectDimensions );
 
    RUN_TEST( test_PixelBuffer_ClearColor_ClearsColor );
    

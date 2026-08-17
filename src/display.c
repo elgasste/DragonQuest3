@@ -6,13 +6,12 @@
 
 void Display_Init( Display_t* display, MemArena_t* memArena, u32 w, u32 h )
 {
-   PixelBuffer_Create( &( display->buffer ), memArena, w, h );
+   display->buffer = PixelBuffer_Create( memArena, w, h );
 }
 
 void Display_Cleanup( Display_t* display, MemArena_t* memArena )
 {
-   PixelBuffer_Cleanup( display->buffer, memArena );
-   MemArena_Free( memArena, display->buffer );
+   PixelBuffer_Free( display->buffer, memArena );
 }
 
 void Display_Fill( Display_t* display, u32 color )
@@ -23,15 +22,18 @@ void Display_Fill( Display_t* display, u32 color )
 void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color )
 {
    i32 r, b, row, col;
+   u32 bufferW, bufferH;
    PixelBuffer_t* buffer;
    u32* mem;
 
    buffer = display->buffer;
+   bufferW = PixelBuffer_GetWidth( buffer );
+   bufferH = PixelBuffer_GetHeight( buffer );
    r = x + w;
    b = y + h;
 
    // make sure the rect is even on the display
-   if ( x >= (i32)( buffer->w ) || y >= (i32)( buffer->h ) || r <= 0 || b <= 0 )
+   if ( x >= (i32)( bufferW ) || y >= (i32)( bufferH ) || r <= 0 || b <= 0 )
    {
       return;
    }
@@ -42,11 +44,11 @@ void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color
       w += x;
       x = 0;
    }
-   if ( r > (i32)( buffer->w ) )
+   if ( r > (i32)( bufferW ) )
    {
       // the right side is off the display
-      w -= ( r - buffer->w );
-      r = buffer->w;
+      w -= ( r - bufferW );
+      r = bufferW;
    }
 
    if ( y < 0 )
@@ -55,14 +57,14 @@ void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color
       h += y;
       y = 0;
    }
-   if ( b > (i32)( buffer->h ) )
+   if ( b > (i32)( bufferH ) )
    {
       // the bottom side is off the display
-      h -= ( b - buffer->h );
-      b = buffer->h;
+      h -= ( b - bufferH );
+      b = bufferH;
    }
 
-   mem = buffer->mem + ( ( y * buffer->w ) + x );
+   mem = PixelBuffer_GetPixels( display->buffer ) + ( ( y * bufferW ) + x );
    for ( row = 0; row < h; row++ )
    {
       for ( col = 0; col < w; col++ )
@@ -71,7 +73,7 @@ void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color
          mem++;
       }
 
-      mem += ( buffer->w - w );
+      mem += ( bufferW - w );
    }
 }
 
@@ -83,16 +85,18 @@ void Display_DrawVector4i( Display_t* display, Vector4i32_t rect, u32 color )
 void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 bufferH, i32 displayX, i32 displayY )
 {
    i32 displayR, displayB, row, col;
-   u32 bufferOffsetL, bufferOffsetR, bufferOffsetT, bufferOffsetB;
+   u32 displayBufferW, displayBufferH, bufferOffsetL, bufferOffsetR, bufferOffsetT, bufferOffsetB;
    PixelBuffer_t* displayBuffer;
    u32* displayMem;
 
    displayBuffer = display->buffer;
+   displayBufferW = PixelBuffer_GetWidth( displayBuffer );
+   displayBufferH = PixelBuffer_GetHeight( displayBuffer );
    displayR = displayX + (i32)bufferW;
    displayB = displayY + (i32)bufferH;
 
    // make sure the rect is even on the display
-   if ( displayX >= (i32)( displayBuffer->w ) || displayY >= (i32)( displayBuffer->h ) || displayR <= 0 || displayB <= 0 )
+   if ( displayX >= (i32)( displayBufferW ) || displayY >= (i32)( displayBufferH ) || displayR <= 0 || displayB <= 0 )
    {
       return;
    }
@@ -105,10 +109,10 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
       bufferOffsetL += -displayX;
       displayX = 0;
    }
-   if ( displayR > (i32)( displayBuffer->w ) )
+   if ( displayR > (i32)( displayBufferW ) )
    {
       // the right side is off the display
-      bufferOffsetR += ( displayR - displayBuffer->w );
+      bufferOffsetR += ( displayR - displayBufferW );
    }
 
    bufferOffsetT = 0;
@@ -119,13 +123,13 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
       bufferOffsetT += -displayY;
       displayY = 0;
    }
-   if ( displayB > (i32)( displayBuffer->h ) )
+   if ( displayB > (i32)( displayBufferH ) )
    {
       // the bottom side is off the display
-      bufferOffsetB += ( displayB - displayBuffer->h );
+      bufferOffsetB += ( displayB - displayBufferH );
    }
 
-   displayMem = displayBuffer->mem + ( ( displayY * displayBuffer->w ) + displayX );
+   displayMem = PixelBuffer_GetPixels( display->buffer ) + ( ( displayY * displayBufferW ) + displayX );
    for ( row = bufferOffsetT; row < (i32)( bufferH - bufferOffsetB ); row++ )
    {
       for ( col = bufferOffsetL; col < (i32)( bufferW - bufferOffsetR ); col++ )
@@ -134,7 +138,7 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
          displayMem++;
       }
 
-      displayMem += ( displayBuffer->w - ( bufferW - bufferOffsetL - bufferOffsetR ) );
+      displayMem += ( displayBufferW - ( bufferW - bufferOffsetL - bufferOffsetR ) );
    }
 }
 

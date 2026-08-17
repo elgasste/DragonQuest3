@@ -4,13 +4,40 @@
 #include "pixel_buffer.h"
 #include "platform.h"
 
-void PixelBuffer_Create( PixelBuffer_t** pBuffer, MemArena_t* memArena, u32 w, u32 h )
+struct PixelBuffer_t
 {
-   *pBuffer = (PixelBuffer_t*)MemArena_Alloc( memArena, sizeof( PixelBuffer_t ) + ( w * h * sizeof( u32 ) ) );
+   u32 w;
+   u32 h;
+   u32* mem;
+};
 
-   ( *pBuffer )->w = w;
-   ( *pBuffer )->h = h;
-   ( *pBuffer )->mem = (u32*)( (u8*)(*pBuffer) + sizeof( PixelBuffer_t ) );
+PixelBuffer_t* PixelBuffer_Create( MemArena_t* memArena, u32 w, u32 h )
+{
+   PixelBuffer_t* buffer = MemArena_Alloc( memArena, sizeof( PixelBuffer_t ) + ( w * h * sizeof( u32 ) ) );
+   buffer->w = w;
+   buffer->h = h;
+   buffer->mem = (u32*)( buffer + 1 );
+   return buffer;
+}
+
+void PixelBuffer_Free( PixelBuffer_t* buffer, MemArena_t* memArena )
+{
+   MemArena_Free( memArena, buffer );
+}
+
+u32 PixelBuffer_GetWidth( PixelBuffer_t* buffer )
+{
+   return buffer->w;
+}
+
+u32 PixelBuffer_GetHeight( PixelBuffer_t* buffer )
+{
+   return buffer->h;
+}
+
+u32* PixelBuffer_GetPixels( PixelBuffer_t* buffer )
+{
+   return buffer->mem;
 }
 
 void PixelBuffer_Cleanup( PixelBuffer_t* buffer, MemArena_t* memArena )
