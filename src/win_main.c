@@ -439,19 +439,19 @@ internal void DrawDiagnostics( HDC* dcMem )
    SetTextColor( *dcMem, 0x00FFFFFF );
    SetBkMode( *dcMem, TRANSPARENT );
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "Target Frame Rate: %u", game->clock->fps );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "Target Frame Rate: %u", Clock_GetFps( game->clock ) );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "    Last Frame MS: %u", (u32)( game->clock->lastframeMicro / 1000 ) );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "    Last Frame MS: %u", (u32)( Clock_GetLastFrameMicro( game->clock ) / 1000 ) );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "     Total Frames: %u", game->clock->frameCount );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "     Total Frames: %u", Clock_GetFrameCount( game->clock ) );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", game->clock->lagFrameCount );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", Clock_GetLagFrameCount( game->clock ) );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
@@ -459,12 +459,12 @@ internal void DrawDiagnostics( HDC* dcMem )
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   gameSeconds = game->clock->frameCount / game->clock->fps;
+   gameSeconds = Clock_GetFrameCount( game->clock ) / Clock_GetFps( game->clock );
    sprintf_s( str, STRING_SIZE_DEFAULT, "    In-Game Timer: %u:%02u:%02u", gameSeconds / 3600, gameSeconds / 60, gameSeconds );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   realSeconds = (u32)( game->clock->absoluteEndMicro - game->clock->absoluteStartMicro ) / 1000000;
+   realSeconds = (u32)( Clock_GetAbsoluteEndMicro( game->clock ) - Clock_GetAbsoluteStartMicro( game->clock ) ) / 1000000;
    sprintf_s( str, STRING_SIZE_DEFAULT, " Real World Timer: %u:%02u:%02u", realSeconds / 3600, realSeconds / 60, realSeconds );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
@@ -619,12 +619,15 @@ internal void ResizeScreen( b32 increase )
 
 internal void ChangeGameFps( b32 increase )
 {
-   if ( increase && g_winGlobals.game->clock->fps < MAX_GAME_FPS )
+   u32 fps;
+
+   fps = Clock_GetFps( g_winGlobals.game->clock );
+   if ( increase && fps < MAX_GAME_FPS )
    {
-      Clock_SetFps( g_winGlobals.game->clock, g_winGlobals.game->clock->fps + GAME_FPS_STEP );
+      Clock_SetFps( g_winGlobals.game->clock, fps + GAME_FPS_STEP );
    }
-   else if ( !increase && g_winGlobals.game->clock->fps > MIN_GAME_FPS )
+   else if ( !increase && fps > MIN_GAME_FPS )
    {
-      Clock_SetFps( g_winGlobals.game->clock, g_winGlobals.game->clock->fps - GAME_FPS_STEP );
+      Clock_SetFps( g_winGlobals.game->clock, fps - GAME_FPS_STEP );
    }
 }

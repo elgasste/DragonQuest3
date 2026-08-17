@@ -21,7 +21,7 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    game = *pGame;
    game->memArena = memArena;
    
-   game->clock = (Clock_t*)MemArena_Alloc( game->memArena, sizeof( Clock_t ) );
+   game->clock = (Clock_t*)MemArena_Alloc( game->memArena, Clock_GetSize() );
    game->input = (Input_t*)MemArena_Alloc( game->memArena, sizeof( Input_t ) );
    game->display = (Display_t*)MemArena_Alloc( game->memArena, sizeof( Display_t ) );
 

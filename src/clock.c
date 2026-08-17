@@ -1,6 +1,63 @@
 #include "clock.h"
 #include "platform.h"
 
+struct Clock_t
+{
+   u32 fps;
+   u64 frameMicroSec;
+   r32 frameSec;
+
+   u64 frameStartMicro;
+   u64 absoluteStartMicro;
+   u64 absoluteEndMicro;
+   u64 lastframeMicro;
+
+   u32 frameCount;
+   u32 lagFrameCount;
+
+   b32 hasStarted;
+};
+
+size_t Clock_GetSize( void )
+{
+   return sizeof( Clock_t );
+}
+
+u32 Clock_GetFps( Clock_t *clock )
+{
+   return clock->fps;
+}
+
+r32 Clock_GetFrameSec( Clock_t *clock )
+{
+   return clock->frameSec;
+}
+
+u64 Clock_GetAbsoluteStartMicro( Clock_t *clock )
+{
+   return clock->absoluteStartMicro;
+}
+
+u64 Clock_GetAbsoluteEndMicro( Clock_t *clock )
+{
+   return clock->absoluteEndMicro;
+}
+
+u64 Clock_GetLastFrameMicro( Clock_t *clock )
+{
+   return clock->lastframeMicro;
+}
+
+u32 Clock_GetFrameCount( Clock_t *clock )
+{
+   return clock->frameCount;
+}
+
+u32 Clock_GetLagFrameCount( Clock_t *clock )
+{
+   return clock->lagFrameCount;
+}
+
 void Clock_Init( Clock_t* clock, u32 fps )
 {
    Clock_SetFps( clock, fps );

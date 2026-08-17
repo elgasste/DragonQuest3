@@ -48,6 +48,11 @@ void setUp( void )
 
 void tearDown( void ) {}
 
+size_t Clock_GetSize( void )
+{
+   return 1;
+}
+
 void Clock_Init( Clock_t* clock, u32 fps )
 {
    UNUSED_PARAM( clock );
@@ -232,12 +237,13 @@ void test_Game_Stop_SetsShutdownFlag( void )
 void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
 {
    Game_t game;
-   Clock_t clock;
+   Clock_t* clock;
    Input_t input;
    Display_t display;
 
    memset( &game, 0, sizeof( game ) );
-   game.clock = &clock;
+   clock = (Clock_t*)malloc( Clock_GetSize() );
+   game.clock = clock;
    game.input = &input;
    game.display = &display;
 
@@ -250,17 +256,20 @@ void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
    TEST_ASSERT_EQUAL( 1, g_calls.gameRender );
    TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
    TEST_ASSERT_EQUAL( 1, g_calls.clockEndFrame );
+
+   free( clock );
 }
 
 void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
 {
    Game_t game;
-   Clock_t clock;
+   Clock_t* clock;
    Input_t input;
    Display_t display;
 
    memset( &game, 0, sizeof( game ) );
-   game.clock = &clock;
+   clock = (Clock_t*)malloc( Clock_GetSize() );
+   game.clock = clock;
    game.input = &input;
    game.display = &display;
 
@@ -273,6 +282,8 @@ void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
    TEST_ASSERT_EQUAL( 1, g_calls.platformHandleMessages );
    TEST_ASSERT_EQUAL( 1, g_calls.gameRender );
    TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
+
+   free( clock );
 }
 
 void test_Game_Destroy_CleansUpAllOwnedResources( void )
@@ -282,7 +293,7 @@ void test_Game_Destroy_CleansUpAllOwnedResources( void )
 
    game = (Game_t*)malloc( sizeof( Game_t ) );
    game->memArena = &arena;
-   game->clock = (Clock_t*)malloc( sizeof( Clock_t ) );
+   game->clock = (Clock_t*)malloc( Clock_GetSize() );
    game->input = (Input_t*)malloc( sizeof( Input_t ) );
    game->display = (Display_t*)malloc( sizeof( Display_t ) );
    game->gameData = (GameData_t*)malloc( sizeof( GameData_t ) );
