@@ -432,7 +432,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.bottom = 0;
 
    // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 256, 206, RGB( 0, 0, 128 ), 200 );
+   DrawTranslucentRectangle( *dcMem, 0, 0, 256, 224, RGB( 0, 0, 128 ), 200 );
 
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
 
@@ -466,6 +466,10 @@ internal void DrawDiagnostics( HDC* dcMem )
 
    realSeconds = (u32)( game->clock->absoluteEndMicro - game->clock->absoluteStartMicro ) / 1000000;
    sprintf_s( str, STRING_SIZE_DEFAULT, " Real World Timer: %u:%02u:%02u", realSeconds / 3600, realSeconds / 60, realSeconds );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "  Player Position: (%d, %d)", game->playerRect.x, game->playerRect.y );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 

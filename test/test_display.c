@@ -446,6 +446,43 @@ void test_Display_DrawTileMapViewport_CentersSmallMapInViewport( void )
    FreeDisplayBuffer( &display );
 }
 
+void test_Display_DrawTileMapViewport_RepeatsWrappedMap( void )
+{
+   Display_t display;
+   u32 textures[2] = {
+      0x01010101u, 0x02020202u,
+   };
+   TileTextureSet_t textureSet;
+   Tile_t tiles[2];
+   TileMap_t tileMap;
+   Vector4i32_t viewport = { 1, 0, 4, 1 };
+
+   textureSet.count = 2;
+   textureSet.tileSize = 1;
+   textureSet.textures = textures;
+
+   tiles[0].textureIndex = 0;
+   tiles[1].textureIndex = 1;
+
+   tileMap.id = 0;
+   tileMap.tilesX = 2;
+   tileMap.tilesY = 1;
+   tileMap.tiles = tiles;
+   tileMap.tileTextureSet = &textureSet;
+   tileMap.wraps = True;
+
+   Display_Init( &display, 0, 4, 1 );
+
+   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
+
+   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[0] );
+   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[1] );
+   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[2] );
+   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[3] );
+
+   FreeDisplayBuffer( &display );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -469,6 +506,7 @@ int main( void )
    RUN_TEST( test_Display_DrawTileMapViewport_UsesViewportOffset );
    RUN_TEST( test_Display_DrawTileMapViewport_ClipsWhenDisplayPositionIsOffscreen );
    RUN_TEST( test_Display_DrawTileMapViewport_CentersSmallMapInViewport );
+   RUN_TEST( test_Display_DrawTileMapViewport_RepeatsWrappedMap );
 
    return UNITY_END();
 }

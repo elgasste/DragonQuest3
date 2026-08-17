@@ -9,34 +9,51 @@ void Game_HandleInput( Game_t* game )
    if ( Input_IsButtonDown( game->input, InputButton_Left ) )
    {
       game->playerRect.x -= 1;
+      if ( game->playerRect.x < 0 )
+      {
+         if ( game->tileMap->wraps )
+            game->playerRect.x = ( game->tileMap->tilesX * game->tileTextureSet->tileSize ) - 1;
+         else
+            game->playerRect.x = 0;
+      }
    }
    if ( Input_IsButtonDown( game->input, InputButton_Up ) )
    {
       game->playerRect.y -= 1;
+      if ( game->playerRect.y < 0 )
+      {
+         if ( game->tileMap->wraps )
+            game->playerRect.y = ( game->tileMap->tilesY * game->tileTextureSet->tileSize ) - 1;
+         else
+            game->playerRect.y = 0;
+      }
    }
    if ( Input_IsButtonDown( game->input, InputButton_Right ) )
    {
       game->playerRect.x += 1;
+      if ( game->playerRect.x + game->playerRect.w > (i32)( game->tileMap->tilesX * game->tileTextureSet->tileSize ) )
+      {
+         if ( game->tileMap->wraps )
+         {
+            if ( game->playerRect.x > (i32)( game->tileMap->tilesX * game->tileTextureSet->tileSize ) )
+               game->playerRect.x = 0;
+         }
+         else
+            game->playerRect.x = ( game->tileMap->tilesX * game->tileTextureSet->tileSize ) - game->playerRect.w;
+      }
    }
    if ( Input_IsButtonDown( game->input, InputButton_Down ) )
    {
       game->playerRect.y += 1;
-   }
-
-   if ( game->playerRect.x < 0 )
-   {
-      game->playerRect.x = 0;
-   }
-   if ( game->playerRect.y < 0 )
-   {
-      game->playerRect.y = 0;
-   }
-   if ( game->playerRect.x + game->playerRect.w > (i32)( game->tileMap->tilesX * game->tileTextureSet->tileSize ) )
-   {
-      game->playerRect.x = ( game->tileMap->tilesX * game->tileTextureSet->tileSize ) - game->playerRect.w;
-   }
-   if ( game->playerRect.y + game->playerRect.h > (i32)( game->tileMap->tilesY * game->tileTextureSet->tileSize ) )
-   {
-      game->playerRect.y = ( game->tileMap->tilesY * game->tileTextureSet->tileSize ) - game->playerRect.h;
+      if ( game->playerRect.y + game->playerRect.h > (i32)( game->tileMap->tilesY * game->tileTextureSet->tileSize ) )
+      {
+         if ( game->tileMap->wraps )
+         {
+            if ( game->playerRect.y > (i32)( game->tileMap->tilesY * game->tileTextureSet->tileSize ) )
+               game->playerRect.y = 0;
+         }
+         else
+            game->playerRect.y = ( game->tileMap->tilesY * game->tileTextureSet->tileSize ) - game->playerRect.h;
+      }
    }
 }
