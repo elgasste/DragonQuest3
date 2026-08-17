@@ -22,11 +22,11 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    game->memArena = memArena;
    
    game->clock = Clock_Create( memArena );
-   game->input = (Input_t*)MemArena_Alloc( game->memArena, sizeof( Input_t ) );
+   game->input = Input_Create( game->memArena );
    game->display = Display_Create( game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
 
    Clock_Init( game->clock, GAME_DEFAULT_FPS );
-   Input_Init( game->input );
+   Input_ResetAllStates( game->input );
 
    game->gameData = 0;
    game->tileMap = 0;
@@ -57,7 +57,7 @@ void Game_Destroy( Game_t** pGame )
    }
 
    Clock_Free( ( *pGame )->clock, ( *pGame )->memArena );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->input );
+   Input_Free( ( *pGame )->input, ( *pGame )->memArena );
 
    Display_Free( ( *pGame )->display, ( *pGame )->memArena );
 

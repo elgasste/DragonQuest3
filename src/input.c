@@ -1,8 +1,28 @@
 #include "input.h"
+#include "mem_arena.h"
 
-void Input_Init( Input_t* input )
+struct Input_t
 {
+   InputButtonState_t buttonStates[InputButton_Count];
+};
+
+Input_t* Input_Create( MemArena_t* memArena )
+{
+   Input_t* input;
+
+   input = (Input_t*)MemArena_Alloc( memArena, sizeof( Input_t ) );
    Input_ResetAllStates( input );
+   return input;
+}
+
+void Input_Free( Input_t* input, MemArena_t* memArena )
+{
+   MemArena_Free( memArena, input );
+}
+
+InputButtonState_t* Input_GetButtonState( Input_t* input, InputButton_t button )
+{
+   return &( input->buttonStates[button] );
 }
 
 void Input_ResetAllStates( Input_t* input )

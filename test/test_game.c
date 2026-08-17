@@ -159,7 +159,21 @@ void Game_Render( Game_t* game )
    g_calls.gameRender++;
 }
 
-void Input_Init( Input_t* input )
+Input_t* Input_Create( MemArena_t* memArena )
+{
+   UNUSED_PARAM( memArena );
+   g_calls.memArenaAlloc++;
+   return (Input_t*)malloc( 1 );
+}
+
+void Input_Free( Input_t* input, MemArena_t* memArena )
+{
+   UNUSED_PARAM( memArena );
+   g_calls.memArenaFree++;
+   free( input );
+}
+
+void Input_ResetAllStates( Input_t* input )
 {
    UNUSED_PARAM( input );
    g_calls.inputInit++;
@@ -250,14 +264,15 @@ void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
 {
    Game_t game;
    Clock_t* clock;
-   Input_t input;
+   Input_t* input;
    Display_t* display;
 
    memset( &game, 0, sizeof( game ) );
    clock = Clock_Create( 0 );
+   input = Input_Create( 0 );
    display = Display_Create( 0, 0, 0 );
    game.clock = clock;
-   game.input = &input;
+   game.input = input;
    game.display = display;
 
    Game_Run( &game );
@@ -271,6 +286,7 @@ void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
    TEST_ASSERT_EQUAL( 1, g_calls.clockEndFrame );
 
    Clock_Free( clock, 0 );
+   Input_Free( input, 0 );
    Display_Free( display, 0 );
 }
 
@@ -278,14 +294,15 @@ void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
 {
    Game_t game;
    Clock_t* clock;
-   Input_t input;
+   Input_t* input;
    Display_t* display;
 
    memset( &game, 0, sizeof( game ) );
    clock = Clock_Create( 0 );
+   input = Input_Create( 0 );
    display = Display_Create( 0, 0, 0 );
    game.clock = clock;
-   game.input = &input;
+   game.input = input;
    game.display = display;
 
    g_calls.platformHandleMessages = 0;
@@ -299,6 +316,7 @@ void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
    TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
 
    Clock_Free( clock, 0 );
+   Input_Free( input, 0 );
    Display_Free( display, 0 );
 }
 
@@ -310,7 +328,7 @@ void test_Game_Destroy_CleansUpAllOwnedResources( void )
    game = (Game_t*)malloc( sizeof( Game_t ) );
    game->memArena = &arena;
    game->clock = Clock_Create( 0 );
-   game->input = (Input_t*)malloc( sizeof( Input_t ) );
+   game->input = Input_Create( 0 );
    game->display = Display_Create( 0, 0, 0 );
    game->gameData = (GameData_t*)malloc( sizeof( GameData_t ) );
    game->tileMap = (TileMap_t*)malloc( sizeof( TileMap_t ) );
