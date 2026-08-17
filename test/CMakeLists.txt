@@ -87,6 +87,7 @@ target_include_directories(Test_Display PRIVATE ../include)
 target_include_directories(Test_Display PRIVATE ../src)
 
 target_include_directories(Test_Game PRIVATE vendor)
+target_include_directories(Test_Game PRIVATE mocks)
 target_include_directories(Test_Game PRIVATE ../include)
 target_include_directories(Test_Game PRIVATE ../src)
 

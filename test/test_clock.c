@@ -38,6 +38,18 @@ u64 Platform_GetMicros( void )
    return g_platformOpsGetMicrosCall.returnValue;
 }
 
+void* MemArena_Alloc( MemArena_t* arena, size_t size )
+{
+   UNUSED_PARAM( arena );
+   return malloc( size );
+}
+
+void MemArena_Free( MemArena_t* arena, void* mem )
+{
+   UNUSED_PARAM( arena );
+   free( mem );
+}
+
 void Platform_SleepMs( u32 ms )
 {
    g_platformOpsSleepMsCall.ms = ms;
@@ -50,7 +62,7 @@ void test_Clock_Init_InitializesClockWithCorrectParameters( void )
    Clock_t* clock;
 
    expectedFrameSec = 1.0f / 30.0f;
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
 
    Clock_Init( clock, 30 );
 
@@ -62,7 +74,7 @@ void test_Clock_Init_InitializesClockWithCorrectParameters( void )
    TEST_ASSERT_EQUAL( 0, Clock_GetFrameCount( clock ) );
    TEST_ASSERT_EQUAL( 0, Clock_GetLagFrameCount( clock ) );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 void test_Clock_SetFps_UpdatesFrameMicroSecAndFrameSec( void )
@@ -70,7 +82,7 @@ void test_Clock_SetFps_UpdatesFrameMicroSecAndFrameSec( void )
    r32 expectedFrameSec;
    Clock_t* clock;
 
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
    Clock_Init( clock, 30 );
 
    expectedFrameSec = 1.0f / 60.0f;
@@ -80,14 +92,14 @@ void test_Clock_SetFps_UpdatesFrameMicroSecAndFrameSec( void )
    TEST_ASSERT_EQUAL( 60, Clock_GetFps( clock ) );
    TEST_ASSERT_EQUAL( expectedFrameSec, Clock_GetFrameSec( clock ) );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 void test_Clock_StartFrame_ClockIsMarkedAsStarted( void )
 {
    Clock_t* clock;
 
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
    Clock_Init( clock, 30 );
    g_platformOpsGetMicrosCall.returnValue = 100;
 
@@ -95,14 +107,14 @@ void test_Clock_StartFrame_ClockIsMarkedAsStarted( void )
    TEST_ASSERT_EQUAL( 100, Clock_GetAbsoluteStartMicro( clock ) );
    TEST_ASSERT_EQUAL( 100, Clock_GetAbsoluteEndMicro( clock ) );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 void test_Clock_StartFrame_InitializesStartMicroValues( void )
 {
    Clock_t* clock;
 
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
    Clock_Init( clock, 30 );
    g_platformOpsGetMicrosCall.returnValue = 100;
 
@@ -111,14 +123,14 @@ void test_Clock_StartFrame_InitializesStartMicroValues( void )
    TEST_ASSERT_EQUAL( 100, Clock_GetAbsoluteStartMicro( clock ) );
    TEST_ASSERT_EQUAL( 100, Clock_GetAbsoluteEndMicro( clock ) );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 void test_Clock_EndFrame_UpdatesParametersCorrectly( void )
 {
    Clock_t* clock;
 
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
    Clock_Init( clock, 60 );
    g_platformOpsGetMicrosCall.returnValue = 100;
 
@@ -134,7 +146,7 @@ void test_Clock_EndFrame_UpdatesParametersCorrectly( void )
    TEST_ASSERT_EQUAL( 150, Clock_GetAbsoluteEndMicro( clock ) );
    TEST_ASSERT_EQUAL( 50, Clock_GetLastFrameMicro( clock ) );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 void test_Clock_EndFrame_NonLagFrameSleepsForCorrectDuration( void )
@@ -142,7 +154,7 @@ void test_Clock_EndFrame_NonLagFrameSleepsForCorrectDuration( void )
    u64 frameMicroSec;
    Clock_t* clock;
 
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
    Clock_Init( clock, 60 );
    frameMicroSec = 1000000 / 60;  // 16,666
 
@@ -155,7 +167,7 @@ void test_Clock_EndFrame_NonLagFrameSleepsForCorrectDuration( void )
    TEST_ASSERT_EQUAL( 1, g_platformOpsSleepMsCall.callCount );
    TEST_ASSERT_EQUAL( (u32)( frameMicroSec - 10000 ) / 1000, g_platformOpsSleepMsCall.ms );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 void test_Clock_EndFrame_LagFrameDoesNotSleepAndUpdatesLagFrameCount( void )
@@ -163,7 +175,7 @@ void test_Clock_EndFrame_LagFrameDoesNotSleepAndUpdatesLagFrameCount( void )
    u64 frameMicroSec;
    Clock_t* clock;
 
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
    Clock_Init( clock, 60 );
    frameMicroSec = 1000000 / 60;  // 16,666
 
@@ -175,7 +187,7 @@ void test_Clock_EndFrame_LagFrameDoesNotSleepAndUpdatesLagFrameCount( void )
    TEST_ASSERT_EQUAL( 1, Clock_GetLagFrameCount( clock ) );
    TEST_ASSERT_EQUAL( 0, g_platformOpsSleepMsCall.callCount );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 int main( void )

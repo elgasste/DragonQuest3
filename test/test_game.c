@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "clock.h"
+#include "mocks/mock_clock.h"
+
 #include "display.h"
 #include "file.h"
 #include "game.h"
@@ -48,9 +49,18 @@ void setUp( void )
 
 void tearDown( void ) {}
 
-size_t Clock_GetSize( void )
+Clock_t* Clock_Create( MemArena_t* memArena )
 {
-   return 1;
+   UNUSED_PARAM( memArena );
+   g_calls.memArenaAlloc++;
+   return (Clock_t*)malloc( sizeof( Clock_t ) );
+}
+
+void Clock_Free( Clock_t* clock, MemArena_t* memArena )
+{
+   UNUSED_PARAM( memArena );
+   g_calls.memArenaFree++;
+   free( clock );
 }
 
 void Clock_Init( Clock_t* clock, u32 fps )
@@ -242,7 +252,7 @@ void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
    Display_t display;
 
    memset( &game, 0, sizeof( game ) );
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
    game.clock = clock;
    game.input = &input;
    game.display = &display;
@@ -257,7 +267,7 @@ void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
    TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
    TEST_ASSERT_EQUAL( 1, g_calls.clockEndFrame );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
@@ -268,7 +278,7 @@ void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
    Display_t display;
 
    memset( &game, 0, sizeof( game ) );
-   clock = (Clock_t*)malloc( Clock_GetSize() );
+   clock = Clock_Create( 0 );
    game.clock = clock;
    game.input = &input;
    game.display = &display;
@@ -283,7 +293,7 @@ void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
    TEST_ASSERT_EQUAL( 1, g_calls.gameRender );
    TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
 
-   free( clock );
+   Clock_Free( clock, 0 );
 }
 
 void test_Game_Destroy_CleansUpAllOwnedResources( void )
@@ -293,7 +303,7 @@ void test_Game_Destroy_CleansUpAllOwnedResources( void )
 
    game = (Game_t*)malloc( sizeof( Game_t ) );
    game->memArena = &arena;
-   game->clock = (Clock_t*)malloc( Clock_GetSize() );
+   game->clock = (Clock_t*)malloc( sizeof( Clock_t ) );
    game->input = (Input_t*)malloc( sizeof( Input_t ) );
    game->display = (Display_t*)malloc( sizeof( Display_t ) );
    game->gameData = (GameData_t*)malloc( sizeof( GameData_t ) );

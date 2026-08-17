@@ -1,4 +1,5 @@
 #include "clock.h"
+#include "mem_arena.h"
 #include "platform.h"
 
 struct Clock_t
@@ -18,9 +19,14 @@ struct Clock_t
    b32 hasStarted;
 };
 
-size_t Clock_GetSize( void )
+Clock_t* Clock_Create( MemArena_t* memArena )
 {
-   return sizeof( Clock_t );
+   return (Clock_t*)MemArena_Alloc( memArena, sizeof( Clock_t ) );
+}
+
+void Clock_Free( Clock_t* clock, MemArena_t* memArena )
+{
+   MemArena_Free( memArena, clock );
 }
 
 u32 Clock_GetFps( Clock_t *clock )

@@ -21,7 +21,7 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    game = *pGame;
    game->memArena = memArena;
    
-   game->clock = (Clock_t*)MemArena_Alloc( game->memArena, Clock_GetSize() );
+   game->clock = Clock_Create( memArena );
    game->input = (Input_t*)MemArena_Alloc( game->memArena, sizeof( Input_t ) );
    game->display = (Display_t*)MemArena_Alloc( game->memArena, sizeof( Display_t ) );
 
@@ -57,7 +57,7 @@ void Game_Destroy( Game_t** pGame )
       return;
    }
 
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->clock );
+   Clock_Free( ( *pGame )->clock, ( *pGame )->memArena );
    MemArena_Free( ( *pGame )->memArena, ( *pGame )->input );
 
    Display_Cleanup( ( *pGame )->display, ( *pGame )->memArena );
