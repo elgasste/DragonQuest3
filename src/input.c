@@ -20,7 +20,7 @@ void Input_Free( Input_t* input, MemArena_t* memArena )
    MemArena_Free( memArena, input );
 }
 
-InputButtonState_t* Input_GetButtonState( Input_t* input, InputButton_t button )
+const InputButtonState_t* Input_GetButtonState( Input_t* input, InputButton_t button )
 {
    return &( input->buttonStates[button] );
 }

@@ -32,7 +32,7 @@ u32 Display_GetHeight( Display_t* display )
    return PixelBuffer_GetHeight( display->buffer );
 }
 
-u32* Display_GetPixels( Display_t* display )
+const u32* Display_GetPixels( Display_t* display )
 {
    return PixelBuffer_GetPixels( display->buffer );
 }

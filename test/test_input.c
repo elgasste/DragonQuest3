@@ -42,9 +42,7 @@ void test_Input_ResetAllStates_ResetsAllButtonStatesToFalse( void )
    input = Input_Create( NULL );
    for ( i = 0; i < InputButton_Count; i++ )
    {
-      Input_GetButtonState( input, (InputButton_t)i )->pressed = True;
-      Input_GetButtonState( input, (InputButton_t)i )->released = True;
-      Input_GetButtonState( input, (InputButton_t)i )->down = True;
+      Input_PressButton( input, (InputButton_t)i );
    }
 
    Input_ResetAllStates( input );
@@ -66,9 +64,7 @@ void test_Input_ResetPressStates_ResetsPressedAndReleasedStatesButLeavesDownAlon
    input = Input_Create( NULL );
    for ( i = 0; i < InputButton_Count; i++ )
    {
-      Input_GetButtonState( input, (InputButton_t)i )->pressed = True;
-      Input_GetButtonState( input, (InputButton_t)i )->released = True;
-      Input_GetButtonState( input, (InputButton_t)i )->down = True;
+      Input_PressButton( input, (InputButton_t)i );
    }
 
    Input_ResetPressStates( input );

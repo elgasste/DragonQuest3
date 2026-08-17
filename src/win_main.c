@@ -278,7 +278,7 @@ internal void RenderScreen( void )
    PAINTSTRUCT ps;
    int winWidth, winHeight;
    u32 displayBufferW, displayBufferH;
-   u32* pixels;
+   const u32* pixels;
 
    winWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale );
    winHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale );

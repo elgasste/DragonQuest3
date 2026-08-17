@@ -32,7 +32,7 @@ typedef struct Input_t Input_t;
 Input_t* Input_Create( MemArena_t* memArena );
 void Input_Free( Input_t* input, MemArena_t* memArena );
 
-InputButtonState_t* Input_GetButtonState( Input_t* input, InputButton_t button );
+const InputButtonState_t* Input_GetButtonState( Input_t* input, InputButton_t button );
 
 void Input_ResetAllStates( Input_t* input );
 void Input_ResetPressStates( Input_t* input );

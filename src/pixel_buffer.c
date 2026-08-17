@@ -40,11 +40,6 @@ u32* PixelBuffer_GetPixels( PixelBuffer_t* buffer )
    return buffer->mem;
 }
 
-void PixelBuffer_Cleanup( PixelBuffer_t* buffer, MemArena_t* memArena )
-{
-   MemArena_Free( memArena, buffer );
-}
-
 void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
 {
    size_t pixels, i;
