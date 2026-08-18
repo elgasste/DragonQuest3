@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+typedef struct MemArena_t MemArena_t;
+
 typedef struct MemArenaStats_t
 {
    size_t totalAllocatedBlocks;
@@ -16,7 +18,6 @@ typedef struct MemArenaStats_t
 }
 MemArenaStats_t;
 
-typedef struct MemArena_t MemArena_t;
 MemArena_t* MemArena_Create( size_t size );
 void MemArena_Free( MemArena_t* arena );
 

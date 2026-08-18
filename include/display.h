@@ -4,10 +4,10 @@
 #include "common.h"
 #include "vector.h"
 
+typedef struct Display_t Display_t;
 typedef struct MemArena_t MemArena_t;
 typedef struct TileMap_t TileMap_t;
 
-typedef struct Display_t Display_t;
 Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h );
 void Display_Free( Display_t* display, MemArena_t* memArena );
 

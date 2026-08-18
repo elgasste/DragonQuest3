@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+typedef struct Input_t Input_t;
 typedef struct MemArena_t MemArena_t;
 
 typedef enum InputButton_t
@@ -28,7 +29,6 @@ typedef struct InputButtonState_t
 }
 InputButtonState_t;
 
-typedef struct Input_t Input_t;
 Input_t* Input_Create( MemArena_t* memArena );
 void Input_Free( Input_t* input, MemArena_t* memArena );
 
