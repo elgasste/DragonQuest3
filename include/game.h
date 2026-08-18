@@ -26,6 +26,7 @@ typedef struct TileTextureSet_t TileTextureSet_t;
 typedef struct Game_t
 {
    MemArena_t* memArena;
+
    Clock_t* clock;
    Input_t* input;
    Display_t* display;
@@ -45,7 +46,7 @@ Game_t;
 
 // game.c
 void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFilePath );
-void Game_Destroy( Game_t** pGame );
+void Game_Destroy( Game_t** pGame, MemArena_t* memArena );
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
 

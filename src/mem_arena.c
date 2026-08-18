@@ -4,36 +4,61 @@
 #include "mem_arena.h"
 #include "platform.h"
 
+typedef struct MemArenaBlock_t MemArenaBlock_t;
+struct MemArenaBlock_t
+{
+   // the size of the memory to be allocated, does not include the MemArenaBlock_t struct size
+   size_t size;
+
+   void* mem;
+   MemArenaBlock_t* prev;
+   MemArenaBlock_t* next;
+};
+
+struct MemArena_t
+{
+   // the entire size of the arena, including the MemArena_t struct
+   size_t size;
+
+   MemArenaBlock_t* firstBlock;
+   MemArenaBlock_t* lastBlock;
+};
+
 internal void* MemArena_AllocTryAppend( MemArena_t* arena, size_t size );
 internal void* MemArena_AllocTryInsert( MemArena_t* arena, size_t size );
 
-MemArenaResult_t MemArena_Create( MemArena_t** pArena, size_t size )
+MemArena_t* MemArena_Create( size_t size )
 {
+   MemArena_t *arena;
+
    // there should be enough space for at least one 1-byte block
    if ( size < ( sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1 ) )
    {
-      return MemArenaResult_ArenaTooSmall;
+      Platform_FatalError( "requested arena size is too small" );
+      return 0;
    }
 
-   *pArena = malloc( size );
-   if ( !( *pArena ) )
+   arena = (MemArena_t*)malloc( size );
+   if ( !arena )
    {
-      return MemArenaResult_SystemMemoryAllocFailed;
+      Platform_FatalError( "system memory allocation failed" );
+      return 0;
    }
 
-   ( *pArena )->size = size;
-   MemArena_Reset( *pArena );
+   arena->size = size;
+   MemArena_Reset( arena );
 
-   return MemArenaResult_Success;
+   return arena;
 }
 
-void MemArena_Destroy( MemArena_t** pArena )
+void MemArena_Free( MemArena_t* arena )
 {
-   if ( pArena )
-   {
-      free( ( *pArena ) );
-      *pArena = 0;
-   }
+   free( arena );
+}
+
+size_t MemArena_GetSize( MemArena_t* arena )
+{
+   return arena->size;
 }
 
 void MemArena_Reset( MemArena_t* arena )
@@ -42,20 +67,7 @@ void MemArena_Reset( MemArena_t* arena )
    arena->lastBlock = 0;
 }
 
-const char* MemArena_GetErrorMessage( MemArenaResult_t result )
-{
-   switch ( result )
-   {
-      case MemArenaResult_Success: return "success";
-
-      case MemArenaResult_ArenaTooSmall: return "requested arena size is too small";
-      case MemArenaResult_SystemMemoryAllocFailed: return "system memory allocation failed";
-
-      default: return "undefined error";
-   }
-}
-
-void* MemArena_Alloc( MemArena_t* arena, size_t size )
+void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
    void* mem;
    char msg[STRING_SIZE_DEFAULT];
@@ -76,7 +88,7 @@ void* MemArena_Alloc( MemArena_t* arena, size_t size )
    return mem;
 }
 
-void MemArena_Free( MemArena_t* arena, void* mem )
+void MemArena_FreeMem( MemArena_t* arena, void* mem )
 {
    MemArenaBlock_t* block;
 
@@ -157,6 +169,11 @@ MemArenaStats_t MemArena_GetStats( MemArena_t* arena )
    }
 
    return stats;
+}
+
+b32 MemArena_IsEmpty( MemArena_t* arena )
+{
+   return ( arena->firstBlock == 0 && arena->lastBlock == 0 );
 }
 
 internal void* MemArena_AllocTryAppend( MemArena_t* arena, size_t size )

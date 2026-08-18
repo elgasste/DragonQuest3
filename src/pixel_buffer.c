@@ -13,7 +13,7 @@ struct PixelBuffer_t
 
 PixelBuffer_t* PixelBuffer_Create( MemArena_t* memArena, u32 w, u32 h )
 {
-   PixelBuffer_t* buffer = MemArena_Alloc( memArena, sizeof( PixelBuffer_t ) + ( w * h * sizeof( u32 ) ) );
+   PixelBuffer_t* buffer = MemArena_AllocMem( memArena, sizeof( PixelBuffer_t ) + ( w * h * sizeof( u32 ) ) );
    buffer->w = w;
    buffer->h = h;
    buffer->mem = (u32*)( buffer + 1 );
@@ -22,7 +22,7 @@ PixelBuffer_t* PixelBuffer_Create( MemArena_t* memArena, u32 w, u32 h )
 
 void PixelBuffer_Free( PixelBuffer_t* buffer, MemArena_t* memArena )
 {
-   MemArena_Free( memArena, buffer );
+   MemArena_FreeMem( memArena, buffer );
 }
 
 u32 PixelBuffer_GetWidth( PixelBuffer_t* buffer )

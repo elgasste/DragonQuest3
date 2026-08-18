@@ -27,8 +27,8 @@ internal b32 GameData_LoadTileMapOffsets( Game_t* game );
 
 void Game_LoadGameData( Game_t* game, const char* gameDataFilePath )
 {
-   game->gameData = (GameData_t*)MemArena_Alloc( game->memArena, sizeof( GameData_t ) );
-   game->gameData->file = (File_t*)MemArena_Alloc( game->memArena, sizeof( File_t ) );
+   game->gameData = (GameData_t*)MemArena_AllocMem( game->memArena, sizeof( GameData_t ) );
+   game->gameData->file = (File_t*)MemArena_AllocMem( game->memArena, sizeof( File_t ) );
 
    Platform_OpenFile( game->gameData->file, gameDataFilePath );
 
@@ -50,7 +50,7 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
    if ( game->tileMap )
    {
       TileMap_Cleanup( game->tileMap, game->memArena );
-      MemArena_Free( game->memArena, game->tileMap );
+      MemArena_FreeMem( game->memArena, game->tileMap );
       game->tileMap = 0;
    }
 
@@ -66,7 +66,7 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
             return;
          }
 
-         game->tileMap = (TileMap_t*)MemArena_Alloc( game->memArena, sizeof( TileMap_t ) );
+         game->tileMap = (TileMap_t*)MemArena_AllocMem( game->memArena, sizeof( TileMap_t ) );
          Platform_FileSeek( game->gameData->file, tileMapOffset, 0 );
          Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap ), sizeof( TileMap_t ) );
          game->tileMap->tiles = 0;
@@ -79,7 +79,7 @@ void Game_LoadTileMapFromId( Game_t* game, u32 id )
             return;
          }
 
-         game->tileMap->tiles = (Tile_t*)MemArena_Alloc( game->memArena, tileCount * sizeof( Tile_t ) );
+         game->tileMap->tiles = (Tile_t*)MemArena_AllocMem( game->memArena, tileCount * sizeof( Tile_t ) );
          Platform_FileSeek( game->gameData->file, tilesOffset, 0 );
          Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap->tiles ), tileCount * sizeof( Tile_t ) );
          game->tileMap->tileTextureSet = game->tileTextureSet;
@@ -146,7 +146,7 @@ internal b32 GameData_LoadTileTextureSet( Game_t* game )
       return False;
    }
 
-   game->tileTextureSet = (TileTextureSet_t*)MemArena_Alloc( game->memArena, sizeof( TileTextureSet_t ) );
+   game->tileTextureSet = (TileTextureSet_t*)MemArena_AllocMem( game->memArena, sizeof( TileTextureSet_t ) );
    Platform_FileSeek( game->gameData->file, tileTextureSetOffset, 0 );
    Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet ), sizeof( TileTextureSet_t ) );
    game->tileTextureSet->textures = 0;
@@ -161,7 +161,7 @@ internal b32 GameData_LoadTileTextureSet( Game_t* game )
          return False;
       }
 
-      game->tileTextureSet->textures = (u32*)MemArena_Alloc( game->memArena, textureDataSize );
+      game->tileTextureSet->textures = (u32*)MemArena_AllocMem( game->memArena, textureDataSize );
       Platform_FileSeek( game->gameData->file, textureDataOffset, 0 );
       Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet->textures ), textureDataSize );
    }
@@ -193,7 +193,7 @@ internal b32 GameData_LoadTileMapOffsets( Game_t* game )
       return False;
    }
 
-   game->gameData->tileMapOffsets = (GameDataTileMapOffset_t*)MemArena_Alloc( game->memArena, game->gameData->tileMapCount * sizeof( GameDataTileMapOffset_t ) );
+   game->gameData->tileMapOffsets = (GameDataTileMapOffset_t*)MemArena_AllocMem( game->memArena, game->gameData->tileMapCount * sizeof( GameDataTileMapOffset_t ) );
 
    for ( i = 0; i < game->gameData->tileMapCount; i++ )
    {

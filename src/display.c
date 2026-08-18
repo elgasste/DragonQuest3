@@ -11,7 +11,7 @@ struct Display_t
 
 Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 {
-   Display_t* display = (Display_t*)MemArena_Alloc( memArena, sizeof( Display_t ) );
+   Display_t* display = (Display_t*)MemArena_AllocMem( memArena, sizeof( Display_t ) );
    display->buffer = PixelBuffer_Create( memArena, w, h );
    return display;
 }
@@ -19,7 +19,7 @@ Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 void Display_Free( Display_t* display, MemArena_t* memArena )
 {
    PixelBuffer_Free( display->buffer, memArena );
-   MemArena_Free( memArena, display );
+   MemArena_FreeMem( memArena, display );
 }
 
 u32 Display_GetWidth( Display_t* display )

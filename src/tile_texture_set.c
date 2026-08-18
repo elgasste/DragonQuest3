@@ -3,5 +3,5 @@
 
 void TileTextureSet_Cleanup( TileTextureSet_t* tileTextureSet, MemArena_t* memArena )
 {
-   MemArena_Free( memArena, tileTextureSet->textures );
+   MemArena_FreeMem( memArena, tileTextureSet->textures );
 }

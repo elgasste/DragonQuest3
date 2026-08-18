@@ -7,19 +7,16 @@ add_executable(Test_Clock
 )
 
 add_executable(Test_Display
-	../src/display.c
 	vendor/unity.c
 	test_display.c
 )
 
 add_executable(Test_Game
-	../src/game.c
 	vendor/unity.c
 	test_game.c
 )
 
 add_executable(Test_Game_Load
-   ../src/game_load.c
    vendor/unity.c
    test_game_load.c
 )
@@ -31,26 +28,21 @@ add_executable(Test_Game_Render
 )
 
 add_executable(Test_Input
-	../src/input.c
 	vendor/unity.c
 	test_input.c
 )
 
 add_executable(Test_MemArena
-	../src/mem_arena.c
 	vendor/unity.c
 	test_mem_arena.c
 )
 
 add_executable(Test_PixelBuffer
-	../src/pixel_buffer.c
 	vendor/unity.c
 	test_pixel_buffer.c
 )
 
 add_executable(Test_TileMap
-	../src/mem_arena.c
-	../src/tile_map.c
 	vendor/unity.c
 	test_tile_map.c
 )

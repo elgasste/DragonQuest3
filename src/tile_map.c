@@ -5,7 +5,7 @@
 
 void TileMap_Cleanup( TileMap_t* tileMap, MemArena_t* memArena )
 {
-   MemArena_Free( memArena, tileMap->tiles );
+   MemArena_FreeMem( memArena, tileMap->tiles );
 }
 
 void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y )

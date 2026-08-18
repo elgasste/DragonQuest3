@@ -16,7 +16,7 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
 {
    Game_t* game;
 
-   *pGame = (Game_t*)MemArena_Alloc( memArena, sizeof( Game_t ) );
+   *pGame = (Game_t*)MemArena_AllocMem( memArena, sizeof( Game_t ) );
 
    game = *pGame;
    game->memArena = memArena;
@@ -49,28 +49,28 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    Game_LoadTileMapFromId( game, 1 );
 }
 
-void Game_Destroy( Game_t** pGame )
+void Game_Destroy( Game_t** pGame, MemArena_t* memArena )
 {
    if ( !pGame || !*pGame )
    {
       return;
    }
 
-   Clock_Free( ( *pGame )->clock, ( *pGame )->memArena );
-   Input_Free( ( *pGame )->input, ( *pGame )->memArena );
+   Clock_Free( ( *pGame )->clock, memArena );
+   Input_Free( ( *pGame )->input, memArena );
 
-   Display_Free( ( *pGame )->display, ( *pGame )->memArena );
+   Display_Free( ( *pGame )->display, memArena );
 
-   GameData_Cleanup( ( *pGame )->gameData, ( *pGame )->memArena );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->gameData );
+   GameData_Cleanup( ( *pGame )->gameData, memArena );
+   MemArena_FreeMem( memArena, ( *pGame )->gameData );
 
-   TileMap_Cleanup( ( *pGame )->tileMap, ( *pGame )->memArena );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->tileMap );
+   TileMap_Cleanup( ( *pGame )->tileMap, memArena );
+   MemArena_FreeMem( memArena, ( *pGame )->tileMap );
 
-   TileTextureSet_Cleanup( ( *pGame )->tileTextureSet, ( *pGame )->memArena );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->tileTextureSet );
+   TileTextureSet_Cleanup( ( *pGame )->tileTextureSet, memArena );
+   MemArena_FreeMem( memArena, ( *pGame )->tileTextureSet );
 
-   MemArena_Free( ( *pGame )->memArena, *pGame );
+   MemArena_FreeMem( memArena, *pGame );
    *pGame = 0;
 }
 

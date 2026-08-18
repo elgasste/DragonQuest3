@@ -21,12 +21,12 @@ struct Clock_t
 
 Clock_t* Clock_Create( MemArena_t* memArena )
 {
-   return (Clock_t*)MemArena_Alloc( memArena, sizeof( Clock_t ) );
+   return (Clock_t*)MemArena_AllocMem( memArena, sizeof( Clock_t ) );
 }
 
 void Clock_Free( Clock_t* clock, MemArena_t* memArena )
 {
-   MemArena_Free( memArena, clock );
+   MemArena_FreeMem( memArena, clock );
 }
 
 u32 Clock_GetFps( Clock_t *clock )
