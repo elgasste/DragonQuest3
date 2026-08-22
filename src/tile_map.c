@@ -24,39 +24,48 @@ size_t TileMap_GetStructSize( void )
 
 TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameData, u32 tileMapId )
 {
-   u32 i;
+   u32 tileMapCount, i;
    i32 chunkOffset, tileMapOffset, tileCount, tilesOffset;
    TileMap_t *tileMap;
+   GameDataFileOffsets_t fileOffsets;
+   GameDataObjectOffset_t tileMapFileOffset;
+   File_t* file;
    u8* tiles;
    char msg[STRING_SIZE_DEFAULT];
 
-   for ( i = 0; i < gameData->tileMapCount; i++ )
+   fileOffsets = GameData_GetFileOffsets( gameData );
+   tileMapCount = GameData_GetTileMapCount( gameData );
+   file = GameData_GetFile( gameData );
+   
+   for ( i = 0; i < tileMapCount; i++ )
    {
-      if ( gameData->tileMapOffsets[i].id == tileMapId )
+      tileMapFileOffset = GameData_GetTileMapOffset( gameData, tileMapId );
+
+      if ( tileMapFileOffset.id == tileMapId )
       {
-         chunkOffset = gameData->offsets.tileMaps;
-         tileMapOffset = chunkOffset + gameData->tileMapOffsets[i].offset;
-         if ( (i32)( tileMapOffset + TileMap_GetStructSize() ) > gameData->file->size )
+         chunkOffset = fileOffsets.tileMaps;
+         tileMapOffset = chunkOffset + tileMapFileOffset.offset;
+         if ( (i32)( tileMapOffset + TileMap_GetStructSize() ) > file->size )
          {
             Platform_FatalError( "game data file is too small to contain the requested tile map." );
             return 0;
          }
 
          tileMap = (TileMap_t*)MemArena_AllocMem( memArena, TileMap_GetStructSize() );
-         Platform_FileSeek( gameData->file, tileMapOffset, 0 );
-         Platform_ReadFileBytes( gameData->file, (u8*)( tileMap ), sizeof( TileMap_t ) );
+         Platform_FileSeek( file, tileMapOffset, 0 );
+         Platform_ReadFileBytes( file, (u8*)( tileMap ), sizeof( TileMap_t ) );
 
          tileCount = (i32)( tileMap->tilesX * tileMap->tilesY );
          tilesOffset = tileMapOffset + sizeof( TileMap_t );
-         if ( tilesOffset + (i32)( tileCount * Tile_GetStructSize() ) > gameData->file->size )
+         if ( tilesOffset + (i32)( tileCount * Tile_GetStructSize() ) > file->size )
          {
             Platform_FatalError( "game data file is too small to contain all the requested tile map tiles." );
             return 0;
          }
 
          tiles = (u8*)MemArena_AllocMem( memArena, tileCount * Tile_GetStructSize() );
-         Platform_FileSeek( gameData->file, tilesOffset, 0 );
-         Platform_ReadFileBytes( gameData->file, tiles, tileCount * Tile_GetStructSize() );
+         Platform_FileSeek( file, tilesOffset, 0 );
+         Platform_ReadFileBytes( file, tiles, tileCount * Tile_GetStructSize() );
          tileMap->tiles = (Tile_t*)tiles;
 
          return tileMap;

@@ -333,7 +333,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
    DWORD bytesWritten;
    BOOL result;
    TileMock_t* tile;
-   GameDataTileMapOffset_t* offsets;
+   GameDataObjectOffset_t* offsets;
 
    bytesWritten = 0;
    result = WriteFile( hFile, &tileMapCount, sizeof( u32 ), &bytesWritten, NULL );
@@ -350,26 +350,26 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
       return False;
    }
 
-   offsets = (GameDataTileMapOffset_t*)malloc( tileMapCount * sizeof( GameDataTileMapOffset_t ) );
+   offsets = (GameDataObjectOffset_t*)malloc( tileMapCount * sizeof( GameDataObjectOffset_t ) );
    tileAccum = 0;
    for ( i = 0; i < tileMapCount; i++ )
    {
       offsets[i].id = tileMaps[i].id;
       offsets[i].offset = sizeof( u32 )
-         + ( tileMapCount * sizeof( GameDataTileMapOffset_t ) )
+         + ( tileMapCount * sizeof( GameDataObjectOffset_t ) )
          + ( i * sizeof( TileMapMock_t ) )
          + ( tileAccum * sizeof( TileMock_t ) );
       tileAccum += tileMaps[i].tilesX * tileMaps[i].tilesY;
    }
 
-   result = WriteFile( hFile, offsets, tileMapCount * sizeof( GameDataTileMapOffset_t ), &bytesWritten, NULL );
+   result = WriteFile( hFile, offsets, tileMapCount * sizeof( GameDataObjectOffset_t ), &bytesWritten, NULL );
    *filePos += bytesWritten;
    if ( !result )
    {
       Platform_FatalError( "failed to write test game data file tile maps offset table." );
       return False;
    }
-   else if ( bytesWritten != tileMapCount * sizeof( GameDataTileMapOffset_t ) )
+   else if ( bytesWritten != tileMapCount * sizeof( GameDataObjectOffset_t ) )
    {
       Platform_FatalError( "failed to write test game data file tile maps offset table: wrote incorrect number of bytes." );
       return False;

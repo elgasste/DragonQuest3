@@ -58,9 +58,7 @@ void Game_Destroy( Game_t** pGame, MemArena_t* memArena )
    Clock_Free( ( *pGame )->clock, memArena );
    Input_Free( ( *pGame )->input, memArena );
    Display_Free( ( *pGame )->display, memArena );
-
-   GameData_Cleanup( ( *pGame )->gameData, memArena );
-   MemArena_FreeMem( memArena, ( *pGame )->gameData );
+   GameData_Free( ( *pGame )->gameData, memArena );
 
    if ( ( *pGame )->tileMap )
    {
