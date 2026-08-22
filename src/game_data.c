@@ -188,5 +188,7 @@ internal b32 GameData_LoadTileMapOffsets( GameData_t* gameData, MemArena_t* memA
       }
    }
 
+   gameData->tileMapCount = tileMapCount;
+
    return True;
 }
