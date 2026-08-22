@@ -5,8 +5,6 @@
 
 #include "file.h"
 #include "game_data.h"
-#include "mem_arena.h"
-#include "platform.h"
 #include "tile_map.h"
 #include "unity.h"
 #include "vector.h"

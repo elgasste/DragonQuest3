@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mocks/mock_display.h"
-#include "mocks/mock_mem_arena.h"
 #include "mocks/mock_pixel_buffer.h"
 #include "mocks/mock_tile.h"
 #include "mocks/mock_tile_map.h"

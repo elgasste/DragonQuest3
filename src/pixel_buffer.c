@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "platform.h"
