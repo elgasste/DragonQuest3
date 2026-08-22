@@ -7,6 +7,7 @@ add_executable(Test_Clock
 )
 
 add_executable(Test_Display
+	../src/display.c
 	vendor/unity.c
 	test_display.c
 )
