@@ -35,6 +35,7 @@ add_executable(Test_MemArena
 )
 
 add_executable(Test_PixelBuffer
+	../src/pixel_buffer.c
 	vendor/unity.c
 	test_pixel_buffer.c
 )
