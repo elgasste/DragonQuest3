@@ -16,7 +16,6 @@
 
 typedef struct MemArena_t MemArena_t;
 typedef struct Clock_t Clock_t;
-typedef struct File_t File_t;
 typedef struct GameData_t GameData_t;
 typedef struct Input_t Input_t;
 typedef struct Display_t Display_t;
@@ -25,7 +24,7 @@ typedef struct TileTextureSet_t TileTextureSet_t;
 
 // game.c
 typedef struct Game_t Game_t;
-size_t Game_GetSize( void );
+size_t Game_GetStructSize( void );
 Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath );
 void Game_Free( Game_t* game, MemArena_t* memArena );
 

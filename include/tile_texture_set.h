@@ -7,6 +7,7 @@ typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
 
 typedef struct TileTextureSet_t TileTextureSet_t;
+size_t TileTextureSet_GetStructSize( void );
 TileTextureSet_t* TileTextureSet_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData );
 void TileTextureSet_Free( TileTextureSet_t* tileTextureSet, MemArena_t* memArena );
 

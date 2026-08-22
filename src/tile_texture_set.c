@@ -49,6 +49,11 @@ TileTextureSet_t* TileTextureSet_CreateFromGameData( MemArena_t* memArena, GameD
    return tileTextureSet;
 }
 
+size_t TileTextureSet_GetStructSize( void )
+{
+   return sizeof( TileTextureSet_t );
+}
+
 void TileTextureSet_Free( TileTextureSet_t* tileTextureSet, MemArena_t* memArena )
 {
    MemArena_FreeMem( memArena, tileTextureSet->textures );

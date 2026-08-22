@@ -12,11 +12,4 @@ typedef struct Vector4i32_t
 }
 Vector4i32_t;
 
-typedef struct Vector2u32_t
-{
-   u32 x;
-   u32 y;
-}
-Vector2u32_t;
-
 #endif // VECTOR_H

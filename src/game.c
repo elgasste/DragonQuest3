@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "clock.h"
 #include "display.h"
 #include "game.h"
@@ -32,7 +30,7 @@ struct Game_t
 
 internal void Game_Tic( Game_t* game );
 
-size_t Game_GetSize( void )
+size_t Game_GetStructSize( void )
 {
    return sizeof( Game_t );
 }

@@ -1,12 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-#include "game.h"
 #include "game_data.h"
 #include "platform.h"
-#include "tile_map.h"
-#include "tile_texture_set.h"
 #include "version.h"
 #include "win_common.h"
 

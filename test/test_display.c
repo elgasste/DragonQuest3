@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "display.h"
 #include "unity.h"
 
