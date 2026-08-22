@@ -1,182 +1,205 @@
+#include <stdlib.h>
+
 #include "clock.h"
-#include "platform.h"
 #include "unity.h"
 
-typedef struct PlatformOpsGetMicrosCall_t
+global u64 g_platformMicros;
+global u32 g_platformSleepMs;
+global u32 g_platformSleepCallCount;
+
+void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
-   u64 returnValue;
-   int callCount;
-}
-PlatformOpsGetMicrosCall_t;
-
-typedef struct PlatformOpsSleepMsCall_t
-{
-   u32 ms;
-   int callCount;
-}
-PlatformOpsSleepMsCall_t;
-
-local_persist PlatformOpsGetMicrosCall_t g_platformOpsGetMicrosCall;
-local_persist PlatformOpsSleepMsCall_t g_platformOpsSleepMsCall;
-
-void setUp( void )
-{
-   g_platformOpsGetMicrosCall.returnValue = 0;
-   g_platformOpsGetMicrosCall.callCount = 0;
-
-   g_platformOpsSleepMsCall.ms = 0;
-   g_platformOpsSleepMsCall.callCount = 0;
+   UNUSED_PARAM( arena );
+   return malloc( size );
 }
 
-void tearDown( void ) {}
+void MemArena_FreeMem( MemArena_t* arena, void* mem )
+{
+   UNUSED_PARAM( arena );
+   free( mem );
+}
 
 u64 Platform_GetMicros( void )
 {
-   g_platformOpsGetMicrosCall.callCount++;
-   return g_platformOpsGetMicrosCall.returnValue;
+   return g_platformMicros;
 }
 
 void Platform_SleepMs( u32 ms )
 {
-   g_platformOpsSleepMsCall.ms = ms;
-   g_platformOpsSleepMsCall.callCount++;
+   g_platformSleepMs = ms;
+   g_platformSleepCallCount++;
 }
 
-void test_Clock_Init_InitializesClockWithCorrectParameters( void )
+void setUp( void )
 {
-   u64 expectedFrameMicroSec;
-   r32 expectedFrameSec;
-   Clock_t clock;
-
-   expectedFrameMicroSec = 1000000 / 30;
-   expectedFrameSec = 1.0f / 30.0f;
-
-   Clock_Init( &clock, 30 );
-
-   TEST_ASSERT_EQUAL( 30, clock.fps );
-   TEST_ASSERT_EQUAL( expectedFrameMicroSec, clock.frameMicroSec );
-   TEST_ASSERT_EQUAL( expectedFrameSec, clock.frameSec );
-   TEST_ASSERT_EQUAL( 0, clock.frameStartMicro );
-   TEST_ASSERT_EQUAL( 0, clock.absoluteStartMicro );
-   TEST_ASSERT_EQUAL( 0, clock.lastframeMicro );
-   TEST_ASSERT_EQUAL( 0, clock.frameCount );
-   TEST_ASSERT_EQUAL( 0, clock.lagFrameCount );
-   TEST_ASSERT_EQUAL( False, clock.hasStarted );
+   g_platformMicros = 0;
+   g_platformSleepMs = 0;
+   g_platformSleepCallCount = 0;
 }
 
-void test_Clock_SetFps_UpdatesFrameMicroSecAndFrameSec( void )
+void tearDown( void ) {}
+
+void test_Clock_GetStructSize_ReturnsNonZeroSize( void )
 {
-   u64 expectedFrameMicroSec;
-   r32 expectedFrameSec;
-   Clock_t clock;
-
-   Clock_Init( &clock, 30 );
-
-   expectedFrameMicroSec = 1000000 / 60;
-   expectedFrameSec = 1.0f / 60.0f;
-
-   Clock_SetFps( &clock, 60 );
-
-   TEST_ASSERT_EQUAL( 60, clock.fps );
-   TEST_ASSERT_EQUAL( expectedFrameMicroSec, clock.frameMicroSec );
-   TEST_ASSERT_EQUAL( expectedFrameSec, clock.frameSec );
+   TEST_ASSERT_GREATER_THAN_UINT( 0, Clock_GetStructSize() );
 }
 
-void test_Clock_StartFrame_ClockIsMarkedAsStarted( void )
+void test_Clock_Create_InitializesClockState( void )
 {
-   Clock_t clock;
+   Clock_t* clock;
 
-   Clock_Init( &clock, 30 );
-   TEST_ASSERT_EQUAL( False, clock.hasStarted );
+   clock = Clock_Create( 0, 60 );
+   TEST_ASSERT_NOT_NULL( clock );
+   TEST_ASSERT_EQUAL_UINT( 60, Clock_GetFps( clock ) );
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f / 60.0f, Clock_GetFrameSec( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, (u32)Clock_GetAbsoluteStartMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, (u32)Clock_GetAbsoluteEndMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, (u32)Clock_GetLastFrameMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, Clock_GetFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, Clock_GetLagFrameCount( clock ) );
 
-   Clock_StartFrame( &clock );
-   TEST_ASSERT_EQUAL( True, clock.hasStarted );
+   Clock_Free( clock, 0 );
 }
 
-void test_Clock_StartFrame_InitializesStartMicroValues( void )
+void test_Clock_SetFps_UpdatesFrameRateValues( void )
 {
-   Clock_t clock;
+   Clock_t* clock;
 
-   Clock_Init( &clock, 30 );   
-   g_platformOpsGetMicrosCall.returnValue = 100;
+   clock = Clock_Create( 0, 30 );
 
-   Clock_StartFrame( &clock );
-   TEST_ASSERT_EQUAL( 1, g_platformOpsGetMicrosCall.callCount );
-   TEST_ASSERT_EQUAL( 100, clock.frameStartMicro );
-   TEST_ASSERT_EQUAL( 100, clock.absoluteStartMicro );
-   TEST_ASSERT_EQUAL( 100, clock.absoluteEndMicro );
+   Clock_SetFps( clock, 60 );
+   TEST_ASSERT_EQUAL_UINT( 60, Clock_GetFps( clock ) );
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f / 60.0f, Clock_GetFrameSec( clock ) );
+
+   Clock_Free( clock, 0 );
 }
 
-void test_Clock_EndFrame_UpdatesParametersCorrectly( void )
+void test_Clock_StartFrame_FirstFrameInitializesAbsoluteTimes( void )
 {
-   Clock_t clock;
+   Clock_t* clock;
 
-   Clock_Init( &clock, 60 );
-   g_platformOpsGetMicrosCall.returnValue = 100;
+   clock = Clock_Create( 0, 60 );
+   g_platformMicros = 100;
 
-   Clock_StartFrame( &clock );
-   TEST_ASSERT_EQUAL( 1, g_platformOpsGetMicrosCall.callCount );
-   TEST_ASSERT_EQUAL( 0, clock.frameCount );
-   TEST_ASSERT_EQUAL( 100, clock.frameStartMicro );
-   TEST_ASSERT_EQUAL( 100, clock.absoluteEndMicro );
+   Clock_StartFrame( clock );
+   TEST_ASSERT_EQUAL_UINT( 100, (u32)Clock_GetAbsoluteStartMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 100, (u32)Clock_GetAbsoluteEndMicro( clock ) );
 
-   g_platformOpsGetMicrosCall.returnValue = 150;
-   Clock_EndFrame( &clock );
-   TEST_ASSERT_EQUAL( 2, g_platformOpsGetMicrosCall.callCount );
-   TEST_ASSERT_EQUAL( 1, clock.frameCount );
-   TEST_ASSERT_EQUAL( 150, clock.absoluteEndMicro );
-   TEST_ASSERT_EQUAL( 50, clock.lastframeMicro );
+   Clock_Free( clock, 0 );
 }
 
-void test_Clock_EndFrame_NonLagFrameSleepsForCorrectDuration( void )
+void test_Clock_StartFrame_LaterFramesPreserveAbsoluteStartTime( void )
 {
-   u64 frameMicroSec;
-   Clock_t clock;
+   Clock_t* clock;
 
-   Clock_Init( &clock, 60 );
-   frameMicroSec = 1000000 / 60;  // 16,666
+   clock = Clock_Create( 0, 60 );
+   g_platformMicros = 100;
+   Clock_StartFrame( clock );
+   g_platformMicros = 200;
 
-   Clock_StartFrame( &clock );
-   g_platformOpsGetMicrosCall.returnValue = 10000;
+   Clock_StartFrame( clock );
+   TEST_ASSERT_EQUAL_UINT( 100, (u32)Clock_GetAbsoluteStartMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 100, (u32)Clock_GetAbsoluteEndMicro( clock ) );
 
-   Clock_EndFrame( &clock );
-   TEST_ASSERT_EQUAL( 1, clock.frameCount );
-   TEST_ASSERT_EQUAL( 0, clock.lagFrameCount );
-   TEST_ASSERT_EQUAL( 1, g_platformOpsSleepMsCall.callCount );
-   TEST_ASSERT_EQUAL( (u32)( frameMicroSec - 10000 ) / 1000, g_platformOpsSleepMsCall.ms );
+   Clock_Free( clock, 0 );
 }
 
-void test_Clock_EndFrame_LagFrameDoesNotSleepAndUpdatesLagFrameCount( void )
+void test_Clock_EndFrame_NormalFrameUpdatesTimingAndSleeps( void )
 {
-   u64 frameMicroSec;
-   Clock_t clock;
+   Clock_t* clock;
 
-   Clock_Init( &clock, 60 );
-   frameMicroSec = 1000000 / 60;  // 16,666
+   clock = Clock_Create( 0, 60 );
+   g_platformMicros = 1000;
+   Clock_StartFrame( clock );
+   g_platformMicros = 2000;
 
-   Clock_StartFrame( &clock );
-   g_platformOpsGetMicrosCall.returnValue = 17000;
+   Clock_EndFrame( clock );
+   TEST_ASSERT_EQUAL_UINT( 2000, (u32)Clock_GetAbsoluteEndMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 1000, (u32)Clock_GetLastFrameMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 1, Clock_GetFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, Clock_GetLagFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 15, g_platformSleepMs );
+   TEST_ASSERT_EQUAL_UINT( 1, g_platformSleepCallCount );
 
-   Clock_EndFrame( &clock );
-   TEST_ASSERT_EQUAL( 1, clock.frameCount );
-   TEST_ASSERT_EQUAL( 1, clock.lagFrameCount );
-   TEST_ASSERT_EQUAL( 0, g_platformOpsSleepMsCall.callCount );
+   Clock_Free( clock, 0 );
+}
+
+void test_Clock_EndFrame_ExactFrameDurationDoesNotCountAsLag( void )
+{
+   Clock_t* clock;
+
+   clock = Clock_Create( 0, 60 );
+   g_platformMicros = 1000;
+   Clock_StartFrame( clock );
+   g_platformMicros = 17666;
+
+   Clock_EndFrame( clock );
+   TEST_ASSERT_EQUAL_UINT( 16666, (u32)Clock_GetLastFrameMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 1, Clock_GetFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, Clock_GetLagFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, g_platformSleepMs );
+   TEST_ASSERT_EQUAL_UINT( 1, g_platformSleepCallCount );
+
+   Clock_Free( clock, 0 );
+}
+
+void test_Clock_EndFrame_LaggingFrameIncrementsLagCountWithoutSleeping( void )
+{
+   Clock_t* clock;
+
+   clock = Clock_Create( 0, 60 );
+   g_platformMicros = 1000;
+   Clock_StartFrame( clock );
+   g_platformMicros = 17667;
+
+   Clock_EndFrame( clock );
+   TEST_ASSERT_EQUAL_UINT( 16667, (u32)Clock_GetLastFrameMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 1, Clock_GetFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 1, Clock_GetLagFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 0, g_platformSleepCallCount );
+
+   Clock_Free( clock, 0 );
+}
+
+void test_Clock_EndFrame_TracksMultipleFramesAndLags( void )
+{
+   Clock_t* clock;
+
+   clock = Clock_Create( 0, 60 );
+   g_platformMicros = 1000;
+   Clock_StartFrame( clock );
+   g_platformMicros = 2000;
+   Clock_EndFrame( clock );
+   g_platformMicros = 3000;
+   Clock_StartFrame( clock );
+   g_platformMicros = 20000;
+
+   Clock_EndFrame( clock );
+   TEST_ASSERT_EQUAL_UINT( 2, Clock_GetFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 1, Clock_GetLagFrameCount( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 17000, (u32)Clock_GetLastFrameMicro( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 1, g_platformSleepCallCount );
+
+   Clock_Free( clock, 0 );
 }
 
 int main( void )
 {
    UNITY_BEGIN();
 
-   RUN_TEST( test_Clock_Init_InitializesClockWithCorrectParameters );
+   RUN_TEST( test_Clock_GetStructSize_ReturnsNonZeroSize );
 
-   RUN_TEST( test_Clock_SetFps_UpdatesFrameMicroSecAndFrameSec );
+   RUN_TEST( test_Clock_Create_InitializesClockState );
 
-   RUN_TEST( test_Clock_StartFrame_ClockIsMarkedAsStarted );
-   RUN_TEST( test_Clock_StartFrame_InitializesStartMicroValues );
+   RUN_TEST( test_Clock_SetFps_UpdatesFrameRateValues );
 
-   RUN_TEST( test_Clock_EndFrame_UpdatesParametersCorrectly );
-   RUN_TEST( test_Clock_EndFrame_NonLagFrameSleepsForCorrectDuration );
-   RUN_TEST( test_Clock_EndFrame_LagFrameDoesNotSleepAndUpdatesLagFrameCount );
+   RUN_TEST( test_Clock_StartFrame_FirstFrameInitializesAbsoluteTimes );
+   RUN_TEST( test_Clock_StartFrame_LaterFramesPreserveAbsoluteStartTime );
+   
+   RUN_TEST( test_Clock_EndFrame_NormalFrameUpdatesTimingAndSleeps );
+   RUN_TEST( test_Clock_EndFrame_ExactFrameDurationDoesNotCountAsLag );
+   RUN_TEST( test_Clock_EndFrame_LaggingFrameIncrementsLagCountWithoutSleeping );
+   RUN_TEST( test_Clock_EndFrame_TracksMultipleFramesAndLags );
 
    return UNITY_END();
 }

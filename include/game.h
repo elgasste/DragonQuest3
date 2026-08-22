@@ -16,42 +16,31 @@
 
 typedef struct MemArena_t MemArena_t;
 typedef struct Clock_t Clock_t;
-typedef struct File_t File_t;
 typedef struct GameData_t GameData_t;
 typedef struct Input_t Input_t;
 typedef struct Display_t Display_t;
 typedef struct TileMap_t TileMap_t;
 typedef struct TileTextureSet_t TileTextureSet_t;
 
-typedef struct Game_t
-{
-   MemArena_t* memArena;
-   Clock_t* clock;
-   Input_t* input;
-   Display_t* display;
-   GameData_t* gameData;
-
-   TileTextureSet_t* tileTextureSet;
-
-   TileMap_t *tileMap;
-   Vector4i32_t tileMapViewport;
-
-   // TODO: this is the player, temporarily
-   Vector4i32_t playerRect;
-
-   b32 shutdown;
-}
-Game_t;
-
 // game.c
-void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFilePath );
-void Game_Destroy( Game_t** pGame );
+typedef struct Game_t Game_t;
+size_t Game_GetStructSize( void );
+Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath );
+void Game_Free( Game_t* game, MemArena_t* memArena );
+
+Clock_t* Game_GetClock( Game_t* game );
+Input_t* Game_GetInput( Game_t* game );
+Display_t* Game_GetDisplay( Game_t* game );
+GameData_t* Game_GetGameData( Game_t* game );
+TileTextureSet_t* Game_GetTileTextureSet( Game_t* game );
+TileMap_t* Game_GetTileMap( Game_t* game );
+Vector4i32_t Game_GetTileMapViewport( Game_t* game );
+Vector4i32_t Game_GetPlayerRect( Game_t* game );
+
+void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect );
+
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
-
-// game_load.c
-void Game_LoadGameData( Game_t* game, const char* gameDataFilePath );
-void Game_LoadTileMapFromId( Game_t* game, u32 id );
 
 // game_input.c
 void Game_HandleInput( Game_t* game );

@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "clock.h"
 #include "display.h"
 #include "game.h"
@@ -10,30 +8,48 @@
 #include "tile_map.h"
 #include "tile_texture_set.h"
 
+struct Game_t
+{
+   MemArena_t* memArena;
+
+   Clock_t* clock;
+   Input_t* input;
+   Display_t* display;
+   GameData_t* gameData;
+
+   TileTextureSet_t* tileTextureSet;
+
+   TileMap_t *tileMap;
+   Vector4i32_t tileMapViewport;
+
+   // TODO: this is the player, temporarily
+   Vector4i32_t playerRect;
+
+   b32 shutdown;
+};
+
 internal void Game_Tic( Game_t* game );
 
-void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFilePath )
+size_t Game_GetStructSize( void )
+{
+   return sizeof( Game_t );
+}
+
+Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
 {
    Game_t* game;
 
-   *pGame = (Game_t*)MemArena_Alloc( memArena, sizeof( Game_t ) );
-
-   game = *pGame;
+   game = (Game_t*)MemArena_AllocMem( memArena, sizeof( Game_t ) );
    game->memArena = memArena;
    
-   game->clock = (Clock_t*)MemArena_Alloc( game->memArena, sizeof( Clock_t ) );
-   game->input = (Input_t*)MemArena_Alloc( game->memArena, sizeof( Input_t ) );
-   game->display = (Display_t*)MemArena_Alloc( game->memArena, sizeof( Display_t ) );
+   game->clock = Clock_Create( memArena, GAME_DEFAULT_FPS );
+   game->input = Input_Create( game->memArena );
+   game->display = Display_Create( game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
 
-   Clock_Init( game->clock, GAME_DEFAULT_FPS );
-   Input_Init( game->input );
-   Display_Init( game->display, game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
+   game->gameData = GameData_Create( game->memArena, gameDataFilePath );
+   game->tileTextureSet = TileTextureSet_CreateFromGameData( game->memArena, game->gameData );
 
-   game->gameData = 0;
    game->tileMap = 0;
-   game->tileTextureSet = 0;
-
-   Game_LoadGameData( game, gameDataFilePath );
    
    // TODO: should this come from the game data file? or is it too integral to the game engine?
    game->tileMapViewport.x = 0;
@@ -46,34 +62,76 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    game->playerRect.h = 14;
 
    // TODO: temporary, this will eventually be part of the game data file
-   game->tileMap = 0;
-   Game_LoadTileMapFromId( game, 1 );
+   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1 );
+
+   return game;
 }
 
-void Game_Destroy( Game_t** pGame )
+void Game_Free( Game_t* game, MemArena_t* memArena )
 {
-   if ( !pGame || !*pGame )
+   Clock_Free( game->clock, memArena );
+   Input_Free( game->input, memArena );
+   Display_Free( game->display, memArena );
+   GameData_Free( game->gameData, memArena );
+
+   if ( game->tileMap )
    {
-      return;
+      TileMap_Free( game->tileMap, memArena );
+      MemArena_FreeMem( memArena, game->tileMap );
    }
 
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->clock );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->input );
+   if ( game->tileTextureSet )
+   {
+      TileTextureSet_Free( game->tileTextureSet, memArena );
+      MemArena_FreeMem( memArena, game->tileTextureSet );
+   }
 
-   Display_Cleanup( ( *pGame )->display, ( *pGame )->memArena );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->display );
+   MemArena_FreeMem( memArena, game );
+}
 
-   GameData_Cleanup( ( *pGame )->gameData, ( *pGame )->memArena );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->gameData );
+Clock_t* Game_GetClock( Game_t* game )
+{
+   return game->clock;
+}
 
-   TileMap_Cleanup( ( *pGame )->tileMap, ( *pGame )->memArena );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->tileMap );
+Input_t* Game_GetInput( Game_t* game )
+{
+   return game->input;
+}
 
-   TileTextureSet_Cleanup( ( *pGame )->tileTextureSet, ( *pGame )->memArena );
-   MemArena_Free( ( *pGame )->memArena, ( *pGame )->tileTextureSet );
+Display_t* Game_GetDisplay( Game_t* game )
+{
+   return game->display;
+}
 
-   MemArena_Free( ( *pGame )->memArena, *pGame );
-   *pGame = 0;
+GameData_t* Game_GetGameData( Game_t* game )
+{
+   return game->gameData;
+}
+
+TileTextureSet_t* Game_GetTileTextureSet( Game_t* game )
+{
+   return game->tileTextureSet;
+}
+
+TileMap_t* Game_GetTileMap( Game_t* game )
+{
+   return game->tileMap;
+}
+
+Vector4i32_t Game_GetTileMapViewport( Game_t* game )
+{
+   return game->tileMapViewport;
+}
+
+Vector4i32_t Game_GetPlayerRect( Game_t* game )
+{
+   return game->playerRect;
+}
+
+void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect )
+{
+   game->playerRect = playerRect;
 }
 
 void Game_Run( Game_t* game )
@@ -103,5 +161,5 @@ internal void Game_Tic( Game_t* game )
 
    centerX = game->playerRect.x + ( game->playerRect.w / 2 );
    centerY = game->playerRect.y + ( game->playerRect.h / 2 );
-   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY );
+   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 }

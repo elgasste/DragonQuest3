@@ -19,6 +19,7 @@
 #define LOG_FILENAME             "dw3.log"
 #define GAME_DATA_FILENAME       "data.dw3d"
 
+typedef struct MemArena_t MemArena_t;
 typedef struct Game_t Game_t;
 
 typedef struct WinCornerPopup_t
@@ -43,6 +44,7 @@ typedef struct WinGlobalObjects_t
    char exeDir[MAX_PATH];
    char logFilePath[MAX_PATH];
 
+   MemArena_t* memArena;
    Game_t* game;
 }
 WinGlobalObjects_t;

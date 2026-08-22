@@ -1,972 +1,339 @@
+#include <stdlib.h>
+
 #include "mem_arena.h"
 #include "unity.h"
 
-static int g_fatalErrorCount;
-static const char* g_fatalErrorMessage;
+global MemArenaStats_t g_initialStats;
 
 void Platform_FatalError( const char* msg )
 {
-   g_fatalErrorCount++;
-   g_fatalErrorMessage = msg;
+   UNUSED_PARAM( msg );
 }
 
-#define MEMARENA_TEST_HELPER_CREATE_ARENA( s ) \
-   result = MemArena_Create( &arena, ( s ) ); \
-   TEST_ASSERT_EQUAL( MemArenaResult_Success, result )
-
-#define MEMARENA_TEST_HELPER_ALLOC( m, s ) \
-   m = MemArena_Alloc( arena, ( s ) ); \
-   TEST_ASSERT_NOT_NULL( m )
-
-internal MemArena_t* MemArenaTestHelper_CreateArenaWithBlockAtOffset( size_t arenaSize,
-                                                                      size_t blockOffset,
-                                                                      size_t blockSize )
+internal MemArena_t* CreateArena( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   MemArenaBlock_t* block;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( arenaSize );
-
-   block = (MemArenaBlock_t*)( (u8*)arena + blockOffset );
-   arena->firstBlock = block;
-   arena->lastBlock = block;
-   block->prev = 0;
-   block->next = 0;
-   block->size = blockSize;
-   block->mem = (u8*)block + sizeof( MemArenaBlock_t );
-
-   return arena;
+   return MemArena_Create( 1024 );
 }
 
-internal MemArena_t* MemArenaTestHelper_CreateArenaWithTwoBlocksAtOffsets( size_t arenaSize,
-                                                                           size_t blockOffset1,
-                                                                           size_t blockSize1,
-                                                                           size_t blockOffset2,
-                                                                           size_t blockSize2 )
+internal MemArena_t* CreateSmallArena( void )
 {
-   MemArena_t* arena;
-   MemArenaBlock_t *block1, *block2;
-
-   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, blockOffset1, blockSize1 );
-
-   block1 = arena->firstBlock;
-   block2 = (MemArenaBlock_t*)( (u8*)arena + blockOffset2 );
-   block1->next = block2;
-   block2->prev = block1;
-   arena->lastBlock = block2;
-   block2->next = 0;
-   block2->size = blockSize2;
-   block2->mem = (u8*)block2 + sizeof( MemArenaBlock_t );
-
-   return arena;
+   return MemArena_Create( 288 );
 }
 
-void setUp( void ) {}
+internal void AssertEmptyStats( MemArenaStats_t stats )
+{
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.largestAllocatedBlock );
+   TEST_ASSERT_EQUAL_size_t( g_initialStats.largestAvailableBlock, stats.largestAvailableBlock );
+   TEST_ASSERT_EQUAL_size_t( g_initialStats.totalUnallocatedSpace, stats.totalUnallocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalFragmentedSpace );
+   TEST_ASSERT_EQUAL_size_t( g_initialStats.totalUnusableSpace, stats.totalUnusableSpace );
+}
+
+void setUp( void )
+{
+   MemArena_t* arena = CreateArena();
+   g_initialStats = MemArena_GetStats( arena );
+   MemArena_Free( arena );
+}
+
 void tearDown( void ) {}
 
-internal void test_MemArena_Create_ArenaTooSmall_ReturnsArenaTooSmall( void )
+void test_MemArena_GetStructSize_ReturnsNonZeroSize( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-
-   result = MemArena_Create( &arena, sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) );
-   TEST_ASSERT_EQUAL( MemArenaResult_ArenaTooSmall, result );
+   TEST_ASSERT_GREATER_THAN_size_t( 0, MemArena_GetStructSize() );
 }
 
-internal void test_MemArena_Create_ArenaMinSize_ReturnsSuccess( void )
+void test_MemArena_Create_ReportsRequestedSizeAndIsEmpty( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
+   MemArena_t* arena = CreateArena();
 
-   result = MemArena_Create( &arena, sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1 );
-   TEST_ASSERT_EQUAL( MemArenaResult_Success, result );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Create_SetsCorrectParameters( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
-   TEST_ASSERT_EQUAL( arena->size, 1000 );
-   TEST_ASSERT_EQUAL( arena->firstBlock, 0 );
-   TEST_ASSERT_EQUAL( arena->lastBlock, 0 );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Destroy_CleansUpArena( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-
-   arena = 0;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
    TEST_ASSERT_NOT_NULL( arena );
+   TEST_ASSERT_EQUAL_size_t( 1024, MemArena_GetSize( arena ) );
+   TEST_ASSERT_TRUE( MemArena_IsEmpty( arena ) );
+   AssertEmptyStats( MemArena_GetStats( arena ) );
 
-   MemArena_Destroy( &arena );
-   TEST_ASSERT_NULL( arena );
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_Reset_ResetsBlockPointers( void )
+void test_MemArena_AllocMem_AppendsBlocksAndReportsStatistics( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2;
+   MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
+   void* firstMemory = MemArena_AllocMem( arena, 16 );
+   void* secondMemory = MemArena_AllocMem( arena, 32 );
 
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
-   MEMARENA_TEST_HELPER_ALLOC( mem1, 10 );
+   TEST_ASSERT_NOT_NULL( firstMemory );
+   TEST_ASSERT_NOT_NULL( secondMemory );
+   TEST_ASSERT_TRUE( firstMemory != secondMemory );
+   TEST_ASSERT_FALSE( MemArena_IsEmpty( arena ) );
 
-   MEMARENA_TEST_HELPER_ALLOC( mem2, 10 );
-   TEST_ASSERT_EQUAL( mem1, arena->firstBlock->mem );
-   TEST_ASSERT_EQUAL( mem2, arena->lastBlock->mem );
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL_size_t( 2, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 48, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 32, stats.largestAllocatedBlock );
+   TEST_ASSERT_TRUE( stats.largestAvailableBlock < g_initialStats.largestAvailableBlock );
+   TEST_ASSERT_TRUE( stats.totalUnallocatedSpace < g_initialStats.totalUnallocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalFragments );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalFragmentedSpace );
+   TEST_ASSERT_EQUAL_size_t( g_initialStats.totalUnusableSpace, stats.totalUnusableSpace );
+
+   MemArena_Free( arena );
+}
+
+void test_MemArena_AllocMem_ReusesFreedBlockSpace( void )
+{
+   MemArenaStats_t stats;
+   MemArena_t* arena = CreateSmallArena();
+   void* firstMemory = MemArena_AllocMem( arena, 64 );
+   void* freedMemory = MemArena_AllocMem( arena, 32 );
+   void* lastMemory = MemArena_AllocMem( arena, 64 );
+   void* replacementMemory;
+
+   MemArena_FreeMem( arena, freedMemory );
+   replacementMemory = MemArena_AllocMem( arena, 24 );
+
+   TEST_ASSERT_NOT_NULL( replacementMemory );
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL_size_t( 3, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 152, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 64, stats.largestAllocatedBlock );
+
+   MemArena_FreeMem( arena, firstMemory );
+   MemArena_FreeMem( arena, replacementMemory );
+   MemArena_FreeMem( arena, lastMemory );
+   MemArena_Free( arena );
+}
+
+void test_MemArena_AllocMem_UsesFreedSpaceBeforeAppending( void )
+{
+   MemArena_t* arena = CreateSmallArena();
+   void* firstMemory = MemArena_AllocMem( arena, 32 );
+   MemArena_AllocMem( arena, 32 );
+   void* lastMemory = MemArena_AllocMem( arena, 64 );
+   void* replacementMemory;
+
+   MemArena_FreeMem( arena, firstMemory );
+   replacementMemory = MemArena_AllocMem( arena, 16 );
+
+   TEST_ASSERT_NOT_NULL( replacementMemory );
+   TEST_ASSERT_EQUAL_size_t( 3, MemArena_GetStats( arena ).totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 112, MemArena_GetStats( arena ).totalAllocatedSpace );
+
+   MemArena_FreeMem( arena, replacementMemory );
+   MemArena_FreeMem( arena, lastMemory );
+   MemArena_Free( arena );
+}
+
+void test_MemArena_AllocMem_AppendsAfterMultipleExistingBlocks( void )
+{
+   MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
+
+   MemArena_AllocMem( arena, 8 );
+   MemArena_AllocMem( arena, 16 );
+   MemArena_AllocMem( arena, 32 );
+   MemArena_AllocMem( arena, 64 );
+   stats = MemArena_GetStats( arena );
+
+   TEST_ASSERT_EQUAL_size_t( 4, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 120, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 64, stats.largestAllocatedBlock );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalFragments );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalFragmentedSpace );
 
    MemArena_Reset( arena );
-   TEST_ASSERT_NULL( arena->firstBlock );
-   TEST_ASSERT_NULL( arena->lastBlock );
-
-   MemArena_Destroy( &arena );
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_Free_DisposingFirstBlockAdjustsPrevAndNextPointers( void )
+void test_MemArena_FreeMem_RemovesOnlyTheSelectedBlock( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2, *mem3;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem1, 10 );
-   MEMARENA_TEST_HELPER_ALLOC( mem2, 20 );
-   MEMARENA_TEST_HELPER_ALLOC( mem3, 30 );
-   TEST_ASSERT_EQUAL( mem1, arena->firstBlock->mem );
-   TEST_ASSERT_EQUAL( mem2, arena->firstBlock->next->mem );
-   TEST_ASSERT_EQUAL( mem3, arena->lastBlock->mem );
-
-   MemArena_Free( arena, mem1 );
-   TEST_ASSERT_EQUAL( arena->lastBlock, arena->firstBlock->next );
-   TEST_ASSERT_EQUAL( arena->firstBlock, arena->lastBlock->prev );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-   TEST_ASSERT_EQUAL( mem2 - sizeof( MemArenaBlock_t ), arena->firstBlock );
-   TEST_ASSERT_EQUAL( mem3 - sizeof( MemArenaBlock_t ), arena->lastBlock );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Free_DisposingCenterBlockAdjustsPrevAndNextPointers( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2, *mem3;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem1, 10 );
-   MEMARENA_TEST_HELPER_ALLOC( mem2, 20 );
-   MEMARENA_TEST_HELPER_ALLOC( mem3, 30 );
-   TEST_ASSERT_EQUAL( mem1, arena->firstBlock->mem );
-   TEST_ASSERT_EQUAL( mem2, arena->firstBlock->next->mem );
-   TEST_ASSERT_EQUAL( mem3, arena->lastBlock->mem );
-
-   MemArena_Free( arena, mem2 );
-   TEST_ASSERT_EQUAL( arena->lastBlock, arena->firstBlock->next );
-   TEST_ASSERT_EQUAL( arena->firstBlock, arena->lastBlock->prev );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-   TEST_ASSERT_EQUAL( mem1 - sizeof( MemArenaBlock_t ), arena->firstBlock );
-   TEST_ASSERT_EQUAL( mem3 - sizeof( MemArenaBlock_t ), arena->lastBlock );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Free_DisposingLastBlockAdjustsPrevAndNextPointers( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2, *mem3;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem1, 10 );
-   MEMARENA_TEST_HELPER_ALLOC( mem2, 20 );
-   MEMARENA_TEST_HELPER_ALLOC( mem3, 30 );
-   TEST_ASSERT_EQUAL( mem1, arena->firstBlock->mem );
-   TEST_ASSERT_EQUAL( mem2, arena->firstBlock->next->mem );
-   TEST_ASSERT_EQUAL( mem3, arena->lastBlock->mem );
-
-   MemArena_Free( arena, mem3 );
-   TEST_ASSERT_EQUAL( arena->lastBlock, arena->firstBlock->next );
-   TEST_ASSERT_EQUAL( arena->firstBlock, arena->lastBlock->prev );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-   TEST_ASSERT_EQUAL( mem1 - sizeof( MemArenaBlock_t ), arena->firstBlock );
-   TEST_ASSERT_EQUAL( mem2 - sizeof( MemArenaBlock_t ), arena->lastBlock );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_NoBlocksAllocatedWithSpaceAvailable_AllocatesBlock( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8* mem;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
-   TEST_ASSERT_NULL( arena->firstBlock );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem, 20 );
-   TEST_ASSERT_NOT_NULL( mem );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_NoBlocksAllocatedWithNoSpaceAvailable_DoesNotAllocateBlock( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8* mem;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
-   TEST_ASSERT_NULL( arena->firstBlock );
-
-   g_fatalErrorCount = 0;
-   g_fatalErrorMessage = 0;
-   mem = MemArena_Alloc( arena, 1000 );
-   TEST_ASSERT_NULL( mem );
-   TEST_ASSERT_EQUAL( 1, g_fatalErrorCount );
-   TEST_ASSERT_NOT_NULL( g_fatalErrorMessage );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_OneImmediateBlockPresentWithSpaceAvailable_AllocatesBlock( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8* mem;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( 1000 );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem, 10 );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ), (u8*)( arena->firstBlock ) );
-   TEST_ASSERT_EQUAL( arena->firstBlock->mem, mem );
-   TEST_ASSERT_EQUAL( arena->lastBlock->mem, mem );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem, 10 );
-   TEST_ASSERT_NOT_EQUAL( arena->firstBlock->mem, mem );
-   TEST_ASSERT_EQUAL( arena->lastBlock->mem, mem );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next, arena->lastBlock );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev, arena->firstBlock );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_OneImmediateBlockPresentWithNoSpaceAvailable_DoesNotAllocateBlock( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8* mem;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( sizeof( MemArenaBlock_t ) * 2 ) + 19 );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem, 10 );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ), (u8*)( arena->firstBlock ) );
-   TEST_ASSERT_EQUAL( arena->firstBlock->mem, mem );
-   TEST_ASSERT_EQUAL( arena->firstBlock, arena->lastBlock );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-
-   g_fatalErrorCount = 0;
-   g_fatalErrorMessage = 0;
-   mem = MemArena_Alloc( arena, 10 );
-   TEST_ASSERT_NULL( mem );
-   TEST_ASSERT_EQUAL( 1, g_fatalErrorCount );
-   TEST_ASSERT_NOT_NULL( g_fatalErrorMessage );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_OneOffsetBlockPresentWithPrecedingSpaceAvailable_InsertsBlock( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset;
-   u8* mem;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 3 ) - 1;
-   blockOffset = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + blockSize;
-   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, blockOffset, blockSize );
-   
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ), mem );
-   TEST_ASSERT_EQUAL( arena->firstBlock->mem, mem );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next, arena->lastBlock );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev, arena->firstBlock );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-   TEST_ASSERT_EQUAL( arena->firstBlock->mem, mem );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_OneOffsetBlockPresentWithSpaceAvailableAfter_AppendsBlock( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset;
-   u8* mem;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 3 ) - 1;
-   blockOffset = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + blockSize - 1;
-   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, blockOffset, blockSize );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
-   TEST_ASSERT_EQUAL( (u8*)arena + blockOffset + ( sizeof( MemArenaBlock_t ) + blockSize ) + sizeof( MemArenaBlock_t ), mem);
-   TEST_ASSERT_EQUAL( arena->lastBlock->mem, mem );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next, arena->lastBlock );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev, arena->firstBlock );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-   TEST_ASSERT_EQUAL( arena->lastBlock->mem, mem );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_OneOffsetBlockPresentWithNoSpaceAvailableOnEitherSide_DoesNotAllocateBlock( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset;
-   u8* mem;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 3 ) - 2;
-   blockOffset = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + blockSize - 1;
-   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, blockOffset, blockSize );
-
-   g_fatalErrorCount = 0;
-   g_fatalErrorMessage = 0;
-   mem = MemArena_Alloc( arena, blockSize );
-   TEST_ASSERT_EQUAL( arena->firstBlock, arena->lastBlock );
-   TEST_ASSERT_NULL( arena->firstBlock->next );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_NULL( mem );
-   TEST_ASSERT_EQUAL( 1, g_fatalErrorCount );
-   TEST_ASSERT_NOT_NULL( g_fatalErrorMessage );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_TwoBlocksPresentWithSpaceBetween_InsertsBlock( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset1, blockOffset2;
-   u8* mem;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 3 );
-   blockOffset1 = sizeof( MemArena_t );
-   blockOffset2 = blockOffset1 + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 );
-   arena = MemArenaTestHelper_CreateArenaWithTwoBlocksAtOffsets( arenaSize, blockOffset1, blockSize, blockOffset2, blockSize );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ) + ( sizeof( MemArenaBlock_t ) * 2 ) + blockSize, mem );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next->mem, mem );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev, arena->firstBlock->next );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next->prev, arena->firstBlock );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev->next, arena->lastBlock );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_TwoBlocksPresentWithNoSpaceBetweenOrAfter_DoesNotAllocateBlock( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset1, blockOffset2;
-   u8* mem;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 3 );
-   blockOffset1 = sizeof( MemArena_t ) + 1;
-   blockOffset2 = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 );
-   arena = MemArenaTestHelper_CreateArenaWithTwoBlocksAtOffsets( arenaSize, blockOffset1, blockSize, blockOffset2, blockSize );
-
-   g_fatalErrorCount = 0;
-   g_fatalErrorMessage = 0;
-   mem = MemArena_Alloc( arena, blockSize );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next, arena->lastBlock );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev, arena->firstBlock );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_NULL( mem );
-   TEST_ASSERT_EQUAL( 1, g_fatalErrorCount );
-   TEST_ASSERT_NOT_NULL( g_fatalErrorMessage );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_Alloc_TwoBlocksPresentWithNoSpaceBetweenButSpaceAfter_AppendsBlock( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset1, blockOffset2;
-   u8* mem;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 3 );
-   blockOffset1 = sizeof( MemArena_t );
-   blockOffset2 = blockOffset1 + sizeof( MemArenaBlock_t ) + blockSize;
-   arena = MemArenaTestHelper_CreateArenaWithTwoBlocksAtOffsets( arenaSize, blockOffset1, blockSize, blockOffset2, blockSize );
-
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) + sizeof( MemArenaBlock_t ), mem );
-   TEST_ASSERT_EQUAL( arena->lastBlock->mem, mem );
-   TEST_ASSERT_NULL( arena->firstBlock->prev );
-   TEST_ASSERT_NULL( arena->lastBlock->next );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev, arena->firstBlock->next );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next->prev, arena->firstBlock );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev->next, arena->lastBlock );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_memArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalAllocatedBlocks( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   size_t blockSize;
    MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
+   void* firstMemory = MemArena_AllocMem( arena, 16 );
+   void* middleMemory = MemArena_AllocMem( arena, 32 );
+   void* lastMemory = MemArena_AllocMem( arena, 64 );
 
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
-
+   MemArena_FreeMem( arena, middleMemory );
    stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 0, stats.totalAllocatedBlocks );
 
-   MemArena_Destroy( &arena );
+   TEST_ASSERT_FALSE( MemArena_IsEmpty( arena ) );
+   TEST_ASSERT_EQUAL_size_t( 2, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 80, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 64, stats.largestAllocatedBlock );
+   TEST_ASSERT_EQUAL_size_t( 1, stats.totalFragments );
+   TEST_ASSERT_EQUAL_size_t( 32, stats.totalFragmentedSpace );
+
+   MemArena_FreeMem( arena, firstMemory );
+   MemArena_FreeMem( arena, lastMemory );
+
+   TEST_ASSERT_TRUE( MemArena_IsEmpty( arena ) );
+   AssertEmptyStats( MemArena_GetStats( arena ) );
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalAllocatedSpace( void )
+void test_MemArena_FreeMem_MultipleBlocksUpdatesFirstAndLastLinks( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   size_t blockSize;
    MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
+   void* firstMemory = MemArena_AllocMem( arena, 8 );
+   void* middleMemory = MemArena_AllocMem( arena, 16 );
+   void* lastMemory = MemArena_AllocMem( arena, 32 );
 
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
-
+   MemArena_FreeMem( arena, firstMemory );
    stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 0, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 2, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 48, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 32, stats.largestAllocatedBlock );
 
-   MemArena_Destroy( &arena );
+   MemArena_FreeMem( arena, lastMemory );
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL_size_t( 1, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 16, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 16, stats.largestAllocatedBlock );
+
+   MemArena_FreeMem( arena, middleMemory );
+   TEST_ASSERT_TRUE( MemArena_IsEmpty( arena ) );
+   AssertEmptyStats( MemArena_GetStats( arena ) );
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForLargestAllocatedBlock( void )
+void test_MemArena_FreeMem_UpdatesEmptyStateWhenLastBlockIsFreed( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   size_t blockSize;
-   MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
+   void* memory = MemArena_AllocMem( arena, 1 );
 
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
+   MemArena_FreeMem( arena, memory );
 
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 0, stats.largestAllocatedBlock );
-
-   MemArena_Destroy( &arena );
+   TEST_ASSERT_TRUE( MemArena_IsEmpty( arena ) );
+   AssertEmptyStats( MemArena_GetStats( arena ) );
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_GetStats_BlocksExistReturnsTotalAllocatedBlocks( void )
+void test_MemArena_Reset_MakesAllocatedSpaceAvailableAgain( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8* mem;
-   size_t blockSize;
-   MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
 
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
+   MemArena_AllocMem( arena, 16 );
+   MemArena_AllocMem( arena, 32 );
+   MemArena_Reset( arena );
 
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 2, stats.totalAllocatedBlocks );
-
-   MemArena_Destroy( &arena );
+   TEST_ASSERT_TRUE( MemArena_IsEmpty( arena ) );
+   AssertEmptyStats( MemArena_GetStats( arena ) );
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_GetStats_BlocksExistReturnsTotalSizeOfAllBlocksForTotalAllocatedSpace( void )
+void test_MemArena_GetStats_TracksLargestAllocatedBlock( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8* mem;
-   size_t blockSize;
    MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
 
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
-
+   MemArena_AllocMem( arena, 24 );
+   MemArena_AllocMem( arena, 80 );
    stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( blockSize * 2, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 80, stats.largestAllocatedBlock );
 
-   MemArena_Destroy( &arena );
+   MemArena_FreeMem( arena, MemArena_AllocMem( arena, 16 ) );
+   stats = MemArena_GetStats( arena );
+   TEST_ASSERT_EQUAL_size_t( 80, stats.largestAllocatedBlock );
+
+   MemArena_Reset( arena );
+   TEST_ASSERT_EQUAL_size_t( 0, MemArena_GetStats( arena ).largestAllocatedBlock );
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_GetStats_BlocksExistReturnsLargestAllocatedBlock( void )
+void test_MemArena_GetStats_ReportsSingleBlockAndRemainingCapacity( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8* mem;
-   size_t blockSize1, blockSize2;
+   MemArenaStats_t initialStats;
    MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
 
-   blockSize1 = 100;
-   blockSize2 = 200;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize1 ) + ( sizeof( MemArenaBlock_t ) + blockSize2 ) ) );
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize1 );
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize2 );
-
+   initialStats = MemArena_GetStats( arena );
+   MemArena_AllocMem( arena, 40 );
    stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( blockSize2, stats.largestAllocatedBlock );
 
-   MemArena_Destroy( &arena );
+   TEST_ASSERT_EQUAL_size_t( 1, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 40, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 40, stats.largestAllocatedBlock );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalFragments );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalFragmentedSpace );
+   TEST_ASSERT_EQUAL_size_t( initialStats.totalUnusableSpace, stats.totalUnusableSpace );
+   TEST_ASSERT_TRUE( stats.largestAvailableBlock < initialStats.largestAvailableBlock );
+   TEST_ASSERT_TRUE( stats.totalUnallocatedSpace < initialStats.totalUnallocatedSpace );
+
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_GetStats_EmptyArenaReturnsCorrectLargestAvailableBlockSize( void )
+void test_MemArena_GetStats_ReportsLargestAvailableFragment( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   size_t blockSize;
    MemArenaStats_t stats;
+   MemArena_t* arena = CreateArena();
+   void* firstMemory = MemArena_AllocMem( arena, 16 );
+   void* middleMemory = MemArena_AllocMem( arena, 64 );
+   void* lastMemory = MemArena_AllocMem( arena, 32 );
 
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
-
+   MemArena_FreeMem( arena, firstMemory );
+   MemArena_FreeMem( arena, middleMemory );
    stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( ( blockSize * 2 ) + sizeof( MemArenaBlock_t ), stats.largestAvailableBlock );
 
-   MemArena_Destroy( &arena );
+   TEST_ASSERT_EQUAL_size_t( 1, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 32, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 32, stats.largestAllocatedBlock );
+   TEST_ASSERT_EQUAL_size_t( 1, stats.totalFragments );
+   TEST_ASSERT_TRUE( stats.largestAvailableBlock >= 16 );
+   TEST_ASSERT_TRUE( stats.totalFragmentedSpace > 0 );
+   TEST_ASSERT_TRUE( stats.totalUnallocatedSpace > 0 );
+
+   MemArena_FreeMem( arena, lastMemory );
+   MemArena_Free( arena );
 }
 
-internal void test_MemArena_GetStats_SpaceAvailableBeforeFirstBlockIsCountedInLargestAvailableBlockSize( void )
+void test_MemArena_GetStats_ReportsUnusableSpace( void )
 {
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2;
-   size_t blockSize;
    MemArenaStats_t stats;
+   MemArena_t* arena = CreateSmallArena();
 
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
-   MEMARENA_TEST_HELPER_ALLOC( mem1, blockSize );
-   MEMARENA_TEST_HELPER_ALLOC( mem2, blockSize );
-
-   MemArena_Free( arena, mem1 );
-   TEST_ASSERT_EQUAL( mem2, arena->firstBlock->mem );
-   TEST_ASSERT_EQUAL( arena->firstBlock, arena->lastBlock );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + blockSize, arena->firstBlock );
-
+   MemArena_AllocMem( arena, 64 );
+   MemArena_AllocMem( arena, 32 );
+   MemArena_AllocMem( arena, 64 );
+   MemArena_AllocMem( arena, 48 );
    stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( blockSize, stats.largestAvailableBlock );
 
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_SpaceBetweenBlocksIsCountedInLargestAvailableBlockSize( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2, *mem3;
-   size_t blockSize;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 3 ) );
-   MEMARENA_TEST_HELPER_ALLOC( mem1, blockSize );
-   MEMARENA_TEST_HELPER_ALLOC( mem2, blockSize );
-   MEMARENA_TEST_HELPER_ALLOC( mem3, blockSize );
-
-   MemArena_Free( arena, mem2 );
-   TEST_ASSERT_EQUAL( mem3, arena->firstBlock->next->mem );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next, arena->lastBlock );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ), arena->lastBlock );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( blockSize, stats.largestAvailableBlock );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_SpaceAfterLastBlockIsCountedInLargestAvailableBlockSize( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8* mem;
-   size_t blockSize;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) );
-   MEMARENA_TEST_HELPER_ALLOC( mem, blockSize );
-   TEST_ASSERT_EQUAL( arena->firstBlock, (u8*)arena + sizeof( MemArena_t ) );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( blockSize, stats.largestAvailableBlock );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_VaryingSizesFoundReturnsLargestAvailableBlockSize( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2, *mem3, *mem4, *mem5;
-   size_t size1, size2, size3, size4, size5;
-   MemArenaStats_t stats;
-
-   size1 = 40;
-   size2 = 90;
-   size3 = 150;
-   size4 = 35;
-   size5 = 26;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( sizeof( MemArenaBlock_t ) * 5 ) + size1 + size2 + size3 + size4 + size5 );
-   MEMARENA_TEST_HELPER_ALLOC( mem1, size1 );
-   MEMARENA_TEST_HELPER_ALLOC( mem2, size2 );
-   MEMARENA_TEST_HELPER_ALLOC( mem3, size3 );
-   MEMARENA_TEST_HELPER_ALLOC( mem4, size4 );
-   MEMARENA_TEST_HELPER_ALLOC( mem5, size5 );
-
-   MemArena_Free( arena, mem1 );
-   MemArena_Free( arena, mem3 );
-   MemArena_Free( arena, mem5 );
-   TEST_ASSERT_EQUAL( arena->firstBlock->mem, mem2 );
-   TEST_ASSERT_EQUAL( arena->lastBlock->mem, mem4 );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next, arena->lastBlock );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev, arena->firstBlock );
-   TEST_ASSERT_EQUAL( size2, arena->firstBlock->size );
-   TEST_ASSERT_EQUAL( size4, arena->lastBlock->size );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( size3, stats.largestAvailableBlock );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsEntireArenaInTotalUnallocatedSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   MemArenaStats_t stats;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1000 );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 1000, stats.totalUnallocatedSpace );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_OneOffsetBlockIncludesSpaceBeforeBlockInTotalUnallocatedSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2;
-   size_t blockSize;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 3 ) );
-   MEMARENA_TEST_HELPER_ALLOC( mem1, blockSize );
-   MEMARENA_TEST_HELPER_ALLOC( mem2, blockSize );
-
-   MemArena_Free( arena, mem1 );
-   TEST_ASSERT_EQUAL( mem2, arena->firstBlock->mem );
-   TEST_ASSERT_EQUAL( arena->firstBlock, arena->lastBlock );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + blockSize, arena->firstBlock );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( blockSize * 2, stats.totalUnallocatedSpace );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_MultipleBlocksIncludesAllEmptySpaceInTotalUnallocatedSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   u8 *mem1, *mem2, *mem3, *mem4, *mem5;
-   size_t size1, size2, size3, size4, size5;
-   MemArenaStats_t stats;
-
-   size1 = 40;
-   size2 = 90;
-   size3 = 150;
-   size4 = 35;
-   size5 = 26;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + ( sizeof( MemArenaBlock_t ) * 5 ) + size1 + size2 + size3 + size4 + size5 );
-   MEMARENA_TEST_HELPER_ALLOC( mem1, size1 );
-   MEMARENA_TEST_HELPER_ALLOC( mem2, size2 );
-   MEMARENA_TEST_HELPER_ALLOC( mem3, size3 );
-   MEMARENA_TEST_HELPER_ALLOC( mem4, size4 );
-   MEMARENA_TEST_HELPER_ALLOC( mem5, size5 );
-
-   MemArena_Free( arena, mem1 );
-   MemArena_Free( arena, mem3 );
-   MemArena_Free( arena, mem5 );
-   TEST_ASSERT_EQUAL( arena->firstBlock->mem, mem2 );
-   TEST_ASSERT_EQUAL( arena->lastBlock->mem, mem4 );
-   TEST_ASSERT_EQUAL( arena->firstBlock->next, arena->lastBlock );
-   TEST_ASSERT_EQUAL( arena->lastBlock->prev, arena->firstBlock );
-   TEST_ASSERT_EQUAL( size2, arena->firstBlock->size );
-   TEST_ASSERT_EQUAL( size4, arena->lastBlock->size );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( size1 + size3 + size5, stats.totalUnallocatedSpace );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalFragmentedSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   MemArenaStats_t stats;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1 );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 0, stats.totalFragmentedSpace );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalFragments( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   MemArenaStats_t stats;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1 );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 0, stats.totalFragments );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_OneGapBeforeFirstBlockReturnsOneForTotalFragments( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( sizeof( MemArenaBlock_t ) + blockSize ) + ( sizeof( MemArenaBlock_t ) + 10 ) + 25;
-   blockOffset = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 10;
-   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, blockOffset, blockSize );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 1, stats.totalFragments );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_GapsBeforeAndBetweenBlocksReturnTwoForTotalFragments( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset1, blockOffset2;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) + ( ( sizeof( MemArenaBlock_t ) + 10 ) * 2 ) + 5;
-   blockOffset1 = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 10;
-   blockOffset2 = blockOffset1 + sizeof( MemArenaBlock_t ) + blockSize + sizeof( MemArenaBlock_t ) + 10;
-   arena = MemArenaTestHelper_CreateArenaWithTwoBlocksAtOffsets( arenaSize, blockOffset1, blockSize, blockOffset2, blockSize );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 2, stats.totalFragments );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_UnusableGapBeforeFirstBlockIsNotCountedAsFragment( void )
-{
-   MemArena_t* arena;
-   size_t arenaSize, blockSize, blockOffset;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( sizeof( MemArenaBlock_t ) + blockSize ) + sizeof( MemArenaBlock_t );
-   blockOffset = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t );
-   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, blockOffset, blockSize );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 0, stats.totalFragments );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_OneOffsetBlockWithSpaceBeforeBlockIncludesSpaceInTotalFragmentedSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   size_t arenaSize, blockSize;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 );
-   MEMARENA_TEST_HELPER_CREATE_ARENA( arenaSize );
-
-   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1, blockSize );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1, arena->firstBlock );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 1, stats.totalFragmentedSpace );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_MultipleFragmentsReturnsTotalCountForTotalFragmentedSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   size_t arenaSize, blockSize, blockOffset1, blockOffset2;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) + ( ( sizeof( MemArenaBlock_t ) + 10 ) * 2 );
-   blockOffset1 = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 10;
-   blockOffset2 = blockOffset1 + ( sizeof( MemArenaBlock_t ) * 2 ) + blockSize + 10;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( arenaSize );
-
-   arena = MemArenaTestHelper_CreateArenaWithTwoBlocksAtOffsets( arenaSize, blockOffset1, blockSize, blockOffset2, blockSize );
-   TEST_ASSERT_EQUAL( (u8*)arena + blockOffset1, arena->firstBlock );
-   TEST_ASSERT_EQUAL( (u8*)arena + blockOffset2, arena->lastBlock );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 20, stats.totalFragmentedSpace );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalUnusableSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   MemArenaStats_t stats;
-
-   MEMARENA_TEST_HELPER_CREATE_ARENA( sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ) + 1 );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( 0, stats.totalUnusableSpace );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_OneOffsetBlockWithSpaceBeforeBlockIncludesSpaceInTotalUnusableSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   size_t arenaSize, blockSize;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 );
-   MEMARENA_TEST_HELPER_CREATE_ARENA( arenaSize );
-
-   arena = MemArenaTestHelper_CreateArenaWithBlockAtOffset( arenaSize, sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ), blockSize );
-   TEST_ASSERT_EQUAL( (u8*)arena + sizeof( MemArena_t ) + sizeof( MemArenaBlock_t ), arena->firstBlock );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( sizeof( MemArenaBlock_t ), stats.totalUnusableSpace );
-
-   MemArena_Destroy( &arena );
-}
-
-internal void test_MemArena_GetStats_MultipleUnusableFragmentsReturnsTotalCountForTotalUnusableSpace( void )
-{
-   MemArena_t* arena;
-   MemArenaResult_t result;
-   size_t arenaSize, blockSize, blockOffset1, blockOffset2;
-   MemArenaStats_t stats;
-
-   blockSize = 100;
-   arenaSize = sizeof( MemArena_t ) + ( ( sizeof( MemArenaBlock_t ) + blockSize ) * 2 ) + ( sizeof( MemArenaBlock_t ) * 3 );
-   blockOffset1 = sizeof( MemArena_t ) + sizeof( MemArenaBlock_t );
-   blockOffset2 = blockOffset1 + ( sizeof( MemArenaBlock_t ) * 2 ) + blockSize;
-   MEMARENA_TEST_HELPER_CREATE_ARENA( arenaSize );
-
-   arena = MemArenaTestHelper_CreateArenaWithTwoBlocksAtOffsets( arenaSize, blockOffset1, blockSize, blockOffset2, blockSize );
-   TEST_ASSERT_EQUAL( (u8*)arena + blockOffset1, arena->firstBlock );
-   TEST_ASSERT_EQUAL( (u8*)arena + blockOffset2, arena->lastBlock );
-
-   stats = MemArena_GetStats( arena );
-   TEST_ASSERT_EQUAL( sizeof( MemArenaBlock_t ) * 3, stats.totalUnusableSpace );
-
-   MemArena_Destroy( &arena );
+   TEST_ASSERT_EQUAL_size_t( 4, stats.totalAllocatedBlocks );
+   TEST_ASSERT_EQUAL_size_t( 208, stats.totalAllocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 64, stats.largestAllocatedBlock );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalFragments );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.totalUnallocatedSpace );
+   TEST_ASSERT_EQUAL_size_t( 0, stats.largestAvailableBlock );
+   TEST_ASSERT_TRUE( stats.totalUnusableSpace > 0 );
+
+   MemArena_Free( arena );
 }
 
 int main( void )
 {
    UNITY_BEGIN();
+
+   RUN_TEST( test_MemArena_GetStructSize_ReturnsNonZeroSize );
+
+   RUN_TEST( test_MemArena_Create_ReportsRequestedSizeAndIsEmpty );
+
+   RUN_TEST( test_MemArena_AllocMem_AppendsBlocksAndReportsStatistics );
+   RUN_TEST( test_MemArena_AllocMem_ReusesFreedBlockSpace );
+   RUN_TEST( test_MemArena_AllocMem_UsesFreedSpaceBeforeAppending );
+   RUN_TEST( test_MemArena_AllocMem_AppendsAfterMultipleExistingBlocks );
+
+   RUN_TEST( test_MemArena_FreeMem_RemovesOnlyTheSelectedBlock );
+   RUN_TEST( test_MemArena_FreeMem_MultipleBlocksUpdatesFirstAndLastLinks );
+   RUN_TEST( test_MemArena_FreeMem_UpdatesEmptyStateWhenLastBlockIsFreed );
+
+   RUN_TEST( test_MemArena_Reset_MakesAllocatedSpaceAvailableAgain );
    
-   RUN_TEST( test_MemArena_Create_ArenaTooSmall_ReturnsArenaTooSmall );
-   RUN_TEST( test_MemArena_Create_ArenaMinSize_ReturnsSuccess );
-   RUN_TEST( test_MemArena_Create_SetsCorrectParameters );
-
-   RUN_TEST( test_MemArena_Destroy_CleansUpArena );
-
-   RUN_TEST( test_MemArena_Reset_ResetsBlockPointers );
-
-   RUN_TEST( test_MemArena_Free_DisposingFirstBlockAdjustsPrevAndNextPointers );
-   RUN_TEST( test_MemArena_Free_DisposingCenterBlockAdjustsPrevAndNextPointers );
-   RUN_TEST( test_MemArena_Free_DisposingLastBlockAdjustsPrevAndNextPointers );
-
-   RUN_TEST( test_MemArena_Alloc_NoBlocksAllocatedWithSpaceAvailable_AllocatesBlock );
-   RUN_TEST( test_MemArena_Alloc_NoBlocksAllocatedWithNoSpaceAvailable_DoesNotAllocateBlock );
-   RUN_TEST( test_MemArena_Alloc_OneImmediateBlockPresentWithSpaceAvailable_AllocatesBlock );
-   RUN_TEST( test_MemArena_Alloc_OneImmediateBlockPresentWithNoSpaceAvailable_DoesNotAllocateBlock );
-   RUN_TEST( test_MemArena_Alloc_OneOffsetBlockPresentWithPrecedingSpaceAvailable_InsertsBlock );
-   RUN_TEST( test_MemArena_Alloc_OneOffsetBlockPresentWithSpaceAvailableAfter_AppendsBlock );
-   RUN_TEST( test_MemArena_Alloc_OneOffsetBlockPresentWithNoSpaceAvailableOnEitherSide_DoesNotAllocateBlock );
-   RUN_TEST( test_MemArena_Alloc_TwoBlocksPresentWithSpaceBetween_InsertsBlock );
-   RUN_TEST( test_MemArena_Alloc_TwoBlocksPresentWithNoSpaceBetweenOrAfter_DoesNotAllocateBlock );
-   RUN_TEST( test_MemArena_Alloc_TwoBlocksPresentWithNoSpaceBetweenButSpaceAfter_AppendsBlock );
-
-   RUN_TEST( test_memArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalAllocatedBlocks );
-   RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalAllocatedSpace );
-   RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForLargestAllocatedBlock );
-   RUN_TEST( test_MemArena_GetStats_BlocksExistReturnsTotalAllocatedBlocks );
-   RUN_TEST( test_MemArena_GetStats_BlocksExistReturnsTotalSizeOfAllBlocksForTotalAllocatedSpace );
-   RUN_TEST( test_MemArena_GetStats_BlocksExistReturnsLargestAllocatedBlock );
-   RUN_TEST( test_MemArena_GetStats_EmptyArenaReturnsCorrectLargestAvailableBlockSize );
-   RUN_TEST( test_MemArena_GetStats_SpaceAvailableBeforeFirstBlockIsCountedInLargestAvailableBlockSize );
-   RUN_TEST( test_MemArena_GetStats_SpaceBetweenBlocksIsCountedInLargestAvailableBlockSize );
-   RUN_TEST( test_MemArena_GetStats_SpaceAfterLastBlockIsCountedInLargestAvailableBlockSize );
-   RUN_TEST( test_MemArena_GetStats_VaryingSizesFoundReturnsLargestAvailableBlockSize );
-   RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsEntireArenaInTotalUnallocatedSpace );
-   RUN_TEST( test_MemArena_GetStats_OneOffsetBlockIncludesSpaceBeforeBlockInTotalUnallocatedSpace );
-   RUN_TEST( test_MemArena_GetStats_MultipleBlocksIncludesAllEmptySpaceInTotalUnallocatedSpace );
-   RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalFragments );
-   RUN_TEST( test_MemArena_GetStats_OneGapBeforeFirstBlockReturnsOneForTotalFragments );
-   RUN_TEST( test_MemArena_GetStats_GapsBeforeAndBetweenBlocksReturnTwoForTotalFragments );
-   RUN_TEST( test_MemArena_GetStats_UnusableGapBeforeFirstBlockIsNotCountedAsFragment );
-   RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalFragmentedSpace );
-   RUN_TEST( test_MemArena_GetStats_OneOffsetBlockWithSpaceBeforeBlockIncludesSpaceInTotalFragmentedSpace );
-   RUN_TEST( test_MemArena_GetStats_MultipleFragmentsReturnsTotalCountForTotalFragmentedSpace );
-   RUN_TEST( test_MemArena_GetStats_NoBlocksAllocatedReturnsZeroForTotalUnusableSpace );
-   RUN_TEST( test_MemArena_GetStats_OneOffsetBlockWithSpaceBeforeBlockIncludesSpaceInTotalUnusableSpace );
-   RUN_TEST( test_MemArena_GetStats_MultipleUnusableFragmentsReturnsTotalCountForTotalUnusableSpace );
+   RUN_TEST( test_MemArena_GetStats_TracksLargestAllocatedBlock );
+   RUN_TEST( test_MemArena_GetStats_ReportsSingleBlockAndRemainingCapacity );
+   RUN_TEST( test_MemArena_GetStats_ReportsLargestAvailableFragment );
+   RUN_TEST( test_MemArena_GetStats_ReportsUnusableSpace );
    
    return UNITY_END();
 }

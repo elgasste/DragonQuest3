@@ -18,12 +18,6 @@ add_executable(Test_Game
 	test_game.c
 )
 
-add_executable(Test_Game_Load
-   ../src/game_load.c
-   vendor/unity.c
-   test_game_load.c
-)
-
 add_executable(Test_Game_Render
 	../src/game_render.c
 	vendor/unity.c
@@ -44,13 +38,11 @@ add_executable(Test_MemArena
 
 add_executable(Test_PixelBuffer
 	../src/pixel_buffer.c
-	../src/mem_arena.c
 	vendor/unity.c
 	test_pixel_buffer.c
 )
 
 add_executable(Test_TileMap
-	../src/mem_arena.c
 	../src/tile_map.c
 	vendor/unity.c
 	test_tile_map.c
@@ -59,7 +51,6 @@ add_executable(Test_TileMap
 set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Display PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game PROPERTY COMPILE_WARNING_AS_ERROR ON)
-set_property(TARGET Test_Game_Load PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Render PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Input PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_MemArena PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -70,7 +61,6 @@ if(MSVC)
 	target_compile_options(Test_Clock PRIVATE /W4)
 	target_compile_options(Test_Display PRIVATE /W4)
    target_compile_options(Test_Game PRIVATE /W4)
-   target_compile_options(Test_Game_Load PRIVATE /W4)
 	target_compile_options(Test_Game_Render PRIVATE /W4)
    target_compile_options(Test_Input PRIVATE /W4)
    target_compile_options(Test_MemArena PRIVATE /W4)
@@ -83,16 +73,14 @@ target_include_directories(Test_Clock PRIVATE ../include)
 target_include_directories(Test_Clock PRIVATE ../src)
 
 target_include_directories(Test_Display PRIVATE vendor)
+target_include_directories(Test_Display PRIVATE mocks)
 target_include_directories(Test_Display PRIVATE ../include)
 target_include_directories(Test_Display PRIVATE ../src)
 
 target_include_directories(Test_Game PRIVATE vendor)
+target_include_directories(Test_Game PRIVATE mocks)
 target_include_directories(Test_Game PRIVATE ../include)
 target_include_directories(Test_Game PRIVATE ../src)
-
-target_include_directories(Test_Game_Load PRIVATE vendor)
-target_include_directories(Test_Game_Load PRIVATE ../include)
-target_include_directories(Test_Game_Load PRIVATE ../src)
 
 target_include_directories(Test_Game_Render PRIVATE vendor)
 target_include_directories(Test_Game_Render PRIVATE ../include)
@@ -111,13 +99,13 @@ target_include_directories(Test_PixelBuffer PRIVATE ../include)
 target_include_directories(Test_PixelBuffer PRIVATE ../src)
 
 target_include_directories(Test_TileMap PRIVATE vendor)
+target_include_directories(Test_TileMap PRIVATE mocks)
 target_include_directories(Test_TileMap PRIVATE ../include)
 target_include_directories(Test_TileMap PRIVATE ../src)
 
 add_test( NAME Unity_Clock_Tests COMMAND Test_Clock)
 add_test( NAME Unity_Display_Tests COMMAND Test_Display)
 add_test( NAME Unity_Game_Tests COMMAND Test_Game)
-add_test( NAME Unity_Game_Load_Tests COMMAND Test_Game_Load)
 add_test( NAME Unity_Game_Render_Tests COMMAND Test_Game_Render)
 add_test( NAME Unity_Input_Tests COMMAND Test_Input)
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)

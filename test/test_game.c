@@ -1,316 +1,316 @@
-#include <stdlib.h>
-#include <string.h>
+#include "mocks/mock_clock.h"
+#include "mocks/mock_display.h"
+#include "mocks/mock_game_data.h"
+#include "mocks/mock_input.h"
+#include "mocks/mock_mem_arena.h"
+#include "mocks/mock_tile_map.h"
+#include "mocks/mock_tile_texture_set.h"
 
-#include "clock.h"
-#include "display.h"
-#include "file.h"
+#include <stdlib.h>
+
 #include "game.h"
-#include "game_data.h"
-#include "input.h"
-#include "mem_arena.h"
-#include "platform.h"
-#include "tile_map.h"
-#include "tile_texture_set.h"
 #include "unity.h"
 
-typedef struct GameTestCalls_t
-{
-   int clockInit;
-   int clockStartFrame;
-   int clockEndFrame;
-   int displayInit;
-   int displayCleanup;
-   int gameLoadGameData;
-   int gameDataCleanup;
-   int tileMapCleanup;
-   int tileTextureSetCleanup;
-   int gameHandleInput;
-   int gameRender;
-   int inputInit;
-   int inputResetPressStates;
-   int memArenaAlloc;
-   int memArenaFree;
-   int platformFatalError;
-   int platformHandleMessages;
-   int platformCloseFile;
-   u32 clockInitFps;
-   const char* gameLoadGameDataPath;
-   const char* fatalErrorMessage;
-}
-GameTestCalls_t;
+global u32 g_allocCount;
+global u32 g_freeCount;
+global u32 g_clockStartCount;
+global u32 g_clockEndCount;
+global u32 g_inputResetCount;
+global u32 g_platformHandleMessagesCount;
+global u32 g_gameHandleInputCount;
+global u32 g_gameRenderCount;
+global u32 g_tileMapAnchorCount;
+global u32 g_tileMapFreeCount;
+global u32 g_tileTextureSetFreeCount;
+global u32 g_gameDataFreeCount;
+global u32 g_displayFreeCount;
+global Clock_t* g_clock;
+global Input_t* g_input;
+global Display_t* g_display;
+global GameData_t* g_gameData;
+global TileTextureSet_t* g_tileTextureSet;
+global TileMap_t* g_tileMap;
+global Vector4i32_t g_anchorViewport;
+global i32 g_anchorX;
+global i32 g_anchorY;
+global u32 g_anchorTileSize;
 
-local_persist GameTestCalls_t g_calls;
-
-void setUp( void )
+void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
-   memset( &g_calls, 0, sizeof( g_calls ) );
+   UNUSED_PARAM( arena );
+   g_allocCount++;
+   return malloc( size );
 }
 
-void tearDown( void ) {}
+void MemArena_FreeMem( MemArena_t* arena, void* mem )
+{
+   UNUSED_PARAM( arena );
+   g_freeCount++;
+   free( mem );
+}
 
-void Clock_Init( Clock_t* clock, u32 fps )
+Clock_t* Clock_Create( MemArena_t* memArena )
+{
+   UNUSED_PARAM( memArena );
+   g_clock = (Clock_t*)malloc( sizeof( Clock_t ) );
+   g_clock->fps = GAME_DEFAULT_FPS;
+   return g_clock;
+}
+
+void Clock_Free( Clock_t* clock, MemArena_t* memArena )
 {
    UNUSED_PARAM( clock );
-   g_calls.clockInit++;
-   g_calls.clockInitFps = fps;
+   UNUSED_PARAM( memArena );
 }
 
 void Clock_StartFrame( Clock_t* clock )
 {
    UNUSED_PARAM( clock );
-   g_calls.clockStartFrame++;
+   g_clockStartCount++;
 }
 
 void Clock_EndFrame( Clock_t* clock )
 {
    UNUSED_PARAM( clock );
-   g_calls.clockEndFrame++;
+   g_clockEndCount++;
 }
 
-void Display_Init( Display_t* display, MemArena_t* memArena, u32 w, u32 h )
+Input_t* Input_Create( MemArena_t* memArena )
 {
-   UNUSED_PARAM( display );
    UNUSED_PARAM( memArena );
-   UNUSED_PARAM( w );
-   UNUSED_PARAM( h );
-   g_calls.displayInit++;
+   g_input = (Input_t*)malloc( sizeof( Input_t ) );
+   return g_input;
 }
 
-void Display_Cleanup( Display_t* display, MemArena_t* memArena )
-{
-   UNUSED_PARAM( display );
-   UNUSED_PARAM( memArena );
-   g_calls.displayCleanup++;
-}
-
-void Game_LoadGameData( Game_t* game, const char* gameDataFilePath )
-{
-   UNUSED_PARAM( game );
-   g_calls.gameLoadGameData++;
-   g_calls.gameLoadGameDataPath = gameDataFilePath;
-}
-
-void GameData_Cleanup( GameData_t* gameData, MemArena_t* memArena )
-{
-   UNUSED_PARAM( gameData );
-   UNUSED_PARAM( memArena );
-   g_calls.gameDataCleanup++;
-}
-
-void TileMap_Cleanup( TileMap_t* tileMap, MemArena_t* memArena )
-{
-   UNUSED_PARAM( tileMap );
-   UNUSED_PARAM( memArena );
-   g_calls.tileMapCleanup++;
-}
-
-void TileTextureSet_Cleanup( TileTextureSet_t* tileTextureSet, MemArena_t* memArena )
-{
-   UNUSED_PARAM( tileTextureSet );
-   UNUSED_PARAM( memArena );
-   g_calls.tileTextureSetCleanup++;
-}
-
-void Game_LoadTileMapFromId( Game_t* game, u32 id )
-{
-   UNUSED_PARAM( game );
-   UNUSED_PARAM( id );
-}
-
-void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y )
-{
-   UNUSED_PARAM( tileMap );
-   UNUSED_PARAM( x );
-   UNUSED_PARAM( y );
-
-   if ( viewport )
-   {
-      viewport->x = 0;
-      viewport->y = 0;
-   }
-}
-
-void Game_HandleInput( Game_t* game )
-{
-   UNUSED_PARAM( game );
-   g_calls.gameHandleInput++;
-}
-
-void Game_Render( Game_t* game )
-{
-   UNUSED_PARAM( game );
-   g_calls.gameRender++;
-}
-
-void Input_Init( Input_t* input )
+void Input_Free( Input_t* input, MemArena_t* memArena )
 {
    UNUSED_PARAM( input );
-   g_calls.inputInit++;
+   UNUSED_PARAM( memArena );
 }
 
 void Input_ResetPressStates( Input_t* input )
 {
    UNUSED_PARAM( input );
-   g_calls.inputResetPressStates++;
+   g_inputResetCount++;
 }
 
-const char* MemArena_GetErrorMessage( MemArenaResult_t result )
+Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 {
-   UNUSED_PARAM( result );
-   return "stubbed memory arena error";
+   UNUSED_PARAM( memArena );
+   g_display = (Display_t*)malloc( sizeof( Display_t ) );
+   UNUSED_PARAM( w );
+   UNUSED_PARAM( h );
+   return g_display;
 }
 
-void* MemArena_Alloc( MemArena_t* arena, size_t size )
+void Display_Free( Display_t* display, MemArena_t* memArena )
 {
-   UNUSED_PARAM( arena );
-   g_calls.memArenaAlloc++;
-
-   return malloc( size );
+   UNUSED_PARAM( display );
+   UNUSED_PARAM( memArena );
+   g_displayFreeCount++;
 }
 
-void MemArena_Free( MemArena_t* arena, void* mem )
+GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
 {
-   UNUSED_PARAM( arena );
-   g_calls.memArenaFree++;
-   free( mem );
+   UNUSED_PARAM( memArena );
+   UNUSED_PARAM( filePath );
+   g_gameData = (GameData_t*)malloc( sizeof( GameData_t ) );
+   return g_gameData;
 }
 
-void Platform_FatalError( const char* message )
+void GameData_Free( GameData_t* gameData, MemArena_t* memArena )
 {
-   UNUSED_PARAM( message );
-   g_calls.platformFatalError++;
-   g_calls.fatalErrorMessage = message;
+   UNUSED_PARAM( gameData );
+   UNUSED_PARAM( memArena );
+   g_gameDataFreeCount++;
+}
+
+TileTextureSet_t* TileTextureSet_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData )
+{
+   UNUSED_PARAM( memArena );
+   UNUSED_PARAM( gameData );
+   g_tileTextureSet = (TileTextureSet_t*)malloc( sizeof( TileTextureSet_t ) );
+   g_tileTextureSet->tileSize = 16;
+   return g_tileTextureSet;
+}
+
+void TileTextureSet_Free( TileTextureSet_t* tileTextureSet, MemArena_t* memArena )
+{
+   UNUSED_PARAM( tileTextureSet );
+   UNUSED_PARAM( memArena );
+   g_tileTextureSetFreeCount++;
+}
+
+u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
+{
+   return tileTextureSet->tileSize;
+}
+
+TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, u32 tileMapId )
+{
+   UNUSED_PARAM( memArena );
+   UNUSED_PARAM( gameData );
+   g_tileMap = (TileMap_t*)malloc( sizeof( TileMap_t ) );
+   g_tileMap->width = tileMapId;
+   g_tileMap->height = tileMapId;
+   g_tileMap->tiles = 0;
+   return g_tileMap;
+}
+
+void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( memArena );
+   g_tileMapFreeCount++;
+}
+
+void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y, u32 tileSize )
+{
+   UNUSED_PARAM( tileMap );
+   g_tileMapAnchorCount++;
+   g_anchorViewport = *viewport;
+   g_anchorX = (i32)x;
+   g_anchorY = (i32)y;
+   g_anchorTileSize = tileSize;
 }
 
 void Platform_HandleMessages( Game_t* game )
 {
-   g_calls.platformHandleMessages++;
+   g_platformHandleMessagesCount++;
    Game_Stop( game );
 }
 
-void Platform_CloseFile( File_t* file )
+void Game_HandleInput( Game_t* game )
 {
-   UNUSED_PARAM( file );
-   g_calls.platformCloseFile++;
+   UNUSED_PARAM( game );
+   g_gameHandleInputCount++;
 }
 
-void test_Game_Create_InitializesGameInfrastructure( void )
+void Game_Render( Game_t* game )
 {
-   Game_t* game = 0;
-   MemArena_t arena;
-   const char* gameDataPath = "test-game-data.dw3d";
+   UNUSED_PARAM( game );
+   g_gameRenderCount++;
+}
 
-   Game_Create( &game, &arena, gameDataPath );
+internal Game_t* CreateGame( void )
+{
+   return Game_Create( (MemArena_t*)1, "test.dw3d" );
+}
+
+void setUp( void )
+{
+   g_allocCount = 0;
+   g_freeCount = 0;
+   g_clockStartCount = 0;
+   g_clockEndCount = 0;
+   g_inputResetCount = 0;
+   g_platformHandleMessagesCount = 0;
+   g_gameHandleInputCount = 0;
+   g_gameRenderCount = 0;
+   g_tileMapAnchorCount = 0;
+   g_tileMapFreeCount = 0;
+   g_tileTextureSetFreeCount = 0;
+   g_gameDataFreeCount = 0;
+   g_displayFreeCount = 0;
+}
+
+void tearDown( void ) {}
+
+void test_Game_GetStructSize_ReturnsNonZeroSize( void )
+{
+   TEST_ASSERT_GREATER_THAN_size_t( 0, Game_GetStructSize() );
+}
+
+void test_Game_Create_InitializesDependenciesAndDefaultState( void )
+{
+   Vector4i32_t viewport;
+   Vector4i32_t playerRect;
+   Game_t* game = CreateGame();
 
    TEST_ASSERT_NOT_NULL( game );
-   TEST_ASSERT_EQUAL_PTR( &arena, game->memArena );
-   TEST_ASSERT_NOT_NULL( game->clock );
-   TEST_ASSERT_NOT_NULL( game->input );
-   TEST_ASSERT_NOT_NULL( game->display );
-   TEST_ASSERT_EQUAL( 4, g_calls.memArenaAlloc );
-   TEST_ASSERT_EQUAL( 1, g_calls.clockInit );
-   TEST_ASSERT_EQUAL( GAME_DEFAULT_FPS, g_calls.clockInitFps );
-   TEST_ASSERT_EQUAL( 1, g_calls.inputInit );
-   TEST_ASSERT_EQUAL( 1, g_calls.displayInit );
-   TEST_ASSERT_EQUAL( 1, g_calls.gameLoadGameData );
-   TEST_ASSERT_EQUAL_PTR( gameDataPath, g_calls.gameLoadGameDataPath );
+   TEST_ASSERT_EQUAL_PTR( g_clock, Game_GetClock( game ) );
+   TEST_ASSERT_EQUAL_PTR( g_input, Game_GetInput( game ) );
+   TEST_ASSERT_EQUAL_PTR( g_display, Game_GetDisplay( game ) );
+   TEST_ASSERT_EQUAL_PTR( g_gameData, Game_GetGameData( game ) );
+   TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, Game_GetTileTextureSet( game ) );
+   TEST_ASSERT_EQUAL_PTR( g_tileMap, Game_GetTileMap( game ) );
 
-   Game_Destroy( &game );
-   TEST_ASSERT_NULL( game );
+   viewport = Game_GetTileMapViewport( game );
+   TEST_ASSERT_EQUAL_INT( 0, viewport.x );
+   TEST_ASSERT_EQUAL_INT( 0, viewport.y );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH, viewport.w );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT, viewport.h );
+
+   playerRect = Game_GetPlayerRect( game );
+   TEST_ASSERT_EQUAL_INT( 10, playerRect.x );
+   TEST_ASSERT_EQUAL_INT( 10, playerRect.y );
+   TEST_ASSERT_EQUAL_INT( 12, playerRect.w );
+   TEST_ASSERT_EQUAL_INT( 14, playerRect.h );
+   TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
+
+   Game_Free( game, (MemArena_t*)1 );
 }
 
-void test_Game_Stop_SetsShutdownFlag( void )
+void test_Game_SetPlayerRect_UpdatesPlayerRectangle( void )
 {
-   Game_t game;
+   Vector4i32_t playerRect = { 25, 30, 18, 20 };
+   Game_t* game = CreateGame();
 
-   game.shutdown = False;
-   Game_Stop( &game );
+   Game_SetPlayerRect( game, playerRect );
 
-   TEST_ASSERT_EQUAL( True, game.shutdown );
+   playerRect = Game_GetPlayerRect( game );
+   TEST_ASSERT_EQUAL_INT( 25, playerRect.x );
+   TEST_ASSERT_EQUAL_INT( 30, playerRect.y );
+   TEST_ASSERT_EQUAL_INT( 18, playerRect.w );
+   TEST_ASSERT_EQUAL_INT( 20, playerRect.h );
+
+   Game_Free( game, (MemArena_t*)1 );
 }
 
-void test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame( void )
+void test_Game_Run_ExecutesOneFrameAndUpdatesViewport( void )
 {
-   Game_t game;
-   Clock_t clock;
-   Input_t input;
-   Display_t display;
+   Game_t* game = CreateGame();
 
-   memset( &game, 0, sizeof( game ) );
-   game.clock = &clock;
-   game.input = &input;
-   game.display = &display;
+   Game_Run( game );
 
-   Game_Run( &game );
+   TEST_ASSERT_EQUAL_UINT( 1, g_clockStartCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_inputResetCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_platformHandleMessagesCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_gameHandleInputCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_tileMapAnchorCount );
+   TEST_ASSERT_EQUAL_INT( 16, g_anchorTileSize );
+   TEST_ASSERT_EQUAL_UINT( 1, g_gameRenderCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_clockEndCount );
 
-   TEST_ASSERT_EQUAL( True, game.shutdown );
-   TEST_ASSERT_EQUAL( 1, g_calls.clockStartFrame );
-   TEST_ASSERT_EQUAL( 1, g_calls.inputResetPressStates );
-   TEST_ASSERT_EQUAL( 1, g_calls.platformHandleMessages );
-   TEST_ASSERT_EQUAL( 1, g_calls.gameRender );
-   TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
-   TEST_ASSERT_EQUAL( 1, g_calls.clockEndFrame );
+   Game_Free( game, (MemArena_t*)1 );
 }
 
-void test_Game_Run_ProcessesMultipleFramesUntilShutdown( void )
+void test_Game_Free_ReleasesAllDependencies( void )
 {
-   Game_t game;
-   Clock_t clock;
-   Input_t input;
-   Display_t display;
+   Game_t* game = CreateGame();
 
-   memset( &game, 0, sizeof( game ) );
-   game.clock = &clock;
-   game.input = &input;
-   game.display = &display;
+   Game_Free( game, (MemArena_t*)1 );
 
-   g_calls.platformHandleMessages = 0;
-   g_calls.gameRender = 0;
-
-   Game_Run( &game );
-
-   TEST_ASSERT_EQUAL( True, game.shutdown );
-   TEST_ASSERT_EQUAL( 1, g_calls.platformHandleMessages );
-   TEST_ASSERT_EQUAL( 1, g_calls.gameRender );
-   TEST_ASSERT_EQUAL( 1, g_calls.gameHandleInput );
-}
-
-void test_Game_Destroy_CleansUpAllOwnedResources( void )
-{
-   Game_t* game;
-   MemArena_t arena;
-
-   game = (Game_t*)malloc( sizeof( Game_t ) );
-   game->memArena = &arena;
-   game->clock = (Clock_t*)malloc( sizeof( Clock_t ) );
-   game->input = (Input_t*)malloc( sizeof( Input_t ) );
-   game->display = (Display_t*)malloc( sizeof( Display_t ) );
-   game->gameData = (GameData_t*)malloc( sizeof( GameData_t ) );
-   game->tileMap = (TileMap_t*)malloc( sizeof( TileMap_t ) );
-   game->tileTextureSet = (TileTextureSet_t*)malloc( sizeof( TileTextureSet_t ) );
-
-   Game_Destroy( &game );
-
-   TEST_ASSERT_NULL( game );
-   TEST_ASSERT_EQUAL( 1, g_calls.displayCleanup );
-   TEST_ASSERT_EQUAL( 1, g_calls.gameDataCleanup );
-   TEST_ASSERT_EQUAL( 1, g_calls.tileMapCleanup );
-   TEST_ASSERT_EQUAL( 1, g_calls.tileTextureSetCleanup );
-   TEST_ASSERT_EQUAL( 7, g_calls.memArenaFree );
+   TEST_ASSERT_EQUAL_UINT( 1, g_displayFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_gameDataFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_tileMapFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_tileTextureSetFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 3, g_freeCount );
 }
 
 int main( void )
 {
    UNITY_BEGIN();
 
-   RUN_TEST( test_Game_Create_InitializesGameInfrastructure );
+   RUN_TEST( test_Game_GetStructSize_ReturnsNonZeroSize );
 
-   RUN_TEST( test_Game_Stop_SetsShutdownFlag );
+   RUN_TEST( test_Game_Create_InitializesDependenciesAndDefaultState );
 
-   RUN_TEST( test_Game_Run_ProcessesMultipleFramesUntilShutdown );
-   RUN_TEST( test_Game_Run_ProcessesOneFrameBeforePlatformStopsGame );
+   RUN_TEST( test_Game_SetPlayerRect_UpdatesPlayerRectangle );
 
-   RUN_TEST( test_Game_Destroy_CleansUpAllOwnedResources );
+   RUN_TEST( test_Game_Run_ExecutesOneFrameAndUpdatesViewport );
+   
+   RUN_TEST( test_Game_Free_ReleasesAllDependencies );
 
    return UNITY_END();
 }

@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+typedef struct MemArena_t MemArena_t;
+
 typedef enum InputButton_t
 {
    InputButton_A = 0,
@@ -26,13 +28,13 @@ typedef struct InputButtonState_t
 }
 InputButtonState_t;
 
-typedef struct Input_t
-{
-   InputButtonState_t buttonStates[InputButton_Count];
-}
-Input_t;
+typedef struct Input_t Input_t;
+size_t Input_GetStructSize( void );
+Input_t* Input_Create( MemArena_t* memArena );
+void Input_Free( Input_t* input, MemArena_t* memArena );
 
-void Input_Init( Input_t* input );
+const InputButtonState_t* Input_GetButtonState( Input_t* input, InputButton_t button );
+
 void Input_ResetAllStates( Input_t* input );
 void Input_ResetPressStates( Input_t* input );
 void Input_PressButton( Input_t* input, InputButton_t button );

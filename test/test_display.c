@@ -1,512 +1,351 @@
 #include <stdlib.h>
+#include <string.h>
+
+#include "mocks/mock_display.h"
+#include "mocks/mock_mem_arena.h"
+#include "mocks/mock_pixel_buffer.h"
+#include "mocks/mock_tile.h"
+#include "mocks/mock_tile_map.h"
+#include "mocks/mock_tile_texture_set.h"
 
 #include "display.h"
-#include "mem_arena.h"
-#include "pixel_buffer.h"
-#include "tile_map.h"
-#include "tile_texture_set.h"
 #include "unity.h"
 
-typedef struct PixelBufferCreateCall_t
+void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
-   MemArena_t* memArena;
-   PixelBuffer_t** pBuffer;
-   u32 w;
-   u32 h;
-   int callCount;
+   UNUSED_PARAM( arena );
+   return malloc( size );
 }
-PixelBufferCreateCall_t;
 
-typedef struct PixelBufferClearColorCall_t
+void MemArena_FreeMem( MemArena_t* arena, void* mem )
+{
+   UNUSED_PARAM( arena );
+   free( mem );
+}
+
+PixelBuffer_t* PixelBuffer_Create( MemArena_t* memArena, u32 w, u32 h )
 {
    PixelBuffer_t* buffer;
-   u32 color;
-   int callCount;
-}
-PixelBufferClearColorCall_t;
 
-local_persist PixelBufferCreateCall_t g_pixelBufferCreateCall;
-local_persist PixelBufferClearColorCall_t g_pixelBufferClearColorCall;
-
-void FreeDisplayBuffer( Display_t* display )
-{
-   if ( !display || !display->buffer )
-   {
-      return;
-   }
-
-   free( display->buffer->mem );
-   free( display->buffer );
-   display->buffer = 0;
+   buffer = (PixelBuffer_t*)MemArena_AllocMem( memArena, sizeof( PixelBuffer_t ) );
+   buffer->w = w;
+   buffer->h = h;
+   buffer->mem = (u32*)MemArena_AllocMem( memArena, w * h * sizeof( u32 ) );
+   memset( buffer->mem, 0, w * h * sizeof( u32 ) );
+   return buffer;
 }
 
-void setUp( void )
+void PixelBuffer_Free( PixelBuffer_t* buffer, MemArena_t* memArena )
 {
-   g_pixelBufferCreateCall.pBuffer = 0;
-   g_pixelBufferCreateCall.memArena = 0;
-   g_pixelBufferCreateCall.w = 0;
-   g_pixelBufferCreateCall.h = 0;
-   g_pixelBufferCreateCall.callCount = 0;
-
-   g_pixelBufferClearColorCall.buffer = 0;
-   g_pixelBufferClearColorCall.color = 0;
-   g_pixelBufferClearColorCall.callCount = 0;
+   MemArena_FreeMem( memArena, buffer->mem );
+   MemArena_FreeMem( memArena, buffer );
 }
 
-void tearDown( void ) {}
-
-void PixelBuffer_Create( PixelBuffer_t** buffer, MemArena_t* memArena, u32 w, u32 h )
+u32 PixelBuffer_GetWidth( PixelBuffer_t* buffer )
 {
-   PixelBuffer_t* newBuffer;
+   return buffer->w;
+}
 
-   newBuffer = (PixelBuffer_t*)malloc( sizeof( PixelBuffer_t ) );
-   newBuffer->w = w;
-   newBuffer->h = h;
-   newBuffer->mem = (u32*)calloc( w * h, sizeof( u32 ) );
+u32 PixelBuffer_GetHeight( PixelBuffer_t* buffer )
+{
+   return buffer->h;
+}
 
-   *buffer = newBuffer;
-
-   g_pixelBufferCreateCall.pBuffer = buffer;
-   g_pixelBufferCreateCall.memArena = memArena;
-   g_pixelBufferCreateCall.w = w;
-   g_pixelBufferCreateCall.h = h;
-   g_pixelBufferCreateCall.callCount++;
+u32* PixelBuffer_GetPixels( PixelBuffer_t* buffer )
+{
+   return buffer->mem;
 }
 
 void PixelBuffer_ClearColor( PixelBuffer_t* buffer, u32 color )
 {
-   g_pixelBufferClearColorCall.buffer = buffer;
-   g_pixelBufferClearColorCall.color = color;
-   g_pixelBufferClearColorCall.callCount++;
-}
+   u32 i;
+   u32 pixelCount = buffer->w * buffer->h;
 
-void PixelBuffer_Cleanup( PixelBuffer_t* buffer, MemArena_t* memArena )
-{
-   UNUSED_PARAM( buffer );
-   UNUSED_PARAM( memArena );
-}
-
-void MemArena_Free( MemArena_t* arena, void* mem )
-{
-   UNUSED_PARAM( arena );
-   UNUSED_PARAM( mem );
-}
-
-void test_Display_Init_CreatesPixelBufferWithCorrectParameters( void )
-{
-   Display_t display;
-   MemArena_t memArena;
-
-   display.buffer = (PixelBuffer_t*)malloc( sizeof( PixelBuffer_t ) );
-
-   Display_Init( &display, &memArena, 20, 45 );
-   TEST_ASSERT_EQUAL( 1, g_pixelBufferCreateCall.callCount );
-   TEST_ASSERT_EQUAL( &( display.buffer ), g_pixelBufferCreateCall.pBuffer );
-   TEST_ASSERT_EQUAL( &memArena, g_pixelBufferCreateCall.memArena );
-   TEST_ASSERT_EQUAL( 20, g_pixelBufferCreateCall.w );
-   TEST_ASSERT_EQUAL( 45, g_pixelBufferCreateCall.h );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_Fill_FillsPixelBufferWithColor( void )
-{
-   Display_t display;
-
-   Display_Init( &display, 0, 10, 10 );
-
-   Display_Fill( &display, 50 );
-   TEST_ASSERT_EQUAL( 1, g_pixelBufferClearColorCall.callCount );
-   TEST_ASSERT_EQUAL( 50, g_pixelBufferClearColorCall.color );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawRect_WritesPixelsInsideTheRect( void )
-{
-   Display_t display;
-   Vector4i32_t rect = { 1, 1, 2, 2 };
-   const u32 color = 0x12345678u;
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawRect( &display, rect.x, rect.y, rect.w, rect.h, color );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawRect_ClampsToVisibleArea( void )
-{
-   Display_t display;
-   Vector4i32_t rect = { -2, -1, 6, 4 };
-   const u32 color = 0x9abcdef0u;
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawRect( &display, rect.x, rect.y, rect.w, rect.h, color );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawVector4i_WritesPixelsInsideTheRect( void )
-{
-   Display_t display;
-   Vector4i32_t rect = { 1, 1, 2, 2 };
-   const u32 color = 0x12345678u;
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawVector4i( &display, rect, color );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 1 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawVector4i_ClampsToVisibleArea( void )
-{
-   Display_t display;
-   Vector4i32_t rect = { -2, -1, 6, 4 };
-   const u32 color = 0x9abcdef0u;
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawVector4i( &display, rect, color );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( color, display.buffer->mem[ ( 2 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawPixelBuffer_CopiesPixelsWhenFullyVisible( void )
-{
-   Display_t display;
-   u32 source[4] = {
-      0x11111111u, 0x22222222u,
-      0x33333333u, 0x44444444u,
-   };
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawBuffer( &display, source, 2, 2, 1, 1 );
-
-   TEST_ASSERT_EQUAL( 0x11111111u, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x22222222u, display.buffer->mem[ ( 1 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0x33333333u, display.buffer->mem[ ( 2 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x44444444u, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawPixelBuffer_ClipsTopLeftAndCopiesVisiblePixels( void )
-{
-   Display_t display;
-   u32 source[9] = {
-      1u, 2u, 3u,
-      4u, 5u, 6u,
-      7u, 8u, 9u,
-   };
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawBuffer( &display, source, 3, 3, -1, -1 );
-
-   TEST_ASSERT_EQUAL( 5u, display.buffer->mem[ ( 0 * 4 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 6u, display.buffer->mem[ ( 0 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 8u, display.buffer->mem[ ( 1 * 4 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 9u, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 0 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 2 * 4 ) + 0 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawPixelBuffer_ClipsBottomRightAndCopiesVisiblePixels( void )
-{
-   Display_t display;
-   u32 source[9] = {
-      1u, 2u, 3u,
-      4u, 5u, 6u,
-      7u, 8u, 9u,
-   };
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawBuffer( &display, source, 3, 3, 3, 2 );
-
-   TEST_ASSERT_EQUAL( 1u, display.buffer->mem[ ( 2 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 4u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 2 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawPixelBuffer_DoesNothingWhenBufferIsFullyOffScreen( void )
-{
-   Display_t display;
-   u32 source[4] = {
-      0xaaaaaaaau, 0xbbbbbbbbu,
-      0xccccccccu, 0xddddddddu,
-   };
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawBuffer( &display, source, 2, 2, 5, 1 );
-
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawTileMapViewport_DrawsVisibleTiles( void )
-{
-   Display_t display;
-   u32 textures[16] = {
-      0x01010101u, 0x01010101u, 0x01010101u, 0x01010101u,
-      0x02020202u, 0x02020202u, 0x02020202u, 0x02020202u,
-      0x03030303u, 0x03030303u, 0x03030303u, 0x03030303u,
-      0x04040404u, 0x04040404u, 0x04040404u, 0x04040404u,
-   };
-   TileTextureSet_t textureSet;
-   Tile_t tiles[4];
-   TileMap_t tileMap;
-   Vector4i32_t viewport = { 0, 0, 4, 4 };
-
-   textureSet.count = 4;
-   textureSet.tileSize = 2;
-   textureSet.textures = textures;
-
-   tiles[0].textureIndex = 0;
-   tiles[1].textureIndex = 1;
-   tiles[2].textureIndex = 2;
-   tiles[3].textureIndex = 3;
-
-   tileMap.id = 0;
-   tileMap.tilesX = 2;
-   tileMap.tilesY = 2;
-   tileMap.tiles = tiles;
-   tileMap.tileTextureSet = &textureSet;
-
-   Display_Init( &display, 0, 4, 4 );
-
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
-
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[ ( 0 * 4 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[ ( 1 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[ ( 0 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[ ( 1 * 4 ) + 3 ] );
-   TEST_ASSERT_EQUAL( 0x03030303u, display.buffer->mem[ ( 2 * 4 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0x03030303u, display.buffer->mem[ ( 3 * 4 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x04040404u, display.buffer->mem[ ( 2 * 4 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0x04040404u, display.buffer->mem[ ( 3 * 4 ) + 3 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawTileMapViewport_UsesViewportOffset( void )
-{
-   Display_t display;
-   u32 textures[16] = {
-      0x11111111u, 0x11111111u, 0x11111111u, 0x11111111u,
-      0x22222222u, 0x22222222u, 0x22222222u, 0x22222222u,
-      0x33333333u, 0x33333333u, 0x33333333u, 0x33333333u,
-      0x44444444u, 0x44444444u, 0x44444444u, 0x44444444u,
-   };
-   TileTextureSet_t textureSet;
-   Tile_t tiles[4];
-   TileMap_t tileMap;
-   Vector4i32_t viewport = { 1, 1, 2, 2 };
-
-   textureSet.count = 4;
-   textureSet.tileSize = 2;
-   textureSet.textures = textures;
-
-   tiles[0].textureIndex = 0;
-   tiles[1].textureIndex = 1;
-   tiles[2].textureIndex = 2;
-   tiles[3].textureIndex = 3;
-
-   tileMap.id = 0;
-   tileMap.tilesX = 2;
-   tileMap.tilesY = 2;
-   tileMap.tiles = tiles;
-   tileMap.tileTextureSet = &textureSet;
-
-   Display_Init( &display, 0, 2, 2 );
-
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
-
-   TEST_ASSERT_EQUAL( 0x11111111u, display.buffer->mem[ ( 0 * 2 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0x22222222u, display.buffer->mem[ ( 0 * 2 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x33333333u, display.buffer->mem[ ( 1 * 2 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0x44444444u, display.buffer->mem[ ( 1 * 2 ) + 1 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawTileMapViewport_ClipsWhenDisplayPositionIsOffscreen( void )
-{
-   Display_t display;
-   u32 textures[16] = {
-      0xabcdef01u, 0xabcdef01u, 0xabcdef01u, 0xabcdef01u,
-      0x12345678u, 0x12345678u, 0x12345678u, 0x12345678u,
-      0x87654321u, 0x87654321u, 0x87654321u, 0x87654321u,
-      0x0f0f0f0fu, 0x0f0f0f0fu, 0x0f0f0f0fu, 0x0f0f0f0fu,
-   };
-   TileTextureSet_t textureSet;
-   Tile_t tiles[4];
-   TileMap_t tileMap;
-   Vector4i32_t viewport = { 0, 0, 4, 4 };
-
-   textureSet.count = 4;
-   textureSet.tileSize = 2;
-   textureSet.textures = textures;
-
-   tiles[0].textureIndex = 0;
-   tiles[1].textureIndex = 1;
-   tiles[2].textureIndex = 2;
-   tiles[3].textureIndex = 3;
-
-   tileMap.id = 0;
-   tileMap.tilesX = 2;
-   tileMap.tilesY = 2;
-   tileMap.tiles = tiles;
-   tileMap.tileTextureSet = &textureSet;
-
-   Display_Init( &display, 0, 3, 3 );
-
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 2, 2 );
-
-   TEST_ASSERT_EQUAL( 0xabcdef01u, display.buffer->mem[ ( 2 * 3 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 0 * 3 ) + 0 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 1 * 3 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0u, display.buffer->mem[ ( 2 * 3 ) + 1 ] );
-
-   FreeDisplayBuffer( &display );
-}
-
-void test_Display_DrawTileMapViewport_CentersSmallMapInViewport( void )
-{
-   Display_t display;
-   u32 textures[9] = {
-      0x01010101u, 0x02020202u, 0x03030303u,
-      0x04040404u, 0x05050505u, 0x06060606u,
-      0x07070707u, 0x08080808u, 0x09090909u,
-   };
-   TileTextureSet_t textureSet;
-   Tile_t tiles[9];
-   TileMap_t tileMap;
-   Vector4i32_t viewport = { 1, 1, 5, 5 };
-   u32 tileIndex;
-
-   textureSet.count = 9;
-   textureSet.tileSize = 1;
-   textureSet.textures = textures;
-
-   for ( tileIndex = 0; tileIndex < 9; tileIndex++ )
+   for ( i = 0; i < pixelCount; i++ )
    {
-      tiles[tileIndex].textureIndex = (u32)tileIndex;
+      buffer->mem[i] = color;
    }
-
-   tileMap.id = 0;
-   tileMap.tilesX = 3;
-   tileMap.tilesY = 3;
-   tileMap.tiles = tiles;
-   tileMap.tileTextureSet = &textureSet;
-   tileMap.wraps = False;
-
-   Display_Init( &display, 0, 5, 5 );
-
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
-
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[ ( 1 * 5 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[ ( 1 * 5 ) + 2 ] );
-   TEST_ASSERT_EQUAL( 0x04040404u, display.buffer->mem[ ( 2 * 5 ) + 1 ] );
-   TEST_ASSERT_EQUAL( 0x05050505u, display.buffer->mem[ ( 2 * 5 ) + 2 ] );
-
-   FreeDisplayBuffer( &display );
 }
 
-void test_Display_DrawTileMapViewport_RepeatsWrappedMap( void )
+u32 Tile_GetTextureIndex( Tile_t* tile )
 {
-   Display_t display;
-   u32 textures[2] = {
-      0x01010101u, 0x02020202u,
-   };
-   TileTextureSet_t textureSet;
-   Tile_t tiles[2];
-   TileMap_t tileMap;
-   Vector4i32_t viewport = { 1, 0, 4, 1 };
+   return tile->textureIndex;
+}
 
-   textureSet.count = 2;
-   textureSet.tileSize = 1;
-   textureSet.textures = textures;
+u32 TileMap_GetTilesX( TileMap_t* tileMap )
+{
+   return tileMap->width;
+}
 
-   tiles[0].textureIndex = 0;
-   tiles[1].textureIndex = 1;
+u32 TileMap_GetTilesY( TileMap_t* tileMap )
+{
+   return tileMap->height;
+}
 
-   tileMap.id = 0;
-   tileMap.tilesX = 2;
-   tileMap.tilesY = 1;
-   tileMap.tiles = tiles;
-   tileMap.tileTextureSet = &textureSet;
-   tileMap.wraps = True;
+b32 TileMap_GetWraps( TileMap_t* tileMap )
+{
+   return tileMap->wraps;
+}
 
-   Display_Init( &display, 0, 4, 1 );
+Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
+{
+   return &tileMap->tiles[y * tileMap->width + x];
+}
 
-   Display_DrawTileMapViewport( &display, &tileMap, viewport, 0, 0 );
+u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
+{
+   return tileTextureSet->tileSize;
+}
 
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[0] );
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[1] );
-   TEST_ASSERT_EQUAL( 0x02020202u, display.buffer->mem[2] );
-   TEST_ASSERT_EQUAL( 0x01010101u, display.buffer->mem[3] );
+u32* TileTextureSet_GetTexture( TileTextureSet_t* tileTextureSet, u32 index )
+{
+   return &tileTextureSet->textures[index * tileTextureSet->tileSize * tileTextureSet->tileSize];
+}
 
-   FreeDisplayBuffer( &display );
+internal Display_t* CreateDisplay( u32 width, u32 height )
+{
+   return Display_Create( (MemArena_t*)1, width, height );
+}
+
+internal void AssertPixel( Display_t* display, u32 x, u32 y, u32 expected )
+{
+   const u32* pixels = Display_GetPixels( display );
+   u32 width = Display_GetWidth( display );
+
+   TEST_ASSERT_EQUAL_UINT32( expected, pixels[y * width + x] );
+}
+
+internal void AssertAllPixels( Display_t* display, u32 expected )
+{
+   u32 x, y;
+   u32 width = Display_GetWidth( display );
+   u32 height = Display_GetHeight( display );
+
+   for ( y = 0; y < height; y++ )
+   {
+      for ( x = 0; x < width; x++ )
+      {
+         AssertPixel( display, x, y, expected );
+      }
+   }
+}
+
+void setUp( void ) {}
+void tearDown( void ) {}
+
+void test_Display_GetStructSize_ReturnsNonZeroSize( void )
+{
+   TEST_ASSERT_GREATER_THAN_size_t( 0, Display_GetStructSize() );
+}
+
+void test_Display_Create_StoresDimensionsAndInitializesPixels( void )
+{
+   Display_t* display = CreateDisplay( 3, 2 );
+
+   TEST_ASSERT_NOT_NULL( display );
+   TEST_ASSERT_EQUAL_UINT( 3, Display_GetWidth( display ) );
+   TEST_ASSERT_EQUAL_UINT( 2, Display_GetHeight( display ) );
+   TEST_ASSERT_NOT_NULL( Display_GetPixels( display ) );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_Fill_FillsTheWholeDisplay( void )
+{
+   Display_t* display = CreateDisplay( 3, 2 );
+
+   Display_Fill( display, 0x00112233u );
+   AssertAllPixels( display, 0x00112233u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawRect_DrawsRectangleAtRequestedPosition( void )
+{
+   Display_t* display = CreateDisplay( 4, 3 );
+
+   Display_DrawRect( display, 1, 1, 2, 2, 0x00ABCDEFu );
+
+   AssertPixel( display, 0, 0, 0 );
+   AssertPixel( display, 1, 1, 0x00ABCDEFu );
+   AssertPixel( display, 2, 1, 0x00ABCDEFu );
+   AssertPixel( display, 1, 2, 0x00ABCDEFu );
+   AssertPixel( display, 2, 2, 0x00ABCDEFu );
+   AssertPixel( display, 3, 2, 0 );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawRect_ClipsRectangleToDisplayBounds( void )
+{
+   Display_t* display = CreateDisplay( 4, 3 );
+
+   Display_DrawRect( display, -1, -1, 3, 3, 0x00010203u );
+
+   AssertPixel( display, 0, 0, 0x00010203u );
+   AssertPixel( display, 1, 0, 0x00010203u );
+   AssertPixel( display, 0, 1, 0x00010203u );
+   AssertPixel( display, 1, 1, 0x00010203u );
+   AssertPixel( display, 2, 2, 0 );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawVector4i_UsesVectorAsRectangle( void )
+{
+   Vector4i32_t rect = { 1, 0, 2, 1 };
+   Display_t* display = CreateDisplay( 4, 2 );
+
+   Display_DrawVector4i( display, rect, 0x00FEDCBAu );
+
+   AssertPixel( display, 0, 0, 0 );
+   AssertPixel( display, 1, 0, 0x00FEDCBAu );
+   AssertPixel( display, 2, 0, 0x00FEDCBAu );
+   AssertPixel( display, 3, 0, 0 );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawBuffer_ClipsSourceAndDestination( void )
+{
+   u32 source[] = { 1, 2, 3, 4, 5, 6 };
+   Display_t* display = CreateDisplay( 3, 2 );
+
+   Display_DrawBuffer( display, source, 3, 2, -1, 0 );
+
+   AssertPixel( display, 0, 0, 2 );
+   AssertPixel( display, 1, 0, 3 );
+   AssertPixel( display, 2, 0, 0 );
+   AssertPixel( display, 0, 1, 5 );
+   AssertPixel( display, 1, 1, 6 );
+   AssertPixel( display, 2, 1, 0 );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawTileMapViewport_DrawsVisibleNonWrappingTiles( void )
+{
+   Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
+   u32 textures[] = { 0x00000011u, 0x00000022u, 0x00000033u, 0x00000044u };
+   TileMap_t tileMap = { 2, 2, False, tiles };
+   TileTextureSet_t textureSet = { 4, 1, textures };
+   Display_t* display = CreateDisplay( 2, 2 );
+
+   Display_DrawTileMapViewport( display, &tileMap, &textureSet, (Vector4i32_t){ 0, 0, 2, 2 }, 0, 0 );
+
+   AssertPixel( display, 0, 0, 0x00000011u );
+   AssertPixel( display, 1, 0, 0x00000022u );
+   AssertPixel( display, 0, 1, 0x00000033u );
+   AssertPixel( display, 1, 1, 0x00000044u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawTileMapViewport_DrawsWrappingTilesAcrossViewport( void )
+{
+   Tile_t tiles[] = { { 0 } };
+   u32 textures[] = { 0x00000077u };
+   TileMap_t tileMap = { 1, 1, True, tiles };
+   TileTextureSet_t textureSet = { 1, 1, textures };
+   Display_t* display = CreateDisplay( 3, 2 );
+
+   Display_DrawTileMapViewport( display, &tileMap, &textureSet, (Vector4i32_t){ 0, 0, 3, 2 }, 0, 0 );
+
+   AssertAllPixels( display, 0x00000077u );
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawTileMapViewport_RepeatsMultiTileMapInBothAxes( void )
+{
+   Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
+   u32 textures[] = { 0x00000011u, 0x00000022u, 0x00000033u, 0x00000044u };
+   TileMap_t tileMap = { 2, 2, True, tiles };
+   TileTextureSet_t textureSet = { 4, 1, textures };
+   Display_t* display = CreateDisplay( 4, 4 );
+
+   Display_DrawTileMapViewport( display, &tileMap, &textureSet, (Vector4i32_t){ 0, 0, 4, 4 }, 0, 0 );
+
+   AssertPixel( display, 0, 0, 0x00000011u );
+   AssertPixel( display, 1, 0, 0x00000022u );
+   AssertPixel( display, 2, 0, 0x00000011u );
+   AssertPixel( display, 3, 0, 0x00000022u );
+   AssertPixel( display, 0, 1, 0x00000033u );
+   AssertPixel( display, 1, 1, 0x00000044u );
+   AssertPixel( display, 2, 1, 0x00000033u );
+   AssertPixel( display, 3, 1, 0x00000044u );
+   AssertPixel( display, 0, 2, 0x00000011u );
+   AssertPixel( display, 1, 2, 0x00000022u );
+   AssertPixel( display, 0, 3, 0x00000033u );
+   AssertPixel( display, 1, 3, 0x00000044u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawTileMapViewport_HandlesNegativeWrappingViewport( void )
+{
+   Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
+   u32 textures[] = { 0x00000011u, 0x00000022u, 0x00000033u, 0x00000044u };
+   TileMap_t tileMap = { 2, 2, True, tiles };
+   TileTextureSet_t textureSet = { 4, 1, textures };
+   Display_t* display = CreateDisplay( 3, 3 );
+
+   Display_DrawTileMapViewport( display, &tileMap, &textureSet, (Vector4i32_t){ -1, -1, 3, 3 }, 0, 0 );
+
+   AssertPixel( display, 0, 0, 0x00000044u );
+   AssertPixel( display, 1, 0, 0x00000033u );
+   AssertPixel( display, 2, 0, 0x00000044u );
+   AssertPixel( display, 0, 1, 0x00000022u );
+   AssertPixel( display, 1, 1, 0x00000011u );
+   AssertPixel( display, 2, 1, 0x00000022u );
+   AssertPixel( display, 0, 2, 0x00000044u );
+   AssertPixel( display, 1, 2, 0x00000033u );
+   AssertPixel( display, 2, 2, 0x00000044u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawTileMapViewport_AppliesDisplayOffsetForWrappingMap( void )
+{
+   Tile_t tiles[] = { { 0 } };
+   u32 textures[] = { 0x00000099u };
+   TileMap_t tileMap = { 1, 1, True, tiles };
+   TileTextureSet_t textureSet = { 1, 1, textures };
+   Display_t* display = CreateDisplay( 4, 4 );
+
+   Display_DrawTileMapViewport( display, &tileMap, &textureSet, (Vector4i32_t){ 0, 0, 2, 2 }, 1, 1 );
+
+   AssertPixel( display, 0, 0, 0 );
+   AssertPixel( display, 1, 1, 0x00000099u );
+   AssertPixel( display, 2, 1, 0x00000099u );
+   AssertPixel( display, 1, 2, 0x00000099u );
+   AssertPixel( display, 2, 2, 0x00000099u );
+   AssertPixel( display, 3, 3, 0 );
+
+   Display_Free( display, (MemArena_t*)1 );
 }
 
 int main( void )
 {
    UNITY_BEGIN();
 
-   RUN_TEST( test_Display_Init_CreatesPixelBufferWithCorrectParameters );
+   RUN_TEST( test_Display_GetStructSize_ReturnsNonZeroSize );
 
-   RUN_TEST( test_Display_Fill_FillsPixelBufferWithColor );
-   
-   RUN_TEST( test_Display_DrawRect_WritesPixelsInsideTheRect );
-   RUN_TEST( test_Display_DrawRect_ClampsToVisibleArea );
+   RUN_TEST( test_Display_Create_StoresDimensionsAndInitializesPixels );
 
-   RUN_TEST( test_Display_DrawVector4i_WritesPixelsInsideTheRect );
-   RUN_TEST( test_Display_DrawVector4i_ClampsToVisibleArea );
+   RUN_TEST( test_Display_Fill_FillsTheWholeDisplay );
 
-   RUN_TEST( test_Display_DrawPixelBuffer_CopiesPixelsWhenFullyVisible );
-   RUN_TEST( test_Display_DrawPixelBuffer_ClipsTopLeftAndCopiesVisiblePixels );
-   RUN_TEST( test_Display_DrawPixelBuffer_ClipsBottomRightAndCopiesVisiblePixels );
-   RUN_TEST( test_Display_DrawPixelBuffer_DoesNothingWhenBufferIsFullyOffScreen );
-   
-   RUN_TEST( test_Display_DrawTileMapViewport_DrawsVisibleTiles );
-   RUN_TEST( test_Display_DrawTileMapViewport_UsesViewportOffset );
-   RUN_TEST( test_Display_DrawTileMapViewport_ClipsWhenDisplayPositionIsOffscreen );
-   RUN_TEST( test_Display_DrawTileMapViewport_CentersSmallMapInViewport );
-   RUN_TEST( test_Display_DrawTileMapViewport_RepeatsWrappedMap );
+   RUN_TEST( test_Display_DrawRect_DrawsRectangleAtRequestedPosition );
+   RUN_TEST( test_Display_DrawRect_ClipsRectangleToDisplayBounds );
+
+   RUN_TEST( test_Display_DrawVector4i_UsesVectorAsRectangle );
+
+   RUN_TEST( test_Display_DrawBuffer_ClipsSourceAndDestination );
+
+   RUN_TEST( test_Display_DrawTileMapViewport_DrawsVisibleNonWrappingTiles );
+   RUN_TEST( test_Display_DrawTileMapViewport_DrawsWrappingTilesAcrossViewport );
+   RUN_TEST( test_Display_DrawTileMapViewport_RepeatsMultiTileMapInBothAxes );
+   RUN_TEST( test_Display_DrawTileMapViewport_HandlesNegativeWrappingViewport );
+   RUN_TEST( test_Display_DrawTileMapViewport_AppliesDisplayOffsetForWrappingMap );
 
    return UNITY_END();
 }

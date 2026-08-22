@@ -1,78 +1,136 @@
-#include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
 #include "mem_arena.h"
 #include "pixel_buffer.h"
-#include "platform.h"
 #include "unity.h"
 
-local_persist int g_fatalErrorCallCount = 0;
-local_persist char g_fatalErrorMessage[256] = {0};
+global u32 g_allocationCount;
+global u32 g_freeCount;
+
+void* MemArena_AllocMem( MemArena_t* arena, size_t size )
+{
+   UNUSED_PARAM( arena );
+   g_allocationCount++;
+   return malloc( size );
+}
+
+void MemArena_FreeMem( MemArena_t* arena, void* mem )
+{
+   UNUSED_PARAM( arena );
+   g_freeCount++;
+   free( mem );
+}
+
+internal PixelBuffer_t* CreatePixelBuffer( u32 width, u32 height )
+{
+   return PixelBuffer_Create( 0, width, height );
+}
+
+internal void AssertPixelsEqual( const u32* expected, const u32* actual, size_t count )
+{
+   size_t i;
+
+   for ( i = 0; i < count; i++ )
+   {
+      TEST_ASSERT_EQUAL_UINT32( expected[i], actual[i] );
+   }
+}
 
 void setUp( void )
 {
-   g_fatalErrorCallCount = 0;
-   g_fatalErrorMessage[0] = '\0';
+   g_allocationCount = 0;
+   g_freeCount = 0;
 }
 
 void tearDown( void ) {}
 
-internal void test_PixelBuffer_Create_CreatesBufferWithCorrectDimensions( void )
+void test_PixelBuffer_GetStructSize_ReturnsNonZeroSize( void )
 {
-   MemArena_t* arena;
-   PixelBuffer_t* buffer;
-
-   MemArena_Create( &arena, 1024 );
-   PixelBuffer_Create( &buffer, arena, 10, 20 );
-
-   TEST_ASSERT_EQUAL( 10, buffer->w );
-   TEST_ASSERT_EQUAL( 20, buffer->h );
-   TEST_ASSERT_NOT_NULL( buffer->mem );
-
-   MemArena_Destroy( &arena );
+   TEST_ASSERT_GREATER_THAN_size_t( 0, PixelBuffer_GetStructSize() );
 }
 
-internal void test_PixelBuffer_ClearColor_ClearsColor( void )
+void test_PixelBuffer_Create_StoresDimensionsAndAllocatesPixels( void )
 {
-   MemArena_t* arena;
-   PixelBuffer_t* buffer;
-   u32 color;
-   size_t x, y;
+   PixelBuffer_t* buffer = CreatePixelBuffer( 3, 2 );
 
-   MemArena_Create( &arena, 1024 );
-   PixelBuffer_Create( &buffer, arena, 10, 10 );
+   TEST_ASSERT_NOT_NULL( buffer );
+   TEST_ASSERT_EQUAL_UINT( 3, PixelBuffer_GetWidth( buffer ) );
+   TEST_ASSERT_EQUAL_UINT( 2, PixelBuffer_GetHeight( buffer ) );
+   TEST_ASSERT_NOT_NULL( PixelBuffer_GetPixels( buffer ) );
+   TEST_ASSERT_EQUAL_UINT( 2, g_allocationCount );
 
-   color = 0xFF00FF00;
-   PixelBuffer_ClearColor( buffer, color );
-
-   for ( y = 0; y < buffer->h; y++ )
-   {
-      for ( x = 0; x < buffer->w; x++ )
-      {
-         TEST_ASSERT_EQUAL( color, buffer->mem[y * buffer->w + x] );
-      }
-   }
-
-   MemArena_Destroy( &arena );
+   PixelBuffer_Free( buffer, 0 );
 }
 
-void Platform_FatalError( const char* message )
+void test_PixelBuffer_GetPixels_ReturnsWritablePixelMemory( void )
 {
-   g_fatalErrorCallCount++;
+   u32 expected[] = { 0x00000011u, 0x00000022u, 0x00000033u, 0x00000044u };
+   PixelBuffer_t* buffer = CreatePixelBuffer( 2, 2 );
+   u32* pixels = PixelBuffer_GetPixels( buffer );
 
-   if ( message )
-   {
-      snprintf( g_fatalErrorMessage, sizeof( g_fatalErrorMessage ), "%s", message );
-   }
+   pixels[0] = expected[0];
+   pixels[1] = expected[1];
+   pixels[2] = expected[2];
+   pixels[3] = expected[3];
+
+   AssertPixelsEqual( expected, PixelBuffer_GetPixels( buffer ), 4 );
+   PixelBuffer_Free( buffer, 0 );
+}
+
+void test_PixelBuffer_ClearColor_FillsEveryPixel( void )
+{
+   u32 expected[6] = { 0x00A1B2C3u, 0x00A1B2C3u, 0x00A1B2C3u, 0x00A1B2C3u, 0x00A1B2C3u, 0x00A1B2C3u };
+   PixelBuffer_t* buffer = CreatePixelBuffer( 3, 2 );
+
+   PixelBuffer_ClearColor( buffer, 0x00A1B2C3u );
+
+   AssertPixelsEqual( expected, PixelBuffer_GetPixels( buffer ), 6 );
+   PixelBuffer_Free( buffer, 0 );
+}
+
+void test_PixelBuffer_ClearColor_OverwritesPreviousPixelValues( void )
+{
+   u32* pixels;
+   PixelBuffer_t* buffer = CreatePixelBuffer( 2, 2 );
+
+   pixels = PixelBuffer_GetPixels( buffer );
+   pixels[0] = 1;
+   pixels[1] = 2;
+   pixels[2] = 3;
+   pixels[3] = 4;
+   PixelBuffer_ClearColor( buffer, 0x00FFFFFFu );
+
+   TEST_ASSERT_EQUAL_UINT32( 0x00FFFFFFu, pixels[0] );
+   TEST_ASSERT_EQUAL_UINT32( 0x00FFFFFFu, pixels[1] );
+   TEST_ASSERT_EQUAL_UINT32( 0x00FFFFFFu, pixels[2] );
+   TEST_ASSERT_EQUAL_UINT32( 0x00FFFFFFu, pixels[3] );
+   PixelBuffer_Free( buffer, 0 );
+}
+
+void test_PixelBuffer_Free_ReleasesBufferAndPixels( void )
+{
+   PixelBuffer_t* buffer = CreatePixelBuffer( 4, 4 );
+
+   PixelBuffer_Free( buffer, 0 );
+
+   TEST_ASSERT_EQUAL_UINT( 2, g_allocationCount );
+   TEST_ASSERT_EQUAL_UINT( 2, g_freeCount );
 }
 
 int main( void )
 {
    UNITY_BEGIN();
-   
-   RUN_TEST( test_PixelBuffer_Create_CreatesBufferWithCorrectDimensions );
 
-   RUN_TEST( test_PixelBuffer_ClearColor_ClearsColor );
+   RUN_TEST( test_PixelBuffer_GetStructSize_ReturnsNonZeroSize );
+
+   RUN_TEST( test_PixelBuffer_Create_StoresDimensionsAndAllocatesPixels );
+
+   RUN_TEST( test_PixelBuffer_GetPixels_ReturnsWritablePixelMemory );
+
+   RUN_TEST( test_PixelBuffer_ClearColor_FillsEveryPixel );
+   RUN_TEST( test_PixelBuffer_ClearColor_OverwritesPreviousPixelValues );
    
+   RUN_TEST( test_PixelBuffer_Free_ReleasesBufferAndPixels );
+
    return UNITY_END();
 }
