@@ -12,6 +12,7 @@ add_executable(Test_Display
 )
 
 add_executable(Test_Game
+	../src/game.c
 	vendor/unity.c
 	test_game.c
 )

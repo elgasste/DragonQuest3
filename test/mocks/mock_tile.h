@@ -1,7 +1,7 @@
 #if !defined( MOCK_TILE_H )
 #define MOCK_TILE_H
 
-#include "common.h"
+#include "../../include/common.h"
 
 typedef struct Tile_t
 {
