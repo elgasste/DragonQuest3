@@ -45,11 +45,11 @@ GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
         !GameData_LoadTileMapOffsets( gameData, memArena ) )
    {
       Platform_FatalError( "failed to load game data." );
+      Platform_CloseFile( gameData->file );
+      MemArena_FreeMem( memArena, gameData->file );
+      MemArena_FreeMem( memArena, gameData );
       return 0;
    }
-
-   // gameData->tileMapOffsets = 0;
-   // gameData->tileMapCount = 0;
 
    return gameData;
 }
@@ -183,6 +183,7 @@ internal b32 GameData_LoadTileMapOffsets( GameData_t* gameData, MemArena_t* memA
       if ( gameData->fileOffsets.tileMaps + gameData->tileMapOffsets[i].offset >= gameData->file->size )
       {
          Platform_FatalError( "game data file has an invalid tile map offset." );
+         MemArena_FreeMem( memArena, gameData->tileMapOffsets );
          return False;
       }
    }

@@ -51,16 +51,14 @@ void MemArena_FreeMem( MemArena_t* arena, void* mem )
 
 Clock_t* Clock_Create( MemArena_t* memArena )
 {
-   UNUSED_PARAM( memArena );
-   g_clock = (Clock_t*)malloc( sizeof( Clock_t ) );
+   g_clock = (Clock_t*)MemArena_AllocMem( memArena, sizeof( Clock_t ) );
    g_clock->fps = GAME_DEFAULT_FPS;
    return g_clock;
 }
 
 void Clock_Free( Clock_t* clock, MemArena_t* memArena )
 {
-   UNUSED_PARAM( clock );
-   UNUSED_PARAM( memArena );
+   MemArena_FreeMem( memArena, clock );
 }
 
 void Clock_StartFrame( Clock_t* clock )
@@ -77,15 +75,13 @@ void Clock_EndFrame( Clock_t* clock )
 
 Input_t* Input_Create( MemArena_t* memArena )
 {
-   UNUSED_PARAM( memArena );
-   g_input = (Input_t*)malloc( sizeof( Input_t ) );
+   g_input = (Input_t*)MemArena_AllocMem( memArena, sizeof( Input_t ) );
    return g_input;
 }
 
 void Input_Free( Input_t* input, MemArena_t* memArena )
 {
-   UNUSED_PARAM( input );
-   UNUSED_PARAM( memArena );
+   MemArena_FreeMem( memArena, input );
 }
 
 void Input_ResetPressStates( Input_t* input )
@@ -96,8 +92,7 @@ void Input_ResetPressStates( Input_t* input )
 
 Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 {
-   UNUSED_PARAM( memArena );
-   g_display = (Display_t*)malloc( sizeof( Display_t ) );
+   g_display = (Display_t*)MemArena_AllocMem( memArena, sizeof( Display_t ) );
    UNUSED_PARAM( w );
    UNUSED_PARAM( h );
    return g_display;
@@ -105,39 +100,34 @@ Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 
 void Display_Free( Display_t* display, MemArena_t* memArena )
 {
-   UNUSED_PARAM( display );
-   UNUSED_PARAM( memArena );
+   MemArena_FreeMem( memArena, display );
    g_displayFreeCount++;
 }
 
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
 {
-   UNUSED_PARAM( memArena );
    UNUSED_PARAM( filePath );
-   g_gameData = (GameData_t*)malloc( sizeof( GameData_t ) );
+   g_gameData = (GameData_t*)MemArena_AllocMem( memArena, sizeof( GameData_t ) );
    return g_gameData;
 }
 
 void GameData_Free( GameData_t* gameData, MemArena_t* memArena )
 {
-   UNUSED_PARAM( gameData );
-   UNUSED_PARAM( memArena );
+   MemArena_FreeMem( memArena, gameData );
    g_gameDataFreeCount++;
 }
 
 TileTextureSet_t* TileTextureSet_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData )
 {
-   UNUSED_PARAM( memArena );
    UNUSED_PARAM( gameData );
-   g_tileTextureSet = (TileTextureSet_t*)malloc( sizeof( TileTextureSet_t ) );
+   g_tileTextureSet = (TileTextureSet_t*)MemArena_AllocMem( memArena, sizeof( TileTextureSet_t ) );
    g_tileTextureSet->tileSize = 16;
    return g_tileTextureSet;
 }
 
 void TileTextureSet_Free( TileTextureSet_t* tileTextureSet, MemArena_t* memArena )
 {
-   UNUSED_PARAM( tileTextureSet );
-   UNUSED_PARAM( memArena );
+   MemArena_FreeMem( memArena, tileTextureSet );
    g_tileTextureSetFreeCount++;
 }
 
@@ -148,9 +138,8 @@ u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
 
 TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, u32 tileMapId )
 {
-   UNUSED_PARAM( memArena );
    UNUSED_PARAM( gameData );
-   g_tileMap = (TileMap_t*)malloc( sizeof( TileMap_t ) );
+   g_tileMap = (TileMap_t*)MemArena_AllocMem( memArena, sizeof( TileMap_t ) );
    g_tileMap->width = tileMapId;
    g_tileMap->height = tileMapId;
    g_tileMap->tiles = 0;
@@ -159,8 +148,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameDat
 
 void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
 {
-   UNUSED_PARAM( tileMap );
-   UNUSED_PARAM( memArena );
+   MemArena_FreeMem( memArena, tileMap );
    g_tileMapFreeCount++;
 }
 
@@ -295,7 +283,7 @@ void test_Game_Free_ReleasesAllDependencies( void )
    TEST_ASSERT_EQUAL_UINT( 1, g_gameDataFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_tileMapFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_tileTextureSetFreeCount );
-   TEST_ASSERT_EQUAL_UINT( 3, g_freeCount );
+   TEST_ASSERT_EQUAL_UINT( 7, g_freeCount );
 }
 
 int main( void )

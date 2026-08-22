@@ -112,6 +112,7 @@ u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* 
    if ( !GetFileSizeEx( hFile, &fileSize ) )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "could not get file size: %lu\n", GetLastError() );
+      CloseHandle( hFile );
       Platform_FatalError( msg );
       return 0;
    }
@@ -121,6 +122,8 @@ u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* 
    if ( !ReadFile( hFile, buffer, (u32)( fileSize.QuadPart ), &bytesReadFromFile, NULL ) )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "could not read file: %lu\n", GetLastError() );
+      CloseHandle( hFile );
+      MemArena_FreeMem( memArena, buffer );
       Platform_FatalError( msg );
       return 0;
    }
@@ -130,6 +133,7 @@ u8* Platform_LoadFileToMemory( const char* filePath, MemArena_t* memArena, u32* 
    if ( bytesReadFromFile != (u32)( fileSize.QuadPart ) )
    {
       snprintf( msg, STRING_SIZE_DEFAULT, "could not read file: read %lu of %llu bytes\n", bytesReadFromFile, fileSize.QuadPart );
+      MemArena_FreeMem( memArena, buffer );
       Platform_FatalError( msg );
       return 0;
    }
