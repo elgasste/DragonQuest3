@@ -38,6 +38,7 @@ TileTextureSet_t* TileTextureSet_CreateFromGameData( MemArena_t* memArena, GameD
       if ( ( textureDataOffset + textureDataSize ) > file->size )
       {
          Platform_FatalError( "game data file is too small to contain all tile textures." );
+         MemArena_FreeMem( memArena, tileTextureSet );
          return 0;
       }
 

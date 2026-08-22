@@ -52,12 +52,14 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( !QueryPerformanceFrequency( &( g_winGlobals.performanceFrequency ) ) )
    {
       Platform_FatalError( "failed to query performance frequency." );
+      MemArena_Free( g_winGlobals.memArena );
       return 1;
    }
 
    if ( timeGetDevCaps( &timeCaps, sizeof( TIMECAPS ) ) != TIMERR_NOERROR )
    {
       Platform_FatalError( "failed to set timer resolution." );
+      MemArena_Free( g_winGlobals.memArena );
       return 1;
    }
 
@@ -89,6 +91,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( !RegisterClassA( &mainWindowClass ) )
    {
       Platform_FatalError( "failed to register window class." );
+      timeEndPeriod( timerResolution );
+      MemArena_Free( g_winGlobals.memArena );
       return 1;
    }
 
@@ -101,6 +105,9 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( !AdjustWindowRect( &expectedWindowRect, windowStyle, 0 ) )
    {
       Platform_FatalError( "failed to adjust window rect." );
+      timeEndPeriod( timerResolution );
+      UnregisterClassA( mainWindowClass.lpszClassName, hInstance );
+      MemArena_Free( g_winGlobals.memArena );
       return 1;
    }
 
@@ -126,6 +133,9 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    if ( !g_winGlobals.hWndMain )
    {
       Platform_FatalError( "failed to create main window." );
+      timeEndPeriod( timerResolution );
+      UnregisterClassA( mainWindowClass.lpszClassName, hInstance );
+      MemArena_Free( g_winGlobals.memArena );
       return 1;
    }
 
@@ -149,6 +159,11 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    
    Game_Free( g_winGlobals.game, g_winGlobals.memArena );
    MemArena_FreeMem( g_winGlobals.memArena, g_winGlobals.buttonMap );
+
+   DeleteObject( g_winGlobals.hFont );
+   DestroyWindow( g_winGlobals.hWndMain );
+   timeEndPeriod( timerResolution );
+   UnregisterClassA( mainWindowClass.lpszClassName, hInstance );
 
    if ( !MemArena_IsEmpty( g_winGlobals.memArena ) )
    {

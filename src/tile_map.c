@@ -60,6 +60,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          if ( tilesOffset + (i32)( tileCount * Tile_GetStructSize() ) > file->size )
          {
             Platform_FatalError( "game data file is too small to contain all the requested tile map tiles." );
+            MemArena_FreeMem( memArena, tileMap );
             return 0;
          }
 

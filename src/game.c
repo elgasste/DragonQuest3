@@ -77,13 +77,11 @@ void Game_Free( Game_t* game, MemArena_t* memArena )
    if ( game->tileMap )
    {
       TileMap_Free( game->tileMap, memArena );
-      MemArena_FreeMem( memArena, game->tileMap );
    }
 
    if ( game->tileTextureSet )
    {
       TileTextureSet_Free( game->tileTextureSet, memArena );
-      MemArena_FreeMem( memArena, game->tileTextureSet );
    }
 
    MemArena_FreeMem( memArena, game );
