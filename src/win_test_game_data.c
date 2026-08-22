@@ -120,7 +120,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    *tileMapCount = 4;
    tileMaps = (TileMapMock_t*)malloc( *tileMapCount * sizeof( TileMapMock_t ) );
 
-   // first
+   // 0: 10x10 checkerboard, no wrapping
    curTileMap = tileMaps;
    curTileMap->id = 0;
    curTileMap->tilesX = 10;
@@ -131,7 +131,6 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
 
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
-      // checkerboard
       if ( ( i / curTileMap->tilesX ) % 2 == 0 )
       {
          if ( ( i % curTileMap->tilesX ) % 2 == 0 )
@@ -156,7 +155,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       }
    }
 
-   // second
+   // 1: 256x256 random, wrapping
    curTileMap++;
    curTileMap->id = 1;
    curTileMap->tilesX = 256;
@@ -171,7 +170,19 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
    }
 
-   // third
+   // make the edges all the same so we can test wrapping
+   for ( i = 0; i < curTileMap->tilesX; i++ )
+   {
+      curTileMap->tiles[i].textureIndex = 2; // top edge
+      curTileMap->tiles[( curTileMap->tilesY - 1 ) * curTileMap->tilesX + i].textureIndex = 2; // bottom edge
+   }
+   for ( i = 0; i < curTileMap->tilesY; i++ )
+   {
+      curTileMap->tiles[i * curTileMap->tilesX].textureIndex = 2; // left edge
+      curTileMap->tiles[i * curTileMap->tilesX + ( curTileMap->tilesX - 1 )].textureIndex = 2; // right edge
+   }
+
+   // 2: 128x128 random, no wrapping
    curTileMap++;
    curTileMap->id = 2;
    curTileMap->tilesX = 128;
@@ -186,7 +197,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
    }
 
-   // fourth
+   // 3: 3x3, no wrapping
    curTileMap++;
    curTileMap->id = 3;
    curTileMap->tilesX = 3;
