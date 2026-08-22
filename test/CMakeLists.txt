@@ -29,6 +29,7 @@ add_executable(Test_Input
 )
 
 add_executable(Test_MemArena
+	../src/mem_arena.c
 	vendor/unity.c
 	test_mem_arena.c
 )
