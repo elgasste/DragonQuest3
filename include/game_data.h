@@ -37,17 +37,6 @@ typedef struct GameDataObjectOffset_t
 GameDataObjectOffset_t;
 END_PACKED_STRUCT
 
-// typedef struct GameData_t
-// {
-//    File_t* file;
-//    GameDataVersion_t version;
-//    GameDataFileOffsets_t offsets;
-
-//    GameDataTileMapOffset_t* tileMapOffsets;
-//    u32 tileMapCount;
-// }
-// GameData_t;
-
 typedef struct GameData_t GameData_t;
 size_t GameData_GetStructSize( void );
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath );
@@ -59,8 +48,6 @@ GameDataFileOffsets_t GameData_GetFileOffsets( GameData_t* gameData );
 GameDataObjectOffset_t GameData_GetTileMapOffset( GameData_t* gameData, u32 tileMapId );
 u32 GameData_GetTileMapCount( GameData_t* gameData );
 
-void GameData_SetVersion( GameData_t* gameData, GameDataVersion_t version );
-void GameData_SetFileOffsets( GameData_t* gameData, GameDataFileOffsets_t offsets );
 void GameData_SetTileMapOffsets( GameData_t* gameData, GameDataObjectOffset_t* offsets, u32 count );
 
 #endif // GAME_DATA_H

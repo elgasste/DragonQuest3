@@ -24,9 +24,25 @@ size_t Clock_GetStructSize( void )
    return sizeof( Clock_t );
 }
 
-Clock_t* Clock_Create( MemArena_t* memArena )
+Clock_t* Clock_Create( MemArena_t* memArena, u32 fps )
 {
-   return (Clock_t*)MemArena_AllocMem( memArena, sizeof( Clock_t ) );
+   Clock_t* clock;
+
+   clock = (Clock_t*)MemArena_AllocMem( memArena, sizeof( Clock_t ) );
+
+   Clock_SetFps( clock, fps );
+
+   clock->frameStartMicro = 0;
+   clock->absoluteStartMicro = 0;
+   clock->absoluteEndMicro = 0;
+   clock->lastframeMicro = 0;
+
+   clock->frameCount = 0;
+   clock->lagFrameCount = 0;
+
+   clock->hasStarted = False;
+
+   return clock;
 }
 
 void Clock_Free( Clock_t* clock, MemArena_t* memArena )
@@ -67,21 +83,6 @@ u32 Clock_GetFrameCount( Clock_t *clock )
 u32 Clock_GetLagFrameCount( Clock_t *clock )
 {
    return clock->lagFrameCount;
-}
-
-void Clock_Init( Clock_t* clock, u32 fps )
-{
-   Clock_SetFps( clock, fps );
-
-   clock->frameStartMicro = 0;
-   clock->absoluteStartMicro = 0;
-   clock->absoluteEndMicro = 0;
-   clock->lastframeMicro = 0;
-
-   clock->frameCount = 0;
-   clock->lagFrameCount = 0;
-
-   clock->hasStarted = False;
 }
 
 void Clock_SetFps( Clock_t* clock, u32 fps )

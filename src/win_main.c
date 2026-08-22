@@ -34,6 +34,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    WNDCLASSA mainWindowClass;
    DWORD windowStyle;
    RECT expectedWindowRect;
+   Display_t* display;
    char gameDataPath[MAX_PATH];
 
    UNUSED_PARAM( hPrevInstance );
@@ -71,7 +72,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.buttonMap = (u32*)MemArena_AllocMem( g_winGlobals.memArena, sizeof( u32 ) * InputButton_Count );
    InitButtonMap();
 
-   Game_Create( &( g_winGlobals.game ), g_winGlobals.memArena, gameDataPath ); // does not transfer ownership of memory arena
+   g_winGlobals.game = Game_Create( g_winGlobals.memArena, gameDataPath ); // does not transfer ownership of memory arena
 
    mainWindowClass.cbClsExtra = 0;
    mainWindowClass.cbWndExtra = 0;
@@ -136,16 +137,17 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                      DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
                                      "Consolas" );
 
+   display = Game_GetDisplay( g_winGlobals.game );
    g_winGlobals.bmpInfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-   g_winGlobals.bmpInfo.bmiHeader.biWidth = Display_GetWidth( g_winGlobals.game->display );
-   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( Display_GetHeight( g_winGlobals.game->display ) );
+   g_winGlobals.bmpInfo.bmiHeader.biWidth = Display_GetWidth( display );
+   g_winGlobals.bmpInfo.bmiHeader.biHeight = -(LONG)( Display_GetHeight( display ) );
    g_winGlobals.bmpInfo.bmiHeader.biPlanes = 1;
    g_winGlobals.bmpInfo.bmiHeader.biBitCount = 32;
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
 
    Game_Run( g_winGlobals.game );
    
-   Game_Destroy( &( g_winGlobals.game ), g_winGlobals.memArena );
+   Game_Free( g_winGlobals.game, g_winGlobals.memArena );
    MemArena_FreeMem( g_winGlobals.memArena, g_winGlobals.buttonMap );
 
    if ( !MemArena_IsEmpty( g_winGlobals.memArena ) )
@@ -260,12 +262,14 @@ internal void RenderScreen( void )
    int winWidth, winHeight;
    u32 displayBufferW, displayBufferH;
    const u32* pixels;
+   Display_t* display;
 
+   display = Game_GetDisplay( g_winGlobals.game );
    winWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale );
    winHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale );
-   displayBufferW = Display_GetWidth( g_winGlobals.game->display );
-   displayBufferH = Display_GetHeight( g_winGlobals.game->display );
-   pixels = Display_GetPixels( g_winGlobals.game->display );
+   displayBufferW = Display_GetWidth( display );
+   displayBufferH = Display_GetHeight( display );
+   pixels = Display_GetPixels( display );
 
    dc = BeginPaint( g_winGlobals.hWndMain, &ps );
 
@@ -317,6 +321,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 {
    b32 keyWasDown, keyIsDown;
    u32 i;
+   Input_t* input;
 
    keyWasDown = ( flags & ( (LONG_PTR)1 << 30 ) ) != 0 ? True : False;
    keyIsDown = ( flags & ( (LONG_PTR)1 << 31 ) ) == 0 ? True : False;
@@ -324,10 +329,12 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
    // ignore repeat presses
    if ( keyWasDown != keyIsDown )
    {
+      input = Game_GetInput( g_winGlobals.game );
+      
       if ( GetKeyState( VK_CONTROL ) & 0x8000 )
       {
          // ctrl should nullify all other input, so we don't end up with stuck button states
-         Input_ResetAllStates( g_winGlobals.game->input );
+         Input_ResetAllStates( input );
 
          if ( keyIsDown )
          {
@@ -362,7 +369,6 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             }
          }
       }
-
       else if ( keyIsDown )
       {
          // ensure alt+F4 still closes the window
@@ -376,7 +382,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          {
             if ( g_winGlobals.buttonMap[i] == keyCode )
             {
-               Input_PressButton( g_winGlobals.game->input, i );
+               Input_PressButton( input, i );
                break;
             }
          }
@@ -394,7 +400,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          {
             if ( g_winGlobals.buttonMap[i] == keyCode )
             {
-               Input_ReleaseButton( g_winGlobals.game->input, i );
+               Input_ReleaseButton( input, i );
                break;
             }
          }
@@ -408,9 +414,15 @@ internal void DrawDiagnostics( HDC* dcMem )
    RECT r;
    HFONT oldFont;
    Game_t* game;
+   Clock_t* clock;
+   Input_t* input;
+   Vector4i32_t playerRect;
    char str[STRING_SIZE_DEFAULT];
 
    game = g_winGlobals.game;
+   clock = Game_GetClock( game );
+   input = Game_GetInput( game );
+   playerRect = Game_GetPlayerRect( game );
 
    r.left = 10;
    r.top = 10;
@@ -425,19 +437,19 @@ internal void DrawDiagnostics( HDC* dcMem )
    SetTextColor( *dcMem, 0x00FFFFFF );
    SetBkMode( *dcMem, TRANSPARENT );
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "Target Frame Rate: %u", Clock_GetFps( game->clock ) );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "Target Frame Rate: %u", Clock_GetFps( clock ) );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "    Last Frame MS: %u", (u32)( Clock_GetLastFrameMicro( game->clock ) / 1000 ) );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "    Last Frame MS: %u", (u32)( Clock_GetLastFrameMicro( clock ) / 1000 ) );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "     Total Frames: %u", Clock_GetFrameCount( game->clock ) );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "     Total Frames: %u", Clock_GetFrameCount( clock ) );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", Clock_GetLagFrameCount( game->clock ) );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", Clock_GetLagFrameCount( clock ) );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
@@ -445,54 +457,54 @@ internal void DrawDiagnostics( HDC* dcMem )
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   gameSeconds = Clock_GetFrameCount( game->clock ) / Clock_GetFps( game->clock );
+   gameSeconds = Clock_GetFrameCount( clock ) / Clock_GetFps( clock );
    sprintf_s( str, STRING_SIZE_DEFAULT, "    In-Game Timer: %u:%02u:%02u", gameSeconds / 3600, gameSeconds / 60, gameSeconds );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   realSeconds = (u32)( Clock_GetAbsoluteEndMicro( game->clock ) - Clock_GetAbsoluteStartMicro( game->clock ) ) / 1000000;
+   realSeconds = (u32)( Clock_GetAbsoluteEndMicro( clock ) - Clock_GetAbsoluteStartMicro( clock ) ) / 1000000;
    sprintf_s( str, STRING_SIZE_DEFAULT, " Real World Timer: %u:%02u:%02u", realSeconds / 3600, realSeconds / 60, realSeconds );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "  Player Position: (%d, %d)", game->playerRect.x, game->playerRect.y );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "  Player Position: (%d, %d)", playerRect.x, playerRect.y );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
    r.top += 16;
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
-   SetTextColor( *dcMem, Input_GetButtonState( game->input, InputButton_Up )->down ? 0x00FFFFFF : 0x00777777 );
+   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Up )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "--" );
-   SetTextColor( *dcMem, Input_GetButtonState( game->input, InputButton_Left )->down ? 0x00FFFFFF : 0x00777777 );
+   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Left )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "   --" );
-   SetTextColor( *dcMem, Input_GetButtonState( game->input, InputButton_Right )->down ? 0x00FFFFFF : 0x00777777 );
+   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Right )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "      SEL" );
-   SetTextColor( *dcMem, Input_GetButtonState( game->input, InputButton_Select )->down ? 0x00FFFFFF : 0x00777777 );
+   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Select )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "          STA" );
-   SetTextColor( *dcMem, Input_GetButtonState( game->input, InputButton_Start )->down ? 0x00FFFFFF : 0x00777777 );
+   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Start )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "              B" );
-   SetTextColor( *dcMem, Input_GetButtonState( game->input, InputButton_B )->down ? 0x00FFFFFF : 0x00777777 );
+   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_B )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "                A" );
-   SetTextColor( *dcMem, Input_GetButtonState( game->input, InputButton_A )->down ? 0x00FFFFFF : 0x00777777 );
+   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_A )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
-   SetTextColor( *dcMem, Input_GetButtonState( game->input, InputButton_Down )->down ? 0x00FFFFFF : 0x00777777 );
+   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Down )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
@@ -606,14 +618,17 @@ internal void ResizeScreen( b32 increase )
 internal void ChangeGameFps( b32 increase )
 {
    u32 fps;
+   Clock_t* clock;
 
-   fps = Clock_GetFps( g_winGlobals.game->clock );
+   clock = Game_GetClock( g_winGlobals.game );
+   fps = Clock_GetFps( clock );
+
    if ( increase && fps < MAX_GAME_FPS )
    {
-      Clock_SetFps( g_winGlobals.game->clock, fps + GAME_FPS_STEP );
+      Clock_SetFps( clock, fps + GAME_FPS_STEP );
    }
    else if ( !increase && fps > MIN_GAME_FPS )
    {
-      Clock_SetFps( g_winGlobals.game->clock, fps - GAME_FPS_STEP );
+      Clock_SetFps( clock, fps - GAME_FPS_STEP );
    }
 }

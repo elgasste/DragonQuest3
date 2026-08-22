@@ -8,60 +8,71 @@ void Game_HandleInput( Game_t* game )
 {
    b32 wraps;
    u32 tilesX, tilesY, tileSize;
+   Input_t* input;
+   TileTextureSet_t* tileTextureSet;
+   TileMap_t* tileMap;
+   Vector4i32_t playerRect;
 
-   wraps = TileMap_GetWraps( game->tileMap );
-   tilesX = TileMap_GetTilesX( game->tileMap );
-   tilesY = TileMap_GetTilesY( game->tileMap );
-   tileSize = TileTextureSet_GetTileSize( game->tileTextureSet );
+   input = Game_GetInput( game );
+   tileTextureSet = Game_GetTileTextureSet( game );
+   tileMap = Game_GetTileMap( game );
+   playerRect = Game_GetPlayerRect( game );
 
-   if ( Input_IsButtonDown( game->input, InputButton_Left ) )
+   wraps = TileMap_GetWraps( tileMap );
+   tilesX = TileMap_GetTilesX( tileMap );
+   tilesY = TileMap_GetTilesY( tileMap );
+   tileSize = TileTextureSet_GetTileSize( tileTextureSet );
+
+   if ( Input_IsButtonDown( input, InputButton_Left ) )
    {
-      game->playerRect.x -= 1;
-      if ( game->playerRect.x < 0 )
+      playerRect.x -= 1;
+      if ( playerRect.x < 0 )
       {
          if ( wraps )
-            game->playerRect.x = ( tilesX * tileSize ) - 1;
+            playerRect.x = ( tilesX * tileSize ) - 1;
          else
-            game->playerRect.x = 0;
+            playerRect.x = 0;
       }
    }
-   if ( Input_IsButtonDown( game->input, InputButton_Up ) )
+   if ( Input_IsButtonDown( input, InputButton_Up ) )
    {
-      game->playerRect.y -= 1;
-      if ( game->playerRect.y < 0 )
+      playerRect.y -= 1;
+      if ( playerRect.y < 0 )
       {
          if ( wraps )
-            game->playerRect.y = ( tilesY * tileSize ) - 1;
+            playerRect.y = ( tilesY * tileSize ) - 1;
          else
-            game->playerRect.y = 0;
+            playerRect.y = 0;
       }
    }
-   if ( Input_IsButtonDown( game->input, InputButton_Right ) )
+   if ( Input_IsButtonDown( input, InputButton_Right ) )
    {
-      game->playerRect.x += 1;
-      if ( game->playerRect.x + game->playerRect.w > (i32)( tilesX * tileSize ) )
+      playerRect.x += 1;
+      if ( playerRect.x + playerRect.w > (i32)( tilesX * tileSize ) )
       {
          if ( wraps )
          {
-            if ( game->playerRect.x > (i32)( tilesX * tileSize ) )
-               game->playerRect.x = 0;
+            if ( playerRect.x > (i32)( tilesX * tileSize ) )
+               playerRect.x = 0;
          }
          else
-            game->playerRect.x = ( tilesX * tileSize ) - game->playerRect.w;
+            playerRect.x = ( tilesX * tileSize ) - playerRect.w;
       }
    }
-   if ( Input_IsButtonDown( game->input, InputButton_Down ) )
+   if ( Input_IsButtonDown( input, InputButton_Down ) )
    {
-      game->playerRect.y += 1;
-      if ( game->playerRect.y + game->playerRect.h > (i32)( tilesY * tileSize ) )
+      playerRect.y += 1;
+      if ( playerRect.y + playerRect.h > (i32)( tilesY * tileSize ) )
       {
          if ( wraps )
          {
-            if ( game->playerRect.y > (i32)( tilesY * tileSize ) )
-               game->playerRect.y = 0;
+            if ( playerRect.y > (i32)( tilesY * tileSize ) )
+               playerRect.y = 0;
          }
          else
-            game->playerRect.y = ( tilesY * tileSize ) - game->playerRect.h;
+            playerRect.y = ( tilesY * tileSize ) - playerRect.h;
       }
    }
+
+   Game_SetPlayerRect( game, playerRect );
 }
