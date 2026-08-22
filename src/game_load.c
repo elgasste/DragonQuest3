@@ -6,6 +6,7 @@
 #include "game_data.h"
 #include "mem_arena.h"
 #include "platform.h"
+#include "tile.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
 #include "version.h"
@@ -43,53 +44,14 @@ void Game_LoadGameData( Game_t* game, const char* gameDataFilePath )
 
 void Game_LoadTileMapFromId( Game_t* game, u32 id )
 {
-   u32 i;
-   i32 tileMapsChunkOffset, tileMapOffset, tilesOffset, tileCount;
-   char msg[STRING_SIZE_DEFAULT];
-
    if ( game->tileMap )
    {
-      TileMap_Cleanup( game->tileMap, game->memArena );
+      TileMap_Free( game->tileMap, game->memArena );
       MemArena_FreeMem( game->memArena, game->tileMap );
       game->tileMap = 0;
    }
 
-   for ( i = 0; i < game->gameData->tileMapCount; i++ )
-   {
-      if ( game->gameData->tileMapOffsets[i].id == id )
-      {
-         tileMapsChunkOffset = game->gameData->offsets.tileMaps;
-         tileMapOffset = tileMapsChunkOffset + game->gameData->tileMapOffsets[i].offset;
-         if ( (i32)( tileMapOffset + sizeof( TileMap_t ) ) > game->gameData->file->size )
-         {
-            Platform_FatalError( "game data file is too small to contain the requested tile map header." );
-            return;
-         }
-
-         game->tileMap = (TileMap_t*)MemArena_AllocMem( game->memArena, sizeof( TileMap_t ) );
-         Platform_FileSeek( game->gameData->file, tileMapOffset, 0 );
-         Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap ), sizeof( TileMap_t ) );
-         game->tileMap->tiles = 0;
-
-         tileCount = (i32)( game->tileMap->tilesX * game->tileMap->tilesY );
-         tilesOffset = tileMapOffset + sizeof( TileMap_t );
-         if ( tilesOffset + (i32)( tileCount * sizeof( Tile_t ) ) > game->gameData->file->size )
-         {
-            Platform_FatalError( "game data file is too small to contain all the requested tile map tiles." );
-            return;
-         }
-
-         game->tileMap->tiles = (Tile_t*)MemArena_AllocMem( game->memArena, tileCount * sizeof( Tile_t ) );
-         Platform_FileSeek( game->gameData->file, tilesOffset, 0 );
-         Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileMap->tiles ), tileCount * sizeof( Tile_t ) );
-         game->tileMap->tileTextureSet = game->tileTextureSet;
-
-         return;
-      }
-   }
-
-   snprintf( msg, STRING_SIZE_DEFAULT, "failed to load tile map with ID %u: not found in game data file.", id );
-   Platform_FatalError( msg );
+   game->tileMap = TileMap_CreateFromGameData( game->memArena, game->gameData, id );
 }
 
 internal b32 GameData_LoadMetaData( GameData_t* gameData )
@@ -137,35 +99,7 @@ internal b32 GameData_LoadMetaData( GameData_t* gameData )
 
 internal b32 GameData_LoadTileTextureSet( Game_t* game )
 {
-   i32 tileTextureSetOffset, textureDataOffset, textureDataSize;
-
-   tileTextureSetOffset = game->gameData->offsets.tileTextureSet;
-   if ( (i32)( tileTextureSetOffset + sizeof( TileTextureSet_t ) ) > game->gameData->file->size )
-   {
-      Platform_FatalError( "game data file is too small to contain a valid tile texture set header." );
-      return False;
-   }
-
-   game->tileTextureSet = (TileTextureSet_t*)MemArena_AllocMem( game->memArena, sizeof( TileTextureSet_t ) );
-   Platform_FileSeek( game->gameData->file, tileTextureSetOffset, 0 );
-   Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet ), sizeof( TileTextureSet_t ) );
-   game->tileTextureSet->textures = 0;
-   textureDataOffset = tileTextureSetOffset + sizeof( TileTextureSet_t );
-
-   if ( game->tileTextureSet->count > 0 )
-   {
-      textureDataSize = game->tileTextureSet->count * game->tileTextureSet->tileSize * game->tileTextureSet->tileSize * sizeof( u32 );
-      if ( ( textureDataOffset + textureDataSize ) > game->gameData->file->size )
-      {
-         Platform_FatalError( "game data file is too small to contain all tile textures." );
-         return False;
-      }
-
-      game->tileTextureSet->textures = (u32*)MemArena_AllocMem( game->memArena, textureDataSize );
-      Platform_FileSeek( game->gameData->file, textureDataOffset, 0 );
-      Platform_ReadFileBytes( game->gameData->file, (u8*)( game->tileTextureSet->textures ), textureDataSize );
-   }
-
+   game->tileTextureSet = TileTextureSet_CreateFromGameData( game->memArena, game->gameData );
    return True;
 }
 

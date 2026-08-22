@@ -9,7 +9,7 @@ void Game_Render( Game_t* game )
    Display_Fill( game->display, 0 );
 
    // TODO: draw this in the correct place based on the game state
-   Display_DrawTileMapViewport( game->display, game->tileMap, game->tileMapViewport, 0, 0 );
+   Display_DrawTileMapViewport( game->display, game->tileMap, game->tileTextureSet, game->tileMapViewport, 0, 0 );
 
    GameRender_DrawPlayer( game );
 

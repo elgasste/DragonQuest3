@@ -19,6 +19,11 @@ struct Clock_t
    b32 hasStarted;
 };
 
+size_t Clock_GetStructSize( void )
+{
+   return sizeof( Clock_t );
+}
+
 Clock_t* Clock_Create( MemArena_t* memArena )
 {
    return (Clock_t*)MemArena_AllocMem( memArena, sizeof( Clock_t ) );

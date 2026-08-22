@@ -4,8 +4,9 @@
 #include "common.h"
 
 typedef struct MemArena_t MemArena_t;
-typedef struct PixelBuffer_t PixelBuffer_t;
 
+typedef struct PixelBuffer_t PixelBuffer_t;
+size_t PixelBuffer_GetStructSize( void );
 PixelBuffer_t* PixelBuffer_Create( MemArena_t* memArena, u32 w, u32 h );
 void PixelBuffer_Free( PixelBuffer_t* buffer, MemArena_t* memArena );
 

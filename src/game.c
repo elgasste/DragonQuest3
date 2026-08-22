@@ -45,7 +45,6 @@ void Game_Create( Game_t** pGame, MemArena_t* memArena, const char* gameDataFile
    game->playerRect.h = 14;
 
    // TODO: temporary, this will eventually be part of the game data file
-   game->tileMap = 0;
    Game_LoadTileMapFromId( game, 1 );
 }
 
@@ -58,17 +57,22 @@ void Game_Destroy( Game_t** pGame, MemArena_t* memArena )
 
    Clock_Free( ( *pGame )->clock, memArena );
    Input_Free( ( *pGame )->input, memArena );
-
    Display_Free( ( *pGame )->display, memArena );
 
    GameData_Cleanup( ( *pGame )->gameData, memArena );
    MemArena_FreeMem( memArena, ( *pGame )->gameData );
 
-   TileMap_Cleanup( ( *pGame )->tileMap, memArena );
-   MemArena_FreeMem( memArena, ( *pGame )->tileMap );
+   if ( ( *pGame )->tileMap )
+   {
+      TileMap_Free( ( *pGame )->tileMap, memArena );
+      MemArena_FreeMem( memArena, ( *pGame )->tileMap );
+   }
 
-   TileTextureSet_Cleanup( ( *pGame )->tileTextureSet, memArena );
-   MemArena_FreeMem( memArena, ( *pGame )->tileTextureSet );
+   if ( ( *pGame )->tileTextureSet )
+   {
+      TileTextureSet_Free( ( *pGame )->tileTextureSet, memArena );
+      MemArena_FreeMem( memArena, ( *pGame )->tileTextureSet );
+   }
 
    MemArena_FreeMem( memArena, *pGame );
    *pGame = 0;
@@ -101,5 +105,5 @@ internal void Game_Tic( Game_t* game )
 
    centerX = game->playerRect.x + ( game->playerRect.w / 2 );
    centerY = game->playerRect.y + ( game->playerRect.h / 2 );
-   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY );
+   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 }

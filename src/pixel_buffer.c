@@ -11,17 +11,23 @@ struct PixelBuffer_t
    u32* mem;
 };
 
+size_t PixelBuffer_GetStructSize( void )
+{
+   return sizeof( PixelBuffer_t );
+}
+
 PixelBuffer_t* PixelBuffer_Create( MemArena_t* memArena, u32 w, u32 h )
 {
-   PixelBuffer_t* buffer = MemArena_AllocMem( memArena, sizeof( PixelBuffer_t ) + ( w * h * sizeof( u32 ) ) );
+   PixelBuffer_t* buffer = MemArena_AllocMem( memArena, sizeof( PixelBuffer_t ) );
    buffer->w = w;
    buffer->h = h;
-   buffer->mem = (u32*)( buffer + 1 );
+   buffer->mem = (u32*)MemArena_AllocMem( memArena, w * h * sizeof( u32 ) );
    return buffer;
 }
 
 void PixelBuffer_Free( PixelBuffer_t* buffer, MemArena_t* memArena )
 {
+   MemArena_FreeMem( memArena, buffer->mem );
    MemArena_FreeMem( memArena, buffer );
 }
 

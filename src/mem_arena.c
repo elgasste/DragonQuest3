@@ -27,6 +27,11 @@ struct MemArena_t
 internal void* MemArena_AllocTryAppend( MemArena_t* arena, size_t size );
 internal void* MemArena_AllocTryInsert( MemArena_t* arena, size_t size );
 
+size_t MemArena_GetStructSize( void )
+{
+   return sizeof( MemArena_t );
+}
+
 MemArena_t* MemArena_Create( size_t size )
 {
    MemArena_t *arena;

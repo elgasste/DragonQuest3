@@ -1,6 +1,7 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "display.h"
+#include "tile.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
 
@@ -8,6 +9,11 @@ struct Display_t
 {
    PixelBuffer_t* buffer;
 };
+
+size_t Display_GetStructSize( void )
+{
+   return sizeof( Display_t );
+}
 
 Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 {
@@ -180,38 +186,40 @@ static i32 Display_FloorDiv( i32 value, i32 divisor )
    return -( ( -value + divisor - 1 ) / divisor );
 }
 
-void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector4i32_t viewport, i32 displayX, i32 displayY )
+void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, Vector4i32_t viewport, i32 displayX, i32 displayY )
 {
    i32 tileX, tileY, viewportR, viewportB, tileMapSizeX, tileMapSizeY;
    i32 tileWorldX, tileWorldY, drawX, drawY;
    i32 mapOffsetX, mapOffsetY;
    i32 repeatX, repeatY, repeatStartX, repeatEndX, repeatStartY, repeatEndY;
-   u32 tileSize, tileIndex;
-   TileTextureSet_t* textureSet;
+   u32 tilesX, tilesY, tileSize, tileIndex, tileTextureIndex;
    Tile_t* tile;
    u32* texture;
-   b32 smallMapCentered;
+   b32 wraps, smallMapCentered;
 
-   textureSet = tileMap->tileTextureSet;
    viewportR = viewport.x + viewport.w;
    viewportB = viewport.y + viewport.h;
-   tileSize = textureSet->tileSize;
+   tileSize = TileTextureSet_GetTileSize( tileTextureSet );
 
    mapOffsetX = 0;
    mapOffsetY = 0;
    smallMapCentered = False;
 
-   tileMapSizeX = (i32)( tileMap->tilesX * tileSize );
-   tileMapSizeY = (i32)( tileMap->tilesY * tileSize );
+   tilesX = TileMap_GetTilesX( tileMap );
+   tilesY = TileMap_GetTilesY( tileMap );
+   tileMapSizeX = (i32)( tilesX * tileSize );
+   tileMapSizeY = (i32)( tilesY * tileSize );
+   wraps = TileMap_GetWraps( tileMap );
 
-   if ( !tileMap->wraps && viewport.w >= tileMapSizeX && viewport.h >= tileMapSizeY )
+   if ( !wraps && viewport.w >= tileMapSizeX && viewport.h >= tileMapSizeY )
    {
       mapOffsetX = ( viewport.w - tileMapSizeX ) / 2;
       mapOffsetY = ( viewport.h - tileMapSizeY ) / 2;
       smallMapCentered = True;
    }
 
-   if ( tileMap->wraps )
+   // TODO: move this into a separate internal function, for clarity
+   if ( wraps )
    {
       repeatStartX = Display_FloorDiv( viewport.x, tileMapSizeX );
       repeatEndX = Display_FloorDiv( viewportR - 1, tileMapSizeX );
@@ -225,7 +233,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
             i32 blockWorldX = repeatX * tileMapSizeX;
             i32 blockWorldY = repeatY * tileMapSizeY;
 
-            for ( tileY = 0; tileY < (i32)tileMap->tilesY; tileY++ )
+               for ( tileY = 0; tileY < (i32)tilesY; tileY++ )
             {
                tileWorldY = blockWorldY + ( tileY * (i32)tileSize );
                if ( tileWorldY + (i32)tileSize <= viewport.y || tileWorldY >= viewportB )
@@ -233,7 +241,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
                   continue;
                }
 
-               for ( tileX = 0; tileX < (i32)tileMap->tilesX; tileX++ )
+               for ( tileX = 0; tileX < (i32)tilesX; tileX++ )
                {
                   tileWorldX = blockWorldX + ( tileX * (i32)tileSize );
                   if ( tileWorldX + (i32)tileSize <= viewport.x || tileWorldX >= viewportR )
@@ -241,10 +249,11 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
                      continue;
                   }
 
-                  tileIndex = (u32)tileY * tileMap->tilesX + (u32)tileX;
-                  tile = &( tileMap->tiles[tileIndex] );
+                  tileIndex = (u32)tileY * tilesX + (u32)tileX;
+                  tile = TileMap_GetTile( tileMap, (u32)tileX, (u32)tileY );
+                  tileTextureIndex = Tile_GetTextureIndex( tile );
 
-                  texture = textureSet->textures + ( tile->textureIndex * tileSize * tileSize );
+                  texture = TileTextureSet_GetTexture( tileTextureSet, tileTextureIndex );
                   drawX = displayX + ( tileWorldX - viewport.x );
                   drawY = displayY + ( tileWorldY - viewport.y );
                   Display_DrawBuffer( display, texture, tileSize, tileSize, drawX, drawY );
@@ -256,7 +265,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
       return;
    }
 
-   for ( tileY = 0; tileY < (i32)tileMap->tilesY; tileY++ )
+   for ( tileY = 0; tileY < (i32)tilesY; tileY++ )
    {
       tileWorldY = tileY * (i32)tileSize;
 
@@ -273,7 +282,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
          }
       }
 
-      for ( tileX = 0; tileX < (i32)tileMap->tilesX; tileX++ )
+      for ( tileX = 0; tileX < (i32)tilesX; tileX++ )
       {
          tileWorldX = tileX * (i32)tileSize;
 
@@ -290,10 +299,10 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, Vector
             }
          }
 
-         tileIndex = (u32)tileY * tileMap->tilesX + (u32)tileX;
-         tile = &( tileMap->tiles[tileIndex] );
-
-         texture = textureSet->textures + ( tile->textureIndex * tileSize * tileSize );
+         tileIndex = (u32)tileY * tilesX + (u32)tileX;
+         tile = TileMap_GetTile( tileMap, (u32)tileX, (u32)tileY );
+         tileTextureIndex = Tile_GetTextureIndex( tile );
+         texture = TileTextureSet_GetTexture( tileTextureSet, tileTextureIndex );
          drawX = displayX + ( smallMapCentered ? ( mapOffsetX + tileWorldX ) : ( tileWorldX - viewport.x ) );
          drawY = displayY + ( smallMapCentered ? ( mapOffsetY + tileWorldY ) : ( tileWorldY - viewport.y ) );
          Display_DrawBuffer( display, texture, tileSize, tileSize, drawX, drawY );

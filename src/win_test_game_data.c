@@ -10,18 +10,42 @@
 #include "version.h"
 #include "win_common.h"
 
-internal TileTextureSet_t* CreateTestTileTextureSet( void );
-internal TileMap_t* CreateTestTileMaps( u32* tileMapCount );
-internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureSet_t* textureSet );
-internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, TileTextureSet_t* textureSet );
-internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t* tileMaps, u32 tileMapCount );
+typedef struct TileTextureSetMock_t
+{
+   u32 count;
+   u32 tileSize;
+   u32* textures;
+}
+TileTextureSetMock_t;
+
+typedef struct TileMock_t
+{
+   u32 textureIndex;
+}
+TileMock_t;
+
+typedef struct TileMapMock_t
+{
+   u32 id;
+   u32 tilesX;
+   u32 tilesY;
+   b32 wraps;
+   TileMock_t* tiles;
+}
+TileMapMock_t;
+
+internal TileTextureSetMock_t* CreateTestTileTextureSet( void );
+internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount );
+internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* textureSet );
+internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* textureSet );
+internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMock_t* tileMaps, u32 tileMapCount );
 
 void WriteTestGameDataFile( const char* filePath )
 {
    HANDLE hFile;
    DWORD filePos;
-   TileTextureSet_t* textureSet;
-   TileMap_t* tileMaps;
+   TileTextureSetMock_t* textureSet;
+   TileMapMock_t* tileMaps;
    u32 tileMapCount, i;
    char msg[STRING_SIZE_DEFAULT];
 
@@ -62,13 +86,13 @@ void WriteTestGameDataFile( const char* filePath )
    CloseHandle( hFile );
 }
 
-internal TileTextureSet_t* CreateTestTileTextureSet( void )
+internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
 {
    u32 pixel, tilePixels, tileIndex, pixelIndex;
    u32 tileColors[5];
-   TileTextureSet_t* textureSet;
+   TileTextureSetMock_t* textureSet;
 
-   textureSet = (TileTextureSet_t*)malloc( sizeof( TileTextureSet_t ) );
+   textureSet = (TileTextureSetMock_t*)malloc( sizeof( TileTextureSetMock_t ) );
    textureSet->count = 5;
    textureSet->tileSize = 16;
    textureSet->textures = (u32*)malloc( textureSet->count * textureSet->tileSize * textureSet->tileSize * sizeof( u32 ) );
@@ -92,13 +116,13 @@ internal TileTextureSet_t* CreateTestTileTextureSet( void )
    return textureSet;
 }
 
-internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
+internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
 {
    u32 i;
-   TileMap_t *tileMaps, *curTileMap;
+   TileMapMock_t *tileMaps, *curTileMap;
 
    *tileMapCount = 4;
-   tileMaps = (TileMap_t*)malloc( *tileMapCount * sizeof( TileMap_t ) );
+   tileMaps = (TileMapMock_t*)malloc( *tileMapCount * sizeof( TileMapMock_t ) );
 
    // first
    curTileMap = tileMaps;
@@ -107,7 +131,7 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->tilesY = 10;
    curTileMap->wraps = False;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (Tile_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( Tile_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
@@ -143,7 +167,7 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->tilesY = 256;
    curTileMap->wraps = True;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (Tile_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( Tile_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
@@ -158,7 +182,7 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->tilesY = 128;
    curTileMap->wraps = False;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (Tile_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( Tile_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
@@ -173,7 +197,7 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->tilesY = 3;
    curTileMap->wraps = False;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (Tile_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( Tile_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
@@ -183,7 +207,7 @@ internal TileMap_t* CreateTestTileMaps( u32* tileMapCount )
    return tileMaps;
 }
 
-internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureSet_t* textureSet )
+internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* textureSet )
 {
    DWORD bytesWritten;
    BOOL result;
@@ -230,7 +254,7 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureS
    }
 
    offsets.tileTextureSet = 4 + sizeof( GameDataVersion_t ) + sizeof( GameDataFileOffsets_t );
-   offsets.tileMaps = offsets.tileTextureSet + sizeof( TileTextureSet_t ) + ( textureSet->count * textureSet->tileSize * textureSet->tileSize * sizeof( u32 ) );
+   offsets.tileMaps = offsets.tileTextureSet + sizeof( TileTextureSetMock_t ) + ( textureSet->count * textureSet->tileSize * textureSet->tileSize * sizeof( u32 ) );
    result = WriteFile( hFile, &offsets, sizeof( GameDataFileOffsets_t ), &bytesWritten, NULL );
    *filePos += bytesWritten;
 
@@ -250,7 +274,7 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureS
    return True;
 }
 
-internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, TileTextureSet_t* textureSet )
+internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* textureSet )
 {
    u32 tileIndex, pixelIndex, tilePixels, pixel;
    DWORD bytesWritten;
@@ -258,7 +282,7 @@ internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, Tile
    char msg[STRING_SIZE_DEFAULT];
 
    bytesWritten = 0;
-   result = WriteFile( hFile, textureSet, sizeof( TileTextureSet_t ), &bytesWritten, NULL );
+   result = WriteFile( hFile, textureSet, sizeof( TileTextureSetMock_t ), &bytesWritten, NULL );
    *filePos += bytesWritten;
 
    if ( !result )
@@ -267,9 +291,9 @@ internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, Tile
       Platform_FatalError( msg );
       return False;
    }
-   else if ( bytesWritten != sizeof( TileTextureSet_t ) )
+   else if ( bytesWritten != sizeof( TileTextureSetMock_t ) )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile texture set header: wrote %lu of %lu bytes", bytesWritten, sizeof( TileTextureSet_t ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile texture set header: wrote %lu of %lu bytes", bytesWritten, sizeof( TileTextureSetMock_t ) );
       Platform_FatalError( msg );
       return False;
    }
@@ -303,12 +327,12 @@ internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, Tile
    return True;
 }
 
-internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t* tileMaps, u32 tileMapCount )
+internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMock_t* tileMaps, u32 tileMapCount )
 {
    u32 i, j, tileAccum;
    DWORD bytesWritten;
    BOOL result;
-   Tile_t* tile;
+   TileMock_t* tile;
    GameDataTileMapOffset_t* offsets;
 
    bytesWritten = 0;
@@ -333,8 +357,8 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t*
       offsets[i].id = tileMaps[i].id;
       offsets[i].offset = sizeof( u32 )
          + ( tileMapCount * sizeof( GameDataTileMapOffset_t ) )
-         + ( i * sizeof( TileMap_t ) )
-         + ( tileAccum * sizeof( Tile_t ) );
+         + ( i * sizeof( TileMapMock_t ) )
+         + ( tileAccum * sizeof( TileMock_t ) );
       tileAccum += tileMaps[i].tilesX * tileMaps[i].tilesY;
    }
 
@@ -354,7 +378,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t*
    for ( i = 0; i < tileMapCount; i++ )
    {
       bytesWritten = 0;
-      result = WriteFile( hFile, &tileMaps[i], sizeof( TileMap_t ), &bytesWritten, NULL );
+      result = WriteFile( hFile, &tileMaps[i], sizeof( TileMapMock_t ), &bytesWritten, NULL );
       *filePos += bytesWritten;
 
       if ( !result )
@@ -362,7 +386,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t*
          Platform_FatalError( "failed to write test game data file tile maps." );
          return False;
       }
-      else if ( bytesWritten != sizeof( TileMap_t ) )
+      else if ( bytesWritten != sizeof( TileMapMock_t ) )
       {
          Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
          return False;
@@ -373,7 +397,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t*
          tile = &( tileMaps[i].tiles[j] );
          
          bytesWritten = 0;
-         result = WriteFile( hFile, tile, sizeof( Tile_t ), &bytesWritten, NULL );
+         result = WriteFile( hFile, tile, sizeof( TileMock_t ), &bytesWritten, NULL );
          *filePos += bytesWritten;
 
          if ( !result )
@@ -381,7 +405,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMap_t*
             Platform_FatalError( "failed to write test game data file tile maps." );
             return False;
          }
-         else if ( bytesWritten != sizeof( Tile_t ) )
+         else if ( bytesWritten != sizeof( TileMock_t ) )
          {
             Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
             return False;

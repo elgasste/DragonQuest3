@@ -6,6 +6,11 @@ struct Input_t
    InputButtonState_t buttonStates[InputButton_Count];
 };
 
+size_t Input_GetStructSize( void )
+{
+   return sizeof( Input_t );
+}
+
 Input_t* Input_Create( MemArena_t* memArena )
 {
    Input_t* input;
