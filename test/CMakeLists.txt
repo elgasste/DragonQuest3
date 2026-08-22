@@ -41,6 +41,7 @@ add_executable(Test_PixelBuffer
 )
 
 add_executable(Test_TileMap
+	../src/tile_map.c
 	vendor/unity.c
 	test_tile_map.c
 )
@@ -96,6 +97,7 @@ target_include_directories(Test_PixelBuffer PRIVATE ../include)
 target_include_directories(Test_PixelBuffer PRIVATE ../src)
 
 target_include_directories(Test_TileMap PRIVATE vendor)
+target_include_directories(Test_TileMap PRIVATE mocks)
 target_include_directories(Test_TileMap PRIVATE ../include)
 target_include_directories(Test_TileMap PRIVATE ../src)
 
