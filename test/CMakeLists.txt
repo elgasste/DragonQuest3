@@ -28,6 +28,7 @@ add_executable(Test_Game_Render
 )
 
 add_executable(Test_Input
+	../src/input.c
 	vendor/unity.c
 	test_input.c
 )
