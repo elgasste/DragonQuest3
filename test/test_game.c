@@ -218,6 +218,11 @@ void Game_Render( Game_t* game )
    g_gameRenderCount++;
 }
 
+void Game_TicPhysics( Game_t* game )
+{
+   UNUSED_PARAM( game );
+}
+
 internal Game_t* CreateGame( void )
 {
    return Game_Create( (MemArena_t*)1, "test.dw3d" );
@@ -268,7 +273,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH, viewport.w );
    TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT, viewport.h );
 
-   playerRect = Game_GetPlayerRect( game );
+   playerRect = Entity_GetRect( Game_GetPlayerEntity( game ) );
    TEST_ASSERT_EQUAL_INT( 100, playerRect.x );
    TEST_ASSERT_EQUAL_INT( 100, playerRect.y );
    TEST_ASSERT_EQUAL_INT( 12, playerRect.w );
@@ -285,7 +290,7 @@ void test_Game_SetPlayerRect_UpdatesPlayerRectangle( void )
 
    Game_SetPlayerRect( game, playerRect );
 
-   playerRect = Game_GetPlayerRect( game );
+   playerRect = Entity_GetRect( Game_GetPlayerEntity( game ) );
    TEST_ASSERT_EQUAL_INT( 25, playerRect.x );
    TEST_ASSERT_EQUAL_INT( 30, playerRect.y );
    TEST_ASSERT_EQUAL_INT( 18, playerRect.w );

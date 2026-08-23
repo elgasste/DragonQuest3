@@ -64,7 +64,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    Entity_SetVelocity( game->playerEntity, 0, 0 );
 
    // TODO: temporary, this will eventually be part of the game data file
-   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1 );
+   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 2 );
 
    return game;
 }
@@ -126,9 +126,9 @@ Vector4i32_t Game_GetTileMapViewport( Game_t* game )
    return game->tileMapViewport;
 }
 
-Vector4i32_t Game_GetPlayerRect( Game_t* game )
+Entity_t* Game_GetPlayerEntity( Game_t* game )
 {
-   return Entity_GetRect( game->playerEntity );
+   return game->playerEntity;
 }
 
 void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect )
@@ -163,8 +163,9 @@ internal void Game_Tic( Game_t* game )
    i32 centerX, centerY;
    Vector4i32_t playerRect;
 
-   playerRect = Entity_GetRect( game->playerEntity );
+   Game_TicPhysics( game );
 
+   playerRect = Entity_GetRect( game->playerEntity );
    centerX = playerRect.x + ( playerRect.w / 2 );
    centerY = playerRect.y + ( playerRect.h / 2 );
    TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );

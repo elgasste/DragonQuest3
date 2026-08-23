@@ -1,5 +1,6 @@
 #include "display.h"
 #include "game.h"
+#include "mocks/mock_entity.h"
 #include "tile_map.h"
 #include "unity.h"
 
@@ -45,6 +46,7 @@ PlatformRenderDisplayBufferCall_t;
 static Display_t* g_display;
 static TileMap_t* g_tileMap;
 static TileTextureSet_t* g_tileTextureSet;
+static Entity_t g_playerEntity;
 static Vector4i32_t g_viewport;
 static Vector4i32_t g_playerRect;
 static DisplayFillCall_t g_displayFillCall;
@@ -65,6 +67,7 @@ void setUp( void )
    g_playerRect.y = 60;
    g_playerRect.w = 12;
    g_playerRect.h = 14;
+   g_playerEntity.rect = g_playerRect;
 
    g_displayFillCall.display = 0;
    g_displayFillCall.color = 0;
@@ -133,10 +136,15 @@ Vector4i32_t Game_GetTileMapViewport( Game_t* game )
    return g_viewport;
 }
 
-Vector4i32_t Game_GetPlayerRect( Game_t* game )
+Entity_t* Game_GetPlayerEntity( Game_t* game )
 {
    UNUSED_PARAM( game );
-   return g_playerRect;
+   return &g_playerEntity;
+}
+
+Vector4i32_t Entity_GetRect( Entity_t* entity )
+{
+   return entity->rect;
 }
 
 void Display_Fill( Display_t* display, u32 color )

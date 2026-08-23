@@ -24,6 +24,12 @@ add_executable(Test_Game
 	test_game.c
 )
 
+add_executable(Test_Game_Physics
+	../src/game_physics.c
+	vendor/unity.c
+	test_game_physics.c
+)
+
 add_executable(Test_Game_Data
 	../src/game_data.c
 	vendor/unity.c
@@ -64,6 +70,7 @@ set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Display PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Entity PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Game_Physics PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Data PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Render PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Input PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -77,6 +84,7 @@ if(MSVC)
 	target_compile_options(Test_Entity PRIVATE /W4)
 	target_compile_options(Test_Display PRIVATE /W4)
 	target_compile_options(Test_Game PRIVATE /W4)
+	target_compile_options(Test_Game_Physics PRIVATE /W4 /wd4201)
 	target_compile_options(Test_Game_Data PRIVATE /W4)
 	target_compile_options(Test_Game_Render PRIVATE /W4)
 	target_compile_options(Test_Input PRIVATE /W4)
@@ -102,6 +110,11 @@ target_include_directories(Test_Game PRIVATE vendor)
 target_include_directories(Test_Game PRIVATE mocks)
 target_include_directories(Test_Game PRIVATE ../include)
 target_include_directories(Test_Game PRIVATE ../src)
+
+target_include_directories(Test_Game_Physics PRIVATE vendor)
+target_include_directories(Test_Game_Physics PRIVATE mocks)
+target_include_directories(Test_Game_Physics PRIVATE ../include)
+target_include_directories(Test_Game_Physics PRIVATE ../src)
 
 target_include_directories(Test_Game_Data PRIVATE vendor)
 target_include_directories(Test_Game_Data PRIVATE mocks)
@@ -133,6 +146,7 @@ add_test( NAME Unity_Clock_Tests COMMAND Test_Clock)
 add_test( NAME Unity_Display_Tests COMMAND Test_Display)
 add_test( NAME Unity_Entity_Tests COMMAND Test_Entity)
 add_test( NAME Unity_Game_Tests COMMAND Test_Game)
+add_test( NAME Unity_Game_Physics_Tests COMMAND Test_Game_Physics)
 add_test( NAME Unity_Game_Data_Tests COMMAND Test_Game_Data)
 add_test( NAME Unity_Game_Render_Tests COMMAND Test_Game_Render)
 add_test( NAME Unity_Input_Tests COMMAND Test_Input)

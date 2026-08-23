@@ -1,4 +1,5 @@
 #include "display.h"
+#include "entity.h"
 #include "game.h"
 #include "platform.h"
 
@@ -31,10 +32,12 @@ internal void GameRender_DrawPlayer( Game_t* game )
    Display_t* display;
    Vector4i32_t viewport;
    Vector4i32_t playerRect;
+   Entity_t* playerEntity;
 
    display = Game_GetDisplay( game );
    viewport = Game_GetTileMapViewport( game );
-   playerRect = Game_GetPlayerRect( game );
+   playerEntity = Game_GetPlayerEntity( game );
+   playerRect = Entity_GetRect( playerEntity );
 
    Display_DrawRect( display, playerRect.x - viewport.x, playerRect.y - viewport.y, playerRect.w, playerRect.h, 0x00666666u );
 }
