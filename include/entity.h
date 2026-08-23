@@ -8,7 +8,7 @@ typedef struct MemArena_t MemArena_t;
 
 typedef struct Entity_t Entity_t;
 size_t Entity_GetStructSize( void );
-Entity_t* Entity_Create( MemArena_t* memArena, i32 x, i32 y, i32 w, i32 h );
+Entity_t* Entity_Create( MemArena_t* memArena );
 void Entity_Free( Entity_t* entity, MemArena_t* memArena );
 
 Vector4i32_t Entity_GetRect( Entity_t* entity );

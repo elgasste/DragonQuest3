@@ -1,5 +1,6 @@
 #include "mocks/mock_clock.h"
 #include "mocks/mock_display.h"
+#include "mocks/mock_entity.h"
 #include "mocks/mock_game_data.h"
 #include "mocks/mock_input.h"
 #include "mocks/mock_mem_arena.h"
@@ -24,12 +25,14 @@ global u32 g_tileMapFreeCount;
 global u32 g_tileTextureSetFreeCount;
 global u32 g_gameDataFreeCount;
 global u32 g_displayFreeCount;
+global u32 g_entityFreeCount;
 global Clock_t* g_clock;
 global Input_t* g_input;
 global Display_t* g_display;
 global GameData_t* g_gameData;
 global TileTextureSet_t* g_tileTextureSet;
 global TileMap_t* g_tileMap;
+global Entity_t* g_playerEntity;
 global Vector4i32_t g_anchorViewport;
 global i32 g_anchorX;
 global i32 g_anchorY;
@@ -102,6 +105,41 @@ void Display_Free( Display_t* display, MemArena_t* memArena )
 {
    MemArena_FreeMem( memArena, display );
    g_displayFreeCount++;
+}
+
+Entity_t* Entity_Create( MemArena_t* memArena )
+{
+   g_playerEntity = (Entity_t*)MemArena_AllocMem( memArena, sizeof( Entity_t ) );
+   return g_playerEntity;
+}
+
+void Entity_Free( Entity_t* entity, MemArena_t* memArena )
+{
+   MemArena_FreeMem( memArena, entity );
+   g_entityFreeCount++;
+}
+
+Vector4i32_t Entity_GetRect( Entity_t* entity )
+{
+   return entity->rect;
+}
+
+void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
+{
+   entity->rect.x = x;
+   entity->rect.y = y;
+}
+
+void Entity_SetSize( Entity_t* entity, i32 w, i32 h )
+{
+   entity->rect.w = w;
+   entity->rect.h = h;
+}
+
+void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
+{
+   entity->velocity.x = vx;
+   entity->velocity.y = vy;
 }
 
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
@@ -200,6 +238,7 @@ void setUp( void )
    g_tileTextureSetFreeCount = 0;
    g_gameDataFreeCount = 0;
    g_displayFreeCount = 0;
+   g_entityFreeCount = 0;
 }
 
 void tearDown( void ) {}
@@ -230,10 +269,10 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT, viewport.h );
 
    playerRect = Game_GetPlayerRect( game );
-   TEST_ASSERT_EQUAL_INT( 10, playerRect.x );
-   TEST_ASSERT_EQUAL_INT( 10, playerRect.y );
+   TEST_ASSERT_EQUAL_INT( 100, playerRect.x );
+   TEST_ASSERT_EQUAL_INT( 100, playerRect.y );
    TEST_ASSERT_EQUAL_INT( 12, playerRect.w );
-   TEST_ASSERT_EQUAL_INT( 14, playerRect.h );
+   TEST_ASSERT_EQUAL_INT( 12, playerRect.h );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
 
    Game_Free( game, (MemArena_t*)1 );
@@ -283,7 +322,8 @@ void test_Game_Free_ReleasesAllDependencies( void )
    TEST_ASSERT_EQUAL_UINT( 1, g_gameDataFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_tileMapFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_tileTextureSetFreeCount );
-   TEST_ASSERT_EQUAL_UINT( 7, g_freeCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_entityFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 8, g_freeCount );
 }
 
 int main( void )

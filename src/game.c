@@ -1,5 +1,6 @@
 #include "clock.h"
 #include "display.h"
+#include "entity.h"
 #include "game.h"
 #include "game_data.h"
 #include "input.h"
@@ -23,7 +24,7 @@ struct Game_t
    Vector4i32_t tileMapViewport;
 
    // TODO: this is the player, temporarily
-   Vector4i32_t playerRect;
+   Entity_t* playerEntity;
 
    b32 shutdown;
 };
@@ -56,10 +57,11 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->tileMapViewport.y = 0;
    game->tileMapViewport.w = DISPLAY_WIDTH;
    game->tileMapViewport.h = DISPLAY_HEIGHT;
-   game->playerRect.x = 10;
-   game->playerRect.y = 10;
-   game->playerRect.w = 12;
-   game->playerRect.h = 14;
+
+   game->playerEntity = Entity_Create( game->memArena );
+   Entity_SetSize( game->playerEntity, 12, 12 );
+   Entity_SetPosition( game->playerEntity, 100, 100 );
+   Entity_SetVelocity( game->playerEntity, 0, 0 );
 
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1 );
@@ -83,6 +85,8 @@ void Game_Free( Game_t* game, MemArena_t* memArena )
    {
       TileTextureSet_Free( game->tileTextureSet, memArena );
    }
+
+   Entity_Free( game->playerEntity, memArena );
 
    MemArena_FreeMem( memArena, game );
 }
@@ -124,12 +128,13 @@ Vector4i32_t Game_GetTileMapViewport( Game_t* game )
 
 Vector4i32_t Game_GetPlayerRect( Game_t* game )
 {
-   return game->playerRect;
+   return Entity_GetRect( game->playerEntity );
 }
 
 void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect )
 {
-   game->playerRect = playerRect;
+   Entity_SetPosition( game->playerEntity, playerRect.x, playerRect.y );
+   Entity_SetSize( game->playerEntity, playerRect.w, playerRect.h );
 }
 
 void Game_Run( Game_t* game )
@@ -156,8 +161,11 @@ void Game_Stop( Game_t* game )
 internal void Game_Tic( Game_t* game )
 {
    i32 centerX, centerY;
+   Vector4i32_t playerRect;
 
-   centerX = game->playerRect.x + ( game->playerRect.w / 2 );
-   centerY = game->playerRect.y + ( game->playerRect.h / 2 );
+   playerRect = Entity_GetRect( game->playerEntity );
+
+   centerX = playerRect.x + ( playerRect.w / 2 );
+   centerY = playerRect.y + ( playerRect.h / 2 );
    TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 }

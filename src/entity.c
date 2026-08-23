@@ -12,16 +12,11 @@ size_t Entity_GetStructSize( void )
    return sizeof( Entity_t );
 }
 
-Entity_t* Entity_Create( MemArena_t* memArena, i32 x, i32 y, i32 w, i32 h )
+Entity_t* Entity_Create( MemArena_t* memArena )
 {
    Entity_t* entity;
 
    entity = (Entity_t*)MemArena_AllocMem( memArena, sizeof( Entity_t ) );
-   entity->rect.x = x;
-   entity->rect.y = y;
-   entity->rect.w = w;
-   entity->rect.h = h;
-
    return entity;
 }
 
