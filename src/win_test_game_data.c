@@ -150,23 +150,106 @@ internal u32 FunnyTilePixel( u32 tileIndex, u32 x, u32 y )
          return RGB( 220, 220, 255 );
       }
    }
-   else
+   else if ( tileIndex == 4 )
    {
-      if ( ( x == 4 || x == 11 ) && y >= 3 && y <= 6 )
+      if ( x >= 3 && x <= 12 && y >= 3 && y <= 12 && x + y >= 7 && x + y <= 18 )
       {
-         return RGB( 100, 240, 100 );
+         return RGB( 255, 190, 40 );
       }
-      if ( x >= 3 && x <= 12 && y >= 6 && y <= 12 )
+      if ( ( x == 5 && y == 6 ) || ( x == 9 && y == 8 ) || ( x == 7 && y == 10 ) )
       {
-         return RGB( 60, 190, 80 );
+         return RGB( 210, 50, 40 );
       }
-      if ( ( x == 5 || x == 10 ) && y >= 6 && y <= 8 )
+      if ( x >= 3 && x <= 12 && y == 12 )
       {
-         return RGB( 32, 32, 32 );
+         return RGB( 180, 90, 30 );
+      }
+   }
+   else if ( tileIndex == 5 )
+   {
+      if ( x >= 3 && x <= 12 && ( y == 5 || y == 8 ) )
+      {
+         return RGB( 240, 240, 240 );
+      }
+      if ( ( x == 3 || x == 12 ) && y >= 5 && y <= 8 )
+      {
+         return RGB( 240, 240, 240 );
+      }
+      if ( x >= 4 && x <= 11 && y >= 9 && y <= 10 )
+      {
+         return RGB( 240, 240, 240 );
+      }
+      if ( x == 6 && y == 6 || x == 9 && y == 6 )
+      {
+         return RGB( 40, 40, 40 );
+      }
+   }
+   else if ( tileIndex == 6 )
+   {
+      if ( x >= 7 && x <= 8 && y >= 2 && y <= 11 )
+      {
+         return RGB( 230, 230, 245 );
+      }
+      if ( y >= 9 && y <= 11 && x >= 5 && x <= 10 )
+      {
+         return RGB( 230, 230, 245 );
+      }
+      if ( ( x == 5 || x == 10 ) && y >= 12 && y <= 13 )
+      {
+         return RGB( 240, 80, 50 );
+      }
+      if ( x == 7 || x == 8 )
+      {
+         return RGB( 100, 160, 240 );
+      }
+   }
+   else if ( tileIndex == 7 )
+   {
+      if ( x >= 4 && x <= 11 && y >= 5 && y <= 12 )
+      {
+         return RGB( 180, 90, 220 );
+      }
+      if ( x >= 5 && x <= 10 && y == 3 )
+      {
+         return RGB( 255, 220, 40 );
+      }
+      if ( ( x == 6 || x == 9 ) && y >= 7 && y <= 8 )
+      {
+         return RGB( 40, 40, 40 );
       }
       if ( y == 10 && x >= 6 && x <= 9 )
       {
-         return RGB( 220, 60, 80 );
+         return RGB( 250, 100, 160 );
+      }
+   }
+   else if ( tileIndex == 8 )
+   {
+      if ( x >= 3 && x <= 12 && y >= 3 && y <= 12 )
+      {
+         return RGB( 80, 180, 240 );
+      }
+      if ( x >= 5 && x <= 10 && y >= 6 && y <= 8 )
+      {
+         return RGB( 40, 40, 80 );
+      }
+      if ( x >= 6 && x <= 9 && y >= 9 && y <= 10 )
+      {
+         return RGB( 240, 240, 240 );
+      }
+   }
+   else
+   {
+      if ( x >= 4 && x <= 11 && y >= 3 && y <= 12 )
+      {
+         return RGB( 250, 180, 80 );
+      }
+      if ( ( x == 6 || x == 9 ) && y >= 6 && y <= 7 )
+      {
+         return RGB( 40, 40, 40 );
+      }
+      if ( x >= 7 && x <= 8 && y >= 9 && y <= 11 )
+      {
+         return RGB( 40, 40, 40 );
       }
    }
 
@@ -179,7 +262,7 @@ internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
    TileTextureSetMock_t* textureSet;
 
    textureSet = (TileTextureSetMock_t*)malloc( sizeof( TileTextureSetMock_t ) );
-   textureSet->count = 5;
+   textureSet->count = 10;
    textureSet->tileSize = 16;
    textureSet->textures = (u32*)malloc( textureSet->count * textureSet->tileSize * textureSet->tileSize * sizeof( u32 ) );
 
@@ -254,7 +337,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
       // random
-      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
+      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
    }
 
    // make the edges all the same so we can test wrapping
@@ -281,7 +364,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
       // random
-      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
+      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
    }
 
    // 3: 3x3, no wrapping
