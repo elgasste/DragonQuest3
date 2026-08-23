@@ -82,10 +82,100 @@ void WriteTestGameDataFile( const char* filePath )
    CloseHandle( hFile );
 }
 
+internal u32 FunnyTilePixel( u32 tileIndex, u32 x, u32 y )
+{
+   u32 background = RGB( 24, 24, 48 );
+
+   if ( tileIndex == 0 )
+   {
+      if ( ( x >= 3 && x <= 12 && ( y == 2 || y == 13 ) ) ||
+           ( y >= 3 && y <= 12 && ( x == 2 || x == 13 ) ) )
+      {
+         return RGB( 255, 220, 40 );
+      }
+      if ( ( x == 5 || x == 10 ) && y >= 5 && y <= 7 )
+      {
+         return RGB( 32, 32, 32 );
+      }
+      if ( y >= 9 && y <= 10 && x >= 5 && x <= 10 && ( x == 5 || x == 10 || y == 10 ) )
+      {
+         return RGB( 32, 32, 32 );
+      }
+   }
+   else if ( tileIndex == 1 )
+   {
+      if ( ( x >= 7 && x <= 8 && y <= 3 ) ||
+           ( x >= 4 && x <= 11 && y >= 4 && y <= 12 ) )
+      {
+         return RGB( 80, 220, 220 );
+      }
+      if ( ( x == 6 || x == 9 ) && y >= 6 && y <= 8 )
+      {
+         return RGB( 32, 32, 32 );
+      }
+      if ( x >= 5 && x <= 10 && y == 10 )
+      {
+         return RGB( 255, 120, 80 );
+      }
+   }
+   else if ( tileIndex == 2 )
+   {
+      if ( ( x >= 3 && x <= 12 && ( y == 3 || y == 12 ) ) ||
+           ( y >= 4 && y <= 11 && ( x == 2 || x == 13 ) ) )
+      {
+         return RGB( 255, 150, 100 );
+      }
+      if ( y >= 5 && y <= 7 && ( x >= 4 && x <= 7 || x >= 9 && x <= 12 ) )
+      {
+         return RGB( 24, 24, 48 );
+      }
+      if ( y == 9 && x >= 6 && x <= 9 )
+      {
+         return RGB( 220, 60, 100 );
+      }
+   }
+   else if ( tileIndex == 3 )
+   {
+      if ( ( x >= 4 && x <= 11 && y >= 3 && y <= 12 ) ||
+           ( x >= 3 && x <= 12 && y == 12 ) )
+      {
+         return RGB( 220, 220, 255 );
+      }
+      if ( ( x == 5 || x == 10 ) && y >= 6 && y <= 8 )
+      {
+         return RGB( 80, 80, 160 );
+      }
+      if ( y == 13 && ( x == 4 || x == 7 || x == 10 ) )
+      {
+         return RGB( 220, 220, 255 );
+      }
+   }
+   else
+   {
+      if ( ( x == 4 || x == 11 ) && y >= 3 && y <= 6 )
+      {
+         return RGB( 100, 240, 100 );
+      }
+      if ( x >= 3 && x <= 12 && y >= 6 && y <= 12 )
+      {
+         return RGB( 60, 190, 80 );
+      }
+      if ( ( x == 5 || x == 10 ) && y >= 6 && y <= 8 )
+      {
+         return RGB( 32, 32, 32 );
+      }
+      if ( y == 10 && x >= 6 && x <= 9 )
+      {
+         return RGB( 220, 60, 80 );
+      }
+   }
+
+   return background;
+}
+
 internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
 {
-   u32 pixel, tilePixels, tileIndex, pixelIndex;
-   u32 tileColors[5];
+   u32 pixel, tilePixels, tileIndex, pixelIndex, x, y;
    TileTextureSetMock_t* textureSet;
 
    textureSet = (TileTextureSetMock_t*)malloc( sizeof( TileTextureSetMock_t ) );
@@ -93,18 +183,15 @@ internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
    textureSet->tileSize = 16;
    textureSet->textures = (u32*)malloc( textureSet->count * textureSet->tileSize * textureSet->tileSize * sizeof( u32 ) );
 
-   tileColors[0] = RGB( 0, 0, 0 );
-   tileColors[1] = RGB( 255, 255, 255 );
-   tileColors[2] = RGB( 255, 0, 0 );
-   tileColors[3] = RGB( 0, 0, 255 );
-   tileColors[4] = RGB( 0, 255, 0 );
    tilePixels = textureSet->tileSize * textureSet->tileSize;
 
    for ( tileIndex = 0; tileIndex < textureSet->count; tileIndex++ )
    {
       for ( pixelIndex = 0; pixelIndex < tilePixels; pixelIndex++ )
       {
-         pixel = tileColors[tileIndex];
+         x = pixelIndex % textureSet->tileSize;
+         y = pixelIndex / textureSet->tileSize;
+         pixel = FunnyTilePixel( tileIndex, x, y );
          textureSet->textures[tileIndex * tilePixels + pixelIndex] = pixel;
       }
    }
