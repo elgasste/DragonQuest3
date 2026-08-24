@@ -29,8 +29,10 @@ u32 TileMap_GetTilesY( TileMap_t* tileMap );
 b32 TileMap_GetWraps( TileMap_t* tileMap );
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y );
 Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap );
+Vector4i32_t TileMap_GetViewportPixels( TileMap_t* tileMap );
 
 void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits );
+void TileMap_SetViewportPixels( TileMap_t* tileMap, Vector4i32_t viewportPixels );
 
 void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels );
 
