@@ -59,14 +59,14 @@ void setUp( void )
    g_display = (Display_t*)1;
    g_tileMap = (TileMap_t*)2;
    g_tileTextureSet = (TileTextureSet_t*)3;
-   g_viewport.x = 10;
-   g_viewport.y = 20;
-   g_viewport.w = 320;
-   g_viewport.h = 240;
-   g_playerRect.x = 40;
-   g_playerRect.y = 60;
-   g_playerRect.w = 12;
-   g_playerRect.h = 14;
+   g_viewport.x = 10 * WORLD_UNITS_PER_PIXEL;
+   g_viewport.y = 20 * WORLD_UNITS_PER_PIXEL;
+   g_viewport.w = 320 * WORLD_UNITS_PER_PIXEL;
+   g_viewport.h = 240 * WORLD_UNITS_PER_PIXEL;
+   g_playerRect.x = 40 * WORLD_UNITS_PER_PIXEL;
+   g_playerRect.y = 60 * WORLD_UNITS_PER_PIXEL;
+   g_playerRect.w = 12 * WORLD_UNITS_PER_PIXEL;
+   g_playerRect.h = 14 * WORLD_UNITS_PER_PIXEL;
    g_playerEntity.rect = g_playerRect;
 
    g_displayFillCall.display = 0;
@@ -209,10 +209,10 @@ void test_Game_Render_RendersTileMapViewport( void )
    TEST_ASSERT_EQUAL_PTR( g_display, g_displayDrawTileMapViewportCall.display );
    TEST_ASSERT_EQUAL_PTR( g_tileMap, g_displayDrawTileMapViewportCall.tileMap );
    TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, g_displayDrawTileMapViewportCall.tileTextureSet );
-   TEST_ASSERT_EQUAL_INT( 10, g_displayDrawTileMapViewportCall.viewport.x );
-   TEST_ASSERT_EQUAL_INT( 20, g_displayDrawTileMapViewportCall.viewport.y );
-   TEST_ASSERT_EQUAL_INT( 320, g_displayDrawTileMapViewportCall.viewport.w );
-   TEST_ASSERT_EQUAL_INT( 240, g_displayDrawTileMapViewportCall.viewport.h );
+   TEST_ASSERT_EQUAL_INT( 10 * WORLD_UNITS_PER_PIXEL, g_displayDrawTileMapViewportCall.viewport.x );
+   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, g_displayDrawTileMapViewportCall.viewport.y );
+   TEST_ASSERT_EQUAL_INT( 320 * WORLD_UNITS_PER_PIXEL, g_displayDrawTileMapViewportCall.viewport.w );
+   TEST_ASSERT_EQUAL_INT( 240 * WORLD_UNITS_PER_PIXEL, g_displayDrawTileMapViewportCall.viewport.h );
    TEST_ASSERT_EQUAL_INT( 0, g_displayDrawTileMapViewportCall.displayX );
    TEST_ASSERT_EQUAL_INT( 0, g_displayDrawTileMapViewportCall.displayY );
    TEST_ASSERT_EQUAL_INT( 1, g_displayDrawTileMapViewportCall.callCount );

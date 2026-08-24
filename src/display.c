@@ -184,6 +184,11 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
    u32* texture;
    b32 wraps, smallMapCentered;
 
+   viewport.x /= WORLD_UNITS_PER_PIXEL;
+   viewport.y /= WORLD_UNITS_PER_PIXEL;
+   viewport.w /= WORLD_UNITS_PER_PIXEL;
+   viewport.h /= WORLD_UNITS_PER_PIXEL;
+
    viewportR = viewport.x + viewport.w;
    viewportB = viewport.y + viewport.h;
    tileSize = TileTextureSet_GetTileSize( tileTextureSet );

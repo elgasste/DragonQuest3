@@ -82,178 +82,94 @@ void WriteTestGameDataFile( const char* filePath )
    CloseHandle( hFile );
 }
 
-internal u32 FunnyTilePixel( u32 tileIndex, u32 x, u32 y )
+internal u32 LandscapeTilePixel( u32 tileIndex, u32 x, u32 y )
 {
-   u32 background = RGB( 24, 24, 48 );
+   u32 speckle = ( ( x * 7 + y * 13 ) % 5 == 0 );
 
-   if ( tileIndex == 0 )
+   if ( tileIndex == 0 ) // grass
    {
-      if ( ( x >= 3 && x <= 12 && ( y == 2 || y == 13 ) ) ||
-           ( y >= 3 && y <= 12 && ( x == 2 || x == 13 ) ) )
+      if ( speckle )
       {
-         return RGB( 255, 220, 40 );
+         return RGB( 60, 140, 50 );
       }
-      if ( ( x == 5 || x == 10 ) && y >= 5 && y <= 7 )
-      {
-         return RGB( 32, 32, 32 );
-      }
-      if ( y >= 9 && y <= 10 && x >= 5 && x <= 10 && ( x == 5 || x == 10 || y == 10 ) )
-      {
-         return RGB( 32, 32, 32 );
-      }
+      return RGB( 80, 170, 70 );
    }
-   else if ( tileIndex == 1 )
+   else if ( tileIndex == 1 ) // dirt
    {
-      if ( ( x >= 7 && x <= 8 && y <= 3 ) ||
-           ( x >= 4 && x <= 11 && y >= 4 && y <= 12 ) )
+      if ( speckle )
       {
-         return RGB( 80, 220, 220 );
+         return RGB( 110, 80, 50 );
       }
-      if ( ( x == 6 || x == 9 ) && y >= 6 && y <= 8 )
-      {
-         return RGB( 32, 32, 32 );
-      }
-      if ( x >= 5 && x <= 10 && y == 10 )
-      {
-         return RGB( 255, 120, 80 );
-      }
+      return RGB( 140, 100, 65 );
    }
-   else if ( tileIndex == 2 )
+   else if ( tileIndex == 2 ) // sand
    {
-      if ( ( x >= 3 && x <= 12 && ( y == 3 || y == 12 ) ) ||
-           ( y >= 4 && y <= 11 && ( x == 2 || x == 13 ) ) )
+      if ( speckle )
       {
-         return RGB( 255, 150, 100 );
+         return RGB( 220, 195, 130 );
       }
-      if ( y >= 5 && y <= 7 && ( x >= 4 && x <= 7 || x >= 9 && x <= 12 ) )
-      {
-         return RGB( 24, 24, 48 );
-      }
-      if ( y == 9 && x >= 6 && x <= 9 )
-      {
-         return RGB( 220, 60, 100 );
-      }
+      return RGB( 235, 210, 150 );
    }
-   else if ( tileIndex == 3 )
+   else if ( tileIndex == 3 ) // water
    {
-      if ( ( x >= 4 && x <= 11 && y >= 3 && y <= 12 ) ||
-           ( x >= 3 && x <= 12 && y == 12 ) )
+      if ( ( x + ( y % 4 ) ) % 6 < 2 )
       {
-         return RGB( 220, 220, 255 );
+         return RGB( 60, 110, 200 );
       }
-      if ( ( x == 5 || x == 10 ) && y >= 6 && y <= 8 )
-      {
-         return RGB( 80, 80, 160 );
-      }
-      if ( y == 13 && ( x == 4 || x == 7 || x == 10 ) )
-      {
-         return RGB( 220, 220, 255 );
-      }
+      return RGB( 80, 140, 220 );
    }
-   else if ( tileIndex == 4 )
+   else if ( tileIndex == 4 ) // stone
    {
-      if ( x >= 3 && x <= 12 && y >= 3 && y <= 12 && x + y >= 7 && x + y <= 18 )
+      if ( speckle )
       {
-         return RGB( 255, 190, 40 );
+         return RGB( 110, 110, 115 );
       }
-      if ( ( x == 5 && y == 6 ) || ( x == 9 && y == 8 ) || ( x == 7 && y == 10 ) )
-      {
-         return RGB( 210, 50, 40 );
-      }
-      if ( x >= 3 && x <= 12 && y == 12 )
-      {
-         return RGB( 180, 90, 30 );
-      }
+      return RGB( 140, 140, 145 );
    }
-   else if ( tileIndex == 5 )
+   else if ( tileIndex == 5 ) // path
    {
-      if ( x >= 3 && x <= 12 && ( y == 5 || y == 8 ) )
+      if ( speckle )
       {
-         return RGB( 240, 240, 240 );
+         return RGB( 190, 160, 110 );
       }
-      if ( ( x == 3 || x == 12 ) && y >= 5 && y <= 8 )
-      {
-         return RGB( 240, 240, 240 );
-      }
-      if ( x >= 4 && x <= 11 && y >= 9 && y <= 10 )
-      {
-         return RGB( 240, 240, 240 );
-      }
-      if ( x == 6 && y == 6 || x == 9 && y == 6 )
-      {
-         return RGB( 40, 40, 40 );
-      }
+      return RGB( 205, 175, 125 );
    }
-   else if ( tileIndex == 6 )
+   else if ( tileIndex == 6 ) // snow
    {
-      if ( x >= 7 && x <= 8 && y >= 2 && y <= 11 )
+      if ( speckle )
       {
-         return RGB( 230, 230, 245 );
+         return RGB( 225, 230, 235 );
       }
-      if ( y >= 9 && y <= 11 && x >= 5 && x <= 10 )
-      {
-         return RGB( 230, 230, 245 );
-      }
-      if ( ( x == 5 || x == 10 ) && y >= 12 && y <= 13 )
-      {
-         return RGB( 240, 80, 50 );
-      }
-      if ( x == 7 || x == 8 )
-      {
-         return RGB( 100, 160, 240 );
-      }
+      return RGB( 245, 248, 250 );
    }
-   else if ( tileIndex == 7 )
+   else if ( tileIndex == 7 ) // tree
    {
-      if ( x >= 4 && x <= 11 && y >= 5 && y <= 12 )
+      if ( y < 6 )
       {
-         return RGB( 180, 90, 220 );
+         return ( speckle ) ? RGB( 40, 110, 45 ) : RGB( 55, 130, 55 );
       }
-      if ( x >= 5 && x <= 10 && y == 3 )
+      if ( x >= 6 && x <= 9 )
       {
-         return RGB( 255, 220, 40 );
+         return RGB( 90, 60, 35 );
       }
-      if ( ( x == 6 || x == 9 ) && y >= 7 && y <= 8 )
-      {
-         return RGB( 40, 40, 40 );
-      }
-      if ( y == 10 && x >= 6 && x <= 9 )
-      {
-         return RGB( 250, 100, 160 );
-      }
+      return RGB( 80, 170, 70 );
    }
-   else if ( tileIndex == 8 )
+   else if ( tileIndex == 8 ) // bush
    {
-      if ( x >= 3 && x <= 12 && y >= 3 && y <= 12 )
+      if ( x >= 3 && x <= 12 && y >= 4 && y <= 11 )
       {
-         return RGB( 80, 180, 240 );
+         return ( speckle ) ? RGB( 50, 120, 55 ) : RGB( 65, 140, 60 );
       }
-      if ( x >= 5 && x <= 10 && y >= 6 && y <= 8 )
-      {
-         return RGB( 40, 40, 80 );
-      }
-      if ( x >= 6 && x <= 9 && y >= 9 && y <= 10 )
-      {
-         return RGB( 240, 240, 240 );
-      }
+      return RGB( 80, 170, 70 );
    }
-   else
+   else // mountain
    {
-      if ( x >= 4 && x <= 11 && y >= 3 && y <= 12 )
+      if ( y + ( x / 2 ) < 10 )
       {
-         return RGB( 250, 180, 80 );
+         return RGB( 130, 130, 135 );
       }
-      if ( ( x == 6 || x == 9 ) && y >= 6 && y <= 7 )
-      {
-         return RGB( 40, 40, 40 );
-      }
-      if ( x >= 7 && x <= 8 && y >= 9 && y <= 11 )
-      {
-         return RGB( 40, 40, 40 );
-      }
+      return RGB( 100, 100, 105 );
    }
-
-   return background;
 }
 
 internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
@@ -274,7 +190,7 @@ internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
       {
          x = pixelIndex % textureSet->tileSize;
          y = pixelIndex / textureSet->tileSize;
-         pixel = FunnyTilePixel( tileIndex, x, y );
+         pixel = LandscapeTilePixel( tileIndex, x, y );
          textureSet->textures[tileIndex * tilePixels + pixelIndex] = pixel;
       }
    }

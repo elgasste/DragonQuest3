@@ -39,5 +39,16 @@ internal void GameRender_DrawPlayer( Game_t* game )
    playerEntity = Game_GetPlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
 
+   // TODO: it seems silly we have to do this for every frame, we should probably store
+   // a separate version of this viewport in pixels. same with the player rect.
+   viewport.x /= WORLD_UNITS_PER_PIXEL;
+   viewport.y /= WORLD_UNITS_PER_PIXEL;
+   viewport.w /= WORLD_UNITS_PER_PIXEL;
+   viewport.h /= WORLD_UNITS_PER_PIXEL;
+   playerRect.x /= WORLD_UNITS_PER_PIXEL;
+   playerRect.y /= WORLD_UNITS_PER_PIXEL;
+   playerRect.w /= WORLD_UNITS_PER_PIXEL;
+   playerRect.h /= WORLD_UNITS_PER_PIXEL;
+
    Display_DrawRect( display, playerRect.x - viewport.x, playerRect.y - viewport.y, playerRect.w, playerRect.h, 0x00666666u );
 }

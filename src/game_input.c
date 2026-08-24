@@ -1,3 +1,4 @@
+#include "clock.h"
 #include "entity.h"
 #include "game.h"
 #include "input.h"
@@ -7,14 +8,19 @@
 void Game_HandleInput( Game_t* game )
 {
    b32 leftIsDown, upIsDown, rightIsDown, downIsDown;
+   r32 frameSeconds;
+   Clock_t* clock;
    Input_t* input;
    Entity_t* playerEntity;
    Vector2i32_t playerVelocity;
 
    playerEntity = Game_GetPlayerEntity( game );
-   // TODO
-   //i32 velocity = TileMap_GetTileVelocity( &game->tileMap, game->players->entity->tileIndex );
-   i32 velocity = 1;
+   clock = Game_GetClock( game );
+   frameSeconds = Clock_GetFrameSec( clock );
+   // TODO: this is 4 tiles per second, but we're getting that familiar jitter that comes from
+   // when the world units don't exactly match up with the clock values. let's mess with those
+   // a little bit and see if we can get them to land on the exact same boundaries.
+   i32 velocity = (i32)( ( WORLD_UNITS_PER_PIXEL * 16 * 4 ) * frameSeconds );
 
    input = Game_GetInput( game );
    leftIsDown = Input_IsButtonDown( input, InputButton_Left );

@@ -270,14 +270,14 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    viewport = Game_GetTileMapViewport( game );
    TEST_ASSERT_EQUAL_INT( 0, viewport.x );
    TEST_ASSERT_EQUAL_INT( 0, viewport.y );
-   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH, viewport.w );
-   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT, viewport.h );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, viewport.w );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL, viewport.h );
 
    playerRect = Entity_GetRect( Game_GetPlayerEntity( game ) );
-   TEST_ASSERT_EQUAL_INT( 100, playerRect.x );
-   TEST_ASSERT_EQUAL_INT( 100, playerRect.y );
-   TEST_ASSERT_EQUAL_INT( 12, playerRect.w );
-   TEST_ASSERT_EQUAL_INT( 12, playerRect.h );
+   TEST_ASSERT_EQUAL_INT( 100 * WORLD_UNITS_PER_PIXEL, playerRect.x );
+   TEST_ASSERT_EQUAL_INT( 100 * WORLD_UNITS_PER_PIXEL, playerRect.y );
+   TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.w );
+   TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.h );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
 
    Game_Free( game, (MemArena_t*)1 );

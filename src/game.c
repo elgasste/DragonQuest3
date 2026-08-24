@@ -55,12 +55,12 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    // TODO: should this come from the game data file? or is it too integral to the game engine?
    game->tileMapViewport.x = 0;
    game->tileMapViewport.y = 0;
-   game->tileMapViewport.w = DISPLAY_WIDTH;
-   game->tileMapViewport.h = DISPLAY_HEIGHT;
+   game->tileMapViewport.w = DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL;
+   game->tileMapViewport.h = DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL;
 
    game->playerEntity = Entity_Create( game->memArena );
-   Entity_SetSize( game->playerEntity, 12, 12 );
-   Entity_SetPosition( game->playerEntity, 100, 100 );
+   Entity_SetSize( game->playerEntity, 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL );
+   Entity_SetPosition( game->playerEntity, 100 * WORLD_UNITS_PER_PIXEL, 100 * WORLD_UNITS_PER_PIXEL );
    Entity_SetVelocity( game->playerEntity, 0, 0 );
 
    // TODO: temporary, this will eventually be part of the game data file

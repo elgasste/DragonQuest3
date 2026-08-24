@@ -116,8 +116,8 @@ void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, 
    halfViewportW = (i32)( viewport->w / 2 );
    halfViewportH = (i32)( viewport->h / 2 );
 
-   tileMapW = (i32)tileMap->tilesX * (i32)tileSize;
-   tileMapH = (i32)tileMap->tilesY * (i32)tileSize;
+   tileMapW = (i32)tileMap->tilesX * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
+   tileMapH = (i32)tileMap->tilesY * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
 
    newViewportX = (i32)x - halfViewportW;
    newViewportY = (i32)y - halfViewportH;
