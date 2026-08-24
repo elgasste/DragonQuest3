@@ -21,7 +21,7 @@ struct Game_t
    TileTextureSet_t* tileTextureSet;
 
    TileMap_t *tileMap;
-   Vector4i32_t tileMapViewport;
+   Vector4i32_t tileMapViewportUnits;
 
    // TODO: this is the player, temporarily
    Entity_t* playerEntity;
@@ -53,10 +53,10 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->tileMap = 0;
    
    // TODO: should this come from the game data file? or is it too integral to the game engine?
-   game->tileMapViewport.x = 0;
-   game->tileMapViewport.y = 0;
-   game->tileMapViewport.w = DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL;
-   game->tileMapViewport.h = DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL;
+   game->tileMapViewportUnits.x = 0;
+   game->tileMapViewportUnits.y = 0;
+   game->tileMapViewportUnits.w = DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL;
+   game->tileMapViewportUnits.h = DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL;
 
    game->playerEntity = Entity_Create( game->memArena );
    Entity_SetSize( game->playerEntity, 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL );
@@ -121,9 +121,9 @@ TileMap_t* Game_GetTileMap( Game_t* game )
    return game->tileMap;
 }
 
-Vector4i32_t Game_GetTileMapViewport( Game_t* game )
+Vector4i32_t Game_GetTileMapViewportUnits( Game_t* game )
 {
-   return game->tileMapViewport;
+   return game->tileMapViewportUnits;
 }
 
 Entity_t* Game_GetPlayerEntity( Game_t* game )
@@ -168,5 +168,5 @@ internal void Game_Tic( Game_t* game )
    playerRect = Entity_GetRect( game->playerEntity );
    centerX = playerRect.x + ( playerRect.w / 2 );
    centerY = playerRect.y + ( playerRect.h / 2 );
-   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewportUnits, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 }

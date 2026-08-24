@@ -255,7 +255,7 @@ void test_Game_GetStructSize_ReturnsNonZeroSize( void )
 
 void test_Game_Create_InitializesDependenciesAndDefaultState( void )
 {
-   Vector4i32_t viewport;
+   Vector4i32_t viewportUnits;
    Vector4i32_t playerRect;
    Game_t* game = CreateGame();
 
@@ -267,11 +267,11 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, Game_GetTileTextureSet( game ) );
    TEST_ASSERT_EQUAL_PTR( g_tileMap, Game_GetTileMap( game ) );
 
-   viewport = Game_GetTileMapViewport( game );
-   TEST_ASSERT_EQUAL_INT( 0, viewport.x );
-   TEST_ASSERT_EQUAL_INT( 0, viewport.y );
-   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, viewport.w );
-   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL, viewport.h );
+   viewportUnits = Game_GetTileMapViewportUnits( game );
+   TEST_ASSERT_EQUAL_INT( 0, viewportUnits.x );
+   TEST_ASSERT_EQUAL_INT( 0, viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, viewportUnits.w );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL, viewportUnits.h );
 
    playerRect = Entity_GetRect( Game_GetPlayerEntity( game ) );
    TEST_ASSERT_EQUAL_INT( 100 * WORLD_UNITS_PER_PIXEL, playerRect.x );
