@@ -1,69 +1,69 @@
 cmake_minimum_required(VERSION 3.15)
 
 add_executable(Test_Clock
-	../src/clock.c
-	vendor/unity.c
-	test_clock.c
+   ../src/clock.c
+   vendor/unity.c
+   test_clock.c
 )
 
 add_executable(Test_Display
-	../src/display.c
-	vendor/unity.c
-	test_display.c
+   ../src/display.c
+   vendor/unity.c
+   test_display.c
 )
 
 add_executable(Test_Entity
-	../src/entity.c
-	vendor/unity.c
-	test_entity.c
+   ../src/entity.c
+   vendor/unity.c
+   test_entity.c
 )
 
 add_executable(Test_Game
-	../src/game.c
-	vendor/unity.c
-	test_game.c
+   ../src/game.c
+   vendor/unity.c
+   test_game.c
 )
 
 add_executable(Test_Game_Physics
-	../src/game_physics.c
-	vendor/unity.c
-	test_game_physics.c
+   ../src/game_physics.c
+   vendor/unity.c
+   test_game_physics.c
 )
 
 add_executable(Test_Game_Data
-	../src/game_data.c
-	vendor/unity.c
-	test_game_data.c
+   ../src/game_data.c
+   vendor/unity.c
+   test_game_data.c
 )
 
 add_executable(Test_Game_Render
-	../src/game_render.c
-	vendor/unity.c
-	test_game_render.c
+   ../src/game_render.c
+   vendor/unity.c
+   test_game_render.c
 )
 
 add_executable(Test_Input
-	../src/input.c
-	vendor/unity.c
-	test_input.c
+   ../src/input.c
+   vendor/unity.c
+   test_input.c
 )
 
 add_executable(Test_MemArena
-	../src/mem_arena.c
-	vendor/unity.c
-	test_mem_arena.c
+   ../src/mem_arena.c
+   vendor/unity.c
+   test_mem_arena.c
 )
 
 add_executable(Test_PixelBuffer
-	../src/pixel_buffer.c
-	vendor/unity.c
-	test_pixel_buffer.c
+   ../src/pixel_buffer.c
+   vendor/unity.c
+   test_pixel_buffer.c
 )
 
 add_executable(Test_TileMap
-	../src/tile_map.c
-	vendor/unity.c
-	test_tile_map.c
+   ../src/tile_map.c
+   vendor/unity.c
+   test_tile_map.c
 )
 
 set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -79,18 +79,18 @@ set_property(TARGET Test_PixelBuffer PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_TileMap PROPERTY COMPILE_WARNING_AS_ERROR ON)
 
 if(MSVC)
-	add_compile_options(/wd4201)
-	target_compile_options(Test_Clock PRIVATE /W4)
-	target_compile_options(Test_Entity PRIVATE /W4)
-	target_compile_options(Test_Display PRIVATE /W4)
-	target_compile_options(Test_Game PRIVATE /W4)
-	target_compile_options(Test_Game_Physics PRIVATE /W4 /wd4201)
-	target_compile_options(Test_Game_Data PRIVATE /W4)
-	target_compile_options(Test_Game_Render PRIVATE /W4)
-	target_compile_options(Test_Input PRIVATE /W4)
-	target_compile_options(Test_MemArena PRIVATE /W4)
-	target_compile_options(Test_PixelBuffer PRIVATE /W4)
-	target_compile_options(Test_TileMap PRIVATE /W4)
+   add_compile_options(/wd4201)
+   target_compile_options(Test_Clock PRIVATE /W4)
+   target_compile_options(Test_Entity PRIVATE /W4)
+   target_compile_options(Test_Display PRIVATE /W4)
+   target_compile_options(Test_Game PRIVATE /W4)
+   target_compile_options(Test_Game_Physics PRIVATE /W4 /wd4201)
+   target_compile_options(Test_Game_Data PRIVATE /W4)
+   target_compile_options(Test_Game_Render PRIVATE /W4)
+   target_compile_options(Test_Input PRIVATE /W4)
+   target_compile_options(Test_MemArena PRIVATE /W4)
+   target_compile_options(Test_PixelBuffer PRIVATE /W4)
+   target_compile_options(Test_TileMap PRIVATE /W4)
 endif()
 
 target_include_directories(Test_Clock PRIVATE vendor)

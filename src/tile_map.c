@@ -117,7 +117,7 @@ void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
    tileMap->viewportUnits = viewportUnits;
 }
 
-void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSize )
+void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels )
 {
    i32 newViewportX, newViewportY, halfViewportW, halfViewportH, tileMapW, tileMapH;
    Vector4i32_t viewport;
@@ -127,8 +127,8 @@ void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSi
    halfViewportW = (i32)( viewport.w / 2 );
    halfViewportH = (i32)( viewport.h / 2 );
 
-   tileMapW = (i32)tileMap->data.tilesX * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
-   tileMapH = (i32)tileMap->data.tilesY * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
+   tileMapW = (i32)tileMap->data.tilesX * (i32)tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   tileMapH = (i32)tileMap->data.tilesY * (i32)tileSizePixels * WORLD_UNITS_PER_PIXEL;
 
    newViewportX = (i32)x - halfViewportW;
    newViewportY = (i32)y - halfViewportH;
