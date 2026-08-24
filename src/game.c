@@ -117,11 +117,6 @@ TileMap_t* Game_GetTileMap( Game_t* game )
    return game->tileMap;
 }
 
-Vector4i32_t Game_GetTileMapViewportUnits( Game_t* game )
-{
-   return TileMap_GetViewportUnits( game->tileMap );
-}
-
 Entity_t* Game_GetPlayerEntity( Game_t* game )
 {
    return game->playerEntity;

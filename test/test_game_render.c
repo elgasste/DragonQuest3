@@ -130,9 +130,9 @@ TileMap_t* Game_GetTileMap( Game_t* game )
    return g_tileMap;
 }
 
-Vector4i32_t Game_GetTileMapViewportUnits( Game_t* game )
+Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap )
 {
-   UNUSED_PARAM( game );
+   UNUSED_PARAM( tileMap );
    return g_viewportUnits;
 }
 

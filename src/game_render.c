@@ -2,6 +2,7 @@
 #include "entity.h"
 #include "game.h"
 #include "platform.h"
+#include "tile_map.h"
 
 internal void GameRender_DrawPlayer( Game_t* game );
 
@@ -15,7 +16,7 @@ void Game_Render( Game_t* game )
    display = Game_GetDisplay( game );
    tileTextureSet = Game_GetTileTextureSet( game );
    tileMap = Game_GetTileMap( game );
-   viewportUnits = Game_GetTileMapViewportUnits( game );
+   viewportUnits = TileMap_GetViewportUnits( tileMap );
    
    Display_Fill( display, 0 );
 
@@ -30,12 +31,14 @@ void Game_Render( Game_t* game )
 internal void GameRender_DrawPlayer( Game_t* game )
 {
    Display_t* display;
+   TileMap_t* tileMap;
    Vector4i32_t viewportUnits;
    Vector4i32_t playerRect;
    Entity_t* playerEntity;
 
    display = Game_GetDisplay( game );
-   viewportUnits = Game_GetTileMapViewportUnits( game );
+   tileMap = Game_GetTileMap( game );
+   viewportUnits = TileMap_GetViewportUnits( tileMap );
    playerEntity = Game_GetPlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
 

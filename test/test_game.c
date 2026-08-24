@@ -280,7 +280,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, Game_GetTileTextureSet( game ) );
    TEST_ASSERT_EQUAL_PTR( g_tileMap, Game_GetTileMap( game ) );
 
-   viewportUnits = Game_GetTileMapViewportUnits( game );
+   viewportUnits = TileMap_GetViewportUnits( Game_GetTileMap( game ) );
    TEST_ASSERT_EQUAL_INT( 0, viewportUnits.x );
    TEST_ASSERT_EQUAL_INT( 0, viewportUnits.y );
    TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, viewportUnits.w );
