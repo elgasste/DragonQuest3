@@ -138,7 +138,7 @@ void TileMap_SetViewportPixels( TileMap_t* tileMap, Vector4i32_t viewportPixels 
    tileMap->viewportUnits.h = viewportPixels.h * WORLD_UNITS_PER_PIXEL;
 }
 
-void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels )
+void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels )
 {
    i32 newViewportX, newViewportY, halfViewportW, halfViewportH, tileMapW, tileMapH;
    Vector4i32_t viewport;

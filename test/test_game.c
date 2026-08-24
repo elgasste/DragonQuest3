@@ -203,7 +203,7 @@ void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
    g_tileMapViewportUnits = viewportUnits;
 }
 
-void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSize )
+void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 tileSize )
 {
    UNUSED_PARAM( tileMap );
    g_tileMapAnchorCount++;

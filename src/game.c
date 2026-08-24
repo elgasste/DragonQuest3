@@ -159,5 +159,5 @@ internal void Game_Tic( Game_t* game )
    playerRect = Entity_GetRect( game->playerEntity );
    centerX = playerRect.x + ( playerRect.w / 2 );
    centerY = playerRect.y + ( playerRect.h / 2 );
-   TileMap_AnchorViewportToPoint( game->tileMap, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   TileMap_AnchorViewportToPointUnits( game->tileMap, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 }

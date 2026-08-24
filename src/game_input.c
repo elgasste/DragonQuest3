@@ -2,8 +2,6 @@
 #include "entity.h"
 #include "game.h"
 #include "input.h"
-#include "tile_map.h"
-#include "tile_texture_set.h"
 
 void Game_HandleInput( Game_t* game )
 {

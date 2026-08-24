@@ -40,7 +40,6 @@ internal void GameRender_DrawPlayer( Game_t* game )
    playerEntity = Game_GetPlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
 
-   // TODO: do the same thing here, add another playerRectPixels vector.
    playerRect.x /= WORLD_UNITS_PER_PIXEL;
    playerRect.y /= WORLD_UNITS_PER_PIXEL;
    playerRect.w /= WORLD_UNITS_PER_PIXEL;

@@ -34,6 +34,6 @@ Vector4i32_t TileMap_GetViewportPixels( TileMap_t* tileMap );
 void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits );
 void TileMap_SetViewportPixels( TileMap_t* tileMap, Vector4i32_t viewportPixels );
 
-void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels );
+void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels );
 
 #endif // TILE_MAP_H

@@ -7,9 +7,7 @@
 #include "game.h"
 #include "input.h"
 #include "mem_arena.h"
-#include "pixel_buffer.h"
 #include "platform.h"
-#include "tile_map.h"
 #include "win_common.h"
 
 internal void MemArena_DumpStats( MemArena_t* memArena );
