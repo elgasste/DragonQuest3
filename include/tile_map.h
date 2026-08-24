@@ -8,6 +8,16 @@ typedef struct MemArena_t MemArena_t;
 typedef struct Tile_t Tile_t;
 typedef struct Vector4i32_t Vector4i32_t;
 
+typedef struct TileMapData_t
+{
+   u32 id;
+   u32 tilesX;
+   u32 tilesY;
+   b32 wraps;
+   Tile_t* tiles;
+}
+TileMapData_t;
+
 typedef struct TileMap_t TileMap_t;
 size_t TileMap_GetStructSize( void );
 TileMap_t *TileMap_CreateFromGameData(MemArena_t *memArena, GameData_t *gameData, u32 tileMapId);

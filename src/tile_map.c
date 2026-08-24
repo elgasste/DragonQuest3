@@ -10,11 +10,7 @@
 
 struct TileMap_t
 {
-   u32 id;
-   u32 tilesX;
-   u32 tilesY;
-   b32 wraps;
-   Tile_t* tiles;
+   TileMapData_t data;
 };
 
 size_t TileMap_GetStructSize( void )
@@ -45,7 +41,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
       {
          chunkOffset = fileOffsets.tileMaps;
          tileMapOffset = chunkOffset + tileMapFileOffset.offset;
-         if ( (i32)( tileMapOffset + TileMap_GetStructSize() ) > file->size )
+         if ( (i32)( tileMapOffset + sizeof( TileMapData_t ) ) > file->size )
          {
             Platform_FatalError( "game data file is too small to contain the requested tile map." );
             return 0;
@@ -53,10 +49,10 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
          tileMap = (TileMap_t*)MemArena_AllocMem( memArena, TileMap_GetStructSize() );
          Platform_FileSeek( file, tileMapOffset, 0 );
-         Platform_ReadFileBytes( file, (u8*)( tileMap ), sizeof( TileMap_t ) );
+         Platform_ReadFileBytes( file, (u8*)( &tileMap->data ), sizeof( TileMapData_t ) );
 
-         tileCount = (i32)( tileMap->tilesX * tileMap->tilesY );
-         tilesOffset = tileMapOffset + sizeof( TileMap_t );
+         tileCount = (i32)( tileMap->data.tilesX * tileMap->data.tilesY );
+         tilesOffset = tileMapOffset + sizeof( TileMapData_t );
          if ( tilesOffset + (i32)( tileCount * Tile_GetStructSize() ) > file->size )
          {
             Platform_FatalError( "game data file is too small to contain all the requested tile map tiles." );
@@ -67,7 +63,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          tiles = (u8*)MemArena_AllocMem( memArena, tileCount * Tile_GetStructSize() );
          Platform_FileSeek( file, tilesOffset, 0 );
          Platform_ReadFileBytes( file, tiles, tileCount * Tile_GetStructSize() );
-         tileMap->tiles = (Tile_t*)tiles;
+         tileMap->data.tiles = (Tile_t*)tiles;
 
          return tileMap;
       }
@@ -80,33 +76,33 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
 void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
 {
-   MemArena_FreeMem( memArena, tileMap->tiles );
+   MemArena_FreeMem( memArena, tileMap->data.tiles );
    MemArena_FreeMem( memArena, tileMap );
 }
 
 u32 TileMap_GetId( TileMap_t* tileMap )
 {
-   return tileMap->id;
+   return tileMap->data.id;
 }
 
 u32 TileMap_GetTilesX( TileMap_t* tileMap )
 {
-   return tileMap->tilesX;
+   return tileMap->data.tilesX;
 }
 
 u32 TileMap_GetTilesY( TileMap_t* tileMap )
 {
-   return tileMap->tilesY;
+   return tileMap->data.tilesY;
 }
 
 b32 TileMap_GetWraps( TileMap_t* tileMap )
 {
-   return tileMap->wraps;
+   return tileMap->data.wraps;
 }
 
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
 {
-   return (Tile_t*)( (u8*)tileMap->tiles + ( y * tileMap->tilesX + x ) * Tile_GetStructSize() );
+   return (Tile_t*)( (u8*)tileMap->data.tiles + ( y * tileMap->data.tilesX + x ) * Tile_GetStructSize() );
 }
 
 void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y, u32 tileSize )
@@ -116,13 +112,13 @@ void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, 
    halfViewportW = (i32)( viewport->w / 2 );
    halfViewportH = (i32)( viewport->h / 2 );
 
-   tileMapW = (i32)tileMap->tilesX * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
-   tileMapH = (i32)tileMap->tilesY * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
+   tileMapW = (i32)tileMap->data.tilesX * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
+   tileMapH = (i32)tileMap->data.tilesY * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
 
    newViewportX = (i32)x - halfViewportW;
    newViewportY = (i32)y - halfViewportH;
 
-   if ( !tileMap->wraps )
+   if ( !tileMap->data.wraps )
    {
       if ( viewport->w >= tileMapW )
       {
