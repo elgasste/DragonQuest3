@@ -21,7 +21,6 @@ struct Game_t
    TileTextureSet_t* tileTextureSet;
 
    TileMap_t *tileMap;
-   Vector4i32_t tileMapViewportUnits;
 
    // TODO: this is the player, temporarily
    Entity_t* playerEntity;
@@ -51,12 +50,6 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->tileTextureSet = TileTextureSet_CreateFromGameData( game->memArena, game->gameData );
 
    game->tileMap = 0;
-   
-   // TODO: should this come from the game data file? or is it too integral to the game engine?
-   game->tileMapViewportUnits.x = 0;
-   game->tileMapViewportUnits.y = 0;
-   game->tileMapViewportUnits.w = DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL;
-   game->tileMapViewportUnits.h = DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL;
 
    game->playerEntity = Entity_Create( game->memArena );
    Entity_SetSize( game->playerEntity, 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL );
@@ -65,6 +58,9 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
 
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 2 );
+
+   // TODO: should this come from the game data file? or is it too integral to the game engine?
+   TileMap_SetViewportUnits( game->tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
 
    return game;
 }
@@ -123,7 +119,7 @@ TileMap_t* Game_GetTileMap( Game_t* game )
 
 Vector4i32_t Game_GetTileMapViewportUnits( Game_t* game )
 {
-   return game->tileMapViewportUnits;
+   return TileMap_GetViewportUnits( game->tileMap );
 }
 
 Entity_t* Game_GetPlayerEntity( Game_t* game )
@@ -168,5 +164,5 @@ internal void Game_Tic( Game_t* game )
    playerRect = Entity_GetRect( game->playerEntity );
    centerX = playerRect.x + ( playerRect.w / 2 );
    centerY = playerRect.y + ( playerRect.h / 2 );
-   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewportUnits, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   TileMap_AnchorViewportToPoint( game->tileMap, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 }

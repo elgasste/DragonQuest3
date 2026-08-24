@@ -2,11 +2,11 @@
 #define TILE_MAP_H
 
 #include "common.h"
+#include "vector.h"
 
 typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
 typedef struct Tile_t Tile_t;
-typedef struct Vector4i32_t Vector4i32_t;
 
 typedef struct TileMapData_t
 {
@@ -29,6 +29,8 @@ u32 TileMap_GetTilesY( TileMap_t* tileMap );
 b32 TileMap_GetWraps( TileMap_t* tileMap );
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y );
 
-void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y, u32 tileSize );
+Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap );
+void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits );
+void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSize );
 
 #endif // TILE_MAP_H

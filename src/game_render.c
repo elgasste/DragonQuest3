@@ -50,5 +50,5 @@ internal void GameRender_DrawPlayer( Game_t* game )
    playerRect.w /= WORLD_UNITS_PER_PIXEL;
    playerRect.h /= WORLD_UNITS_PER_PIXEL;
 
-   Display_DrawRect( display, playerRect.x - viewportUnits.x, playerRect.y - viewportUnits.y, playerRect.w, playerRect.h, 0x00666666u );
+   Display_DrawRect( display, playerRect.x - viewportUnits.x, playerRect.y - viewportUnits.y, playerRect.w, playerRect.h, 0x00990000u );
 }

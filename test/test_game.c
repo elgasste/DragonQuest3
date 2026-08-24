@@ -33,6 +33,7 @@ global GameData_t* g_gameData;
 global TileTextureSet_t* g_tileTextureSet;
 global TileMap_t* g_tileMap;
 global Entity_t* g_playerEntity;
+global Vector4i32_t g_tileMapViewportUnits;
 global Vector4i32_t g_anchorViewport;
 global i32 g_anchorX;
 global i32 g_anchorY;
@@ -190,11 +191,23 @@ void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
    g_tileMapFreeCount++;
 }
 
-void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y, u32 tileSize )
+Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap )
+{
+   UNUSED_PARAM( tileMap );
+   return g_tileMapViewportUnits;
+}
+
+void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
+{
+   UNUSED_PARAM( tileMap );
+   g_tileMapViewportUnits = viewportUnits;
+}
+
+void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSize )
 {
    UNUSED_PARAM( tileMap );
    g_tileMapAnchorCount++;
-   g_anchorViewport = *viewport;
+   g_anchorViewport = g_tileMapViewportUnits;
    g_anchorX = (i32)x;
    g_anchorY = (i32)y;
    g_anchorTileSize = tileSize;

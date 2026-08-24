@@ -19,6 +19,13 @@ typedef struct TestTileMapData_t
 }
 TestTileMapData_t;
 
+typedef struct TestTileMap_t
+{
+   TestTileMapData_t data;
+   Vector4i32_t viewportUnits;
+}
+TestTileMap_t;
+
 global u8 g_fileData[256];
 global size_t g_filePosition;
 global File_t g_file;
@@ -162,46 +169,42 @@ void test_TileMap_GetTile_ReturnsTilesInRowMajorOrder( void )
 
 void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtTopLeft( void )
 {
-   TestTileMapData_t map = { 1, 20, 15, False, 0 };
-   Vector4i32_t viewport = { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL } };
 
-   TileMap_AnchorViewportToPoint( (TileMap_t*)&map, &viewport, 0, 0, 16 );
+   TileMap_AnchorViewportToPoint( (TileMap_t*)&map, 0, 0, 16 );
 
-   TEST_ASSERT_EQUAL_INT( 0, viewport.x );
-   TEST_ASSERT_EQUAL_INT( 0, viewport.y );
+   TEST_ASSERT_EQUAL_INT( 0, map.viewportUnits.x );
+   TEST_ASSERT_EQUAL_INT( 0, map.viewportUnits.y );
 }
 
 void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtBottomRight( void )
 {
-   TestTileMapData_t map = { 1, 20, 15, False, 0 };
-   Vector4i32_t viewport = { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL } };
 
-   TileMap_AnchorViewportToPoint( (TileMap_t*)&map, &viewport, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL, 16 );
+   TileMap_AnchorViewportToPoint( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL, 16 );
 
-   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, viewport.x );
-   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, viewport.y );
+   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
+   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
 }
 
 void test_TileMap_AnchorViewport_CentersSmallNonWrappingMap( void )
 {
-   TestTileMapData_t map = { 1, 4, 3, False, 0 };
-   Vector4i32_t viewport = { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL };
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL } };
 
-   TileMap_AnchorViewportToPoint( (TileMap_t*)&map, &viewport, 32 * WORLD_UNITS_PER_PIXEL, 24 * WORLD_UNITS_PER_PIXEL, 16 );
+   TileMap_AnchorViewportToPoint( (TileMap_t*)&map, 32 * WORLD_UNITS_PER_PIXEL, 24 * WORLD_UNITS_PER_PIXEL, 16 );
 
-   TEST_ASSERT_EQUAL_INT( -48 * WORLD_UNITS_PER_PIXEL, viewport.x );
-   TEST_ASSERT_EQUAL_INT( -36 * WORLD_UNITS_PER_PIXEL, viewport.y );
+   TEST_ASSERT_EQUAL_INT( -48 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
+   TEST_ASSERT_EQUAL_INT( -36 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
 }
 
 void test_TileMap_AnchorViewport_AllowsWrappingMapToMoveBeyondEdges( void )
 {
-   TestTileMapData_t map = { 1, 20, 15, True, 0 };
-   Vector4i32_t viewport = { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL };
+   TestTileMap_t map = { { 1, 20, 15, True, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL } };
 
-   TileMap_AnchorViewportToPoint( (TileMap_t*)&map, &viewport, 0, 0, 16 );
+   TileMap_AnchorViewportToPoint( (TileMap_t*)&map, 0, 0, 16 );
 
-   TEST_ASSERT_EQUAL_INT( -80 * WORLD_UNITS_PER_PIXEL, viewport.x );
-   TEST_ASSERT_EQUAL_INT( -60 * WORLD_UNITS_PER_PIXEL, viewport.y );
+   TEST_ASSERT_EQUAL_INT( -80 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
+   TEST_ASSERT_EQUAL_INT( -60 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
 }
 
 int main( void )

@@ -11,6 +11,8 @@
 struct TileMap_t
 {
    TileMapData_t data;
+
+   Vector4i32_t viewportUnits;
 };
 
 size_t TileMap_GetStructSize( void )
@@ -105,12 +107,25 @@ Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
    return (Tile_t*)( (u8*)tileMap->data.tiles + ( y * tileMap->data.tilesX + x ) * Tile_GetStructSize() );
 }
 
-void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, u32 x, u32 y, u32 tileSize )
+Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap )
+{
+   return tileMap->viewportUnits;
+}
+
+void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
+{
+   tileMap->viewportUnits = viewportUnits;
+}
+
+void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, u32 x, u32 y, u32 tileSize )
 {
    i32 newViewportX, newViewportY, halfViewportW, halfViewportH, tileMapW, tileMapH;
+   Vector4i32_t viewport;
 
-   halfViewportW = (i32)( viewport->w / 2 );
-   halfViewportH = (i32)( viewport->h / 2 );
+   viewport = tileMap->viewportUnits;
+
+   halfViewportW = (i32)( viewport.w / 2 );
+   halfViewportH = (i32)( viewport.h / 2 );
 
    tileMapW = (i32)tileMap->data.tilesX * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
    tileMapH = (i32)tileMap->data.tilesY * (i32)tileSize * WORLD_UNITS_PER_PIXEL;
@@ -120,33 +135,33 @@ void TileMap_AnchorViewportToPoint( TileMap_t* tileMap, Vector4i32_t* viewport, 
 
    if ( !tileMap->data.wraps )
    {
-      if ( viewport->w >= tileMapW )
+      if ( viewport.w >= tileMapW )
       {
-         newViewportX = -(i32)( ( viewport->w - tileMapW ) / 2 );
+         newViewportX = -(i32)( ( viewport.w - tileMapW ) / 2 );
       }
       else if ( newViewportX < 0 )
       {
          newViewportX = 0;
       }
-      else if ( newViewportX > ( tileMapW - viewport->w ) )
+      else if ( newViewportX > ( tileMapW - viewport.w ) )
       {
-         newViewportX = (i32)( tileMapW - viewport->w );
+         newViewportX = (i32)( tileMapW - viewport.w );
       }
 
-      if ( viewport->h >= tileMapH )
+      if ( viewport.h >= tileMapH )
       {
-         newViewportY = -(i32)( ( viewport->h - tileMapH ) / 2 );
+         newViewportY = -(i32)( ( viewport.h - tileMapH ) / 2 );
       }
       else if ( newViewportY < 0 )
       {
          newViewportY = 0;
       }
-      else if ( newViewportY > ( tileMapH - viewport->h ) )
+      else if ( newViewportY > ( tileMapH - viewport.h ) )
       {
-         newViewportY = (i32)( tileMapH - viewport->h );
+         newViewportY = (i32)( tileMapH - viewport.h );
       }
    }
 
-   viewport->x = newViewportX;
-   viewport->y = newViewportY;
+   tileMap->viewportUnits.x = newViewportX;
+   tileMap->viewportUnits.y = newViewportY;
 }

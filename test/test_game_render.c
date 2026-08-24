@@ -227,7 +227,7 @@ void test_Game_Render_DrawsPlayerRelativeToViewport( void )
    TEST_ASSERT_EQUAL_INT( 40, g_displayDrawRectCall.y );
    TEST_ASSERT_EQUAL_INT( 12, g_displayDrawRectCall.w );
    TEST_ASSERT_EQUAL_INT( 14, g_displayDrawRectCall.h );
-   TEST_ASSERT_EQUAL_HEX32( 0x00666666, g_displayDrawRectCall.color );
+   TEST_ASSERT_EQUAL_HEX32( 0x00990000, g_displayDrawRectCall.color );
    TEST_ASSERT_EQUAL_INT( 1, g_displayDrawRectCall.callCount );
 }
 
