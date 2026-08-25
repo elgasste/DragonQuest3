@@ -49,7 +49,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->tileTextureSet = TileTextureSet_CreateFromGameData( game->memArena, game->gameData );
 
    // TODO: temporary, this will eventually be part of the game data file
-   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 2, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 
    game->playerEntity = Entity_Create( game->memArena );
    Entity_SetSize( game->playerEntity, 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL );

@@ -203,7 +203,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    u32 i;
    TileMapMock_t *tileMaps, *curTileMap;
 
-   *tileMapCount = 4;
+   *tileMapCount = 5;
    tileMaps = (TileMapMock_t*)malloc( *tileMapCount * sizeof( TileMapMock_t ) );
 
    // 0: 10x10 checkerboard, no wrapping
@@ -295,6 +295,21 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
       curTileMap->tiles[i].textureIndex = 1;
+   }
+
+   // 4: 256x256 random, no wrapping
+   curTileMap++;
+   curTileMap->id = 4;
+   curTileMap->tilesX = 256;
+   curTileMap->tilesY = 256;
+   curTileMap->wraps = False;
+   curTileMap->tiles = 0;
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
+
+   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
+   {
+      // random
+      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
    }
 
    return tileMaps;
