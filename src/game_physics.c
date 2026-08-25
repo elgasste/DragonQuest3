@@ -1,3 +1,4 @@
+#include "clock.h"
 #include "entity.h"
 #include "game.h"
 #include "tile_map.h"
@@ -6,20 +7,22 @@
 void Game_TicPhysics( Game_t* game )
 {
    i32 mapWidth, mapHeight, maxX, maxY;
+   r32 frameSeconds;
    Vector4i32_t playerRect;
    Vector2i32_t playerVelocity;
    TileMap_t* tileMap;
    TileTextureSet_t* tileTextureSet;
    Entity_t* playerEntity;
 
+   frameSeconds = Clock_GetFrameSec( Game_GetClock( game ) );
    playerEntity = Game_GetPlayerEntity( game );
    tileMap = Game_GetTileMap( game );
    tileTextureSet = Game_GetTileTextureSet( game );
    playerRect = Entity_GetRect( playerEntity );
    playerVelocity = Entity_GetVelocity( playerEntity );
 
-   playerRect.x += playerVelocity.x;
-   playerRect.y += playerVelocity.y;
+   playerRect.x += (i32)( playerVelocity.x * frameSeconds );
+   playerRect.y += (i32)( playerVelocity.y * frameSeconds );
 
    if ( !TileMap_GetWraps( tileMap ) )
    {

@@ -10,6 +10,7 @@
 
 typedef struct Game_t
 {
+   Clock_t* clock;
    Entity_t* playerEntity;
    TileMap_t* tileMap;
    TileTextureSet_t* tileTextureSet;
@@ -20,6 +21,18 @@ global Game_t g_game;
 global Entity_t g_entity;
 global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
+
+r32 Clock_GetFrameSec( Clock_t* clock )
+{
+   UNUSED_PARAM( clock );
+   return 1.0f / 60.0f;
+}
+
+Clock_t* Game_GetClock( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   return (Clock_t*)1;
+}
 
 Entity_t* Game_GetPlayerEntity( Game_t* game )
 {
@@ -84,8 +97,8 @@ void setUp( void )
    g_entity.rect.y = 30 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.w = 10 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.h = 12 * WORLD_UNITS_PER_PIXEL;
-   g_entity.velocity.x = 3 * WORLD_UNITS_PER_PIXEL;
-   g_entity.velocity.y = 4 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 3 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 4 * WORLD_UNITS_PER_PIXEL * 60;
    g_tileMap.width = 10;
    g_tileMap.height = 8;
    g_tileMap.wraps = False;
@@ -93,6 +106,7 @@ void setUp( void )
    g_game.playerEntity = &g_entity;
    g_game.tileMap = &g_tileMap;
    g_game.tileTextureSet = &g_textureSet;
+   g_game.clock = (Clock_t*)1;
 }
 
 void tearDown( void ) {}
@@ -111,8 +125,8 @@ void test_Game_TicPhysics_ClampsPlayerAtLowerBounds( void )
 {
    g_entity.rect.x = 2 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 1 * WORLD_UNITS_PER_PIXEL;
-   g_entity.velocity.x = -5 * WORLD_UNITS_PER_PIXEL;
-   g_entity.velocity.y = -4 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = -5 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = -4 * WORLD_UNITS_PER_PIXEL * 60;
 
    Game_TicPhysics( &g_game );
 
@@ -124,8 +138,8 @@ void test_Game_TicPhysics_ClampsPlayerAtUpperBounds( void )
 {
    g_entity.rect.x = 150 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 110 * WORLD_UNITS_PER_PIXEL;
-   g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL;
-   g_entity.velocity.y = 20 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 20 * WORLD_UNITS_PER_PIXEL * 60;
 
    Game_TicPhysics( &g_game );
 
@@ -138,8 +152,8 @@ void test_Game_TicPhysics_DoesNotClampWrappingMap( void )
    g_tileMap.wraps = True;
    g_entity.rect.x = 150 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 110 * WORLD_UNITS_PER_PIXEL;
-   g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL;
-   g_entity.velocity.y = 20 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 20 * WORLD_UNITS_PER_PIXEL * 60;
 
    Game_TicPhysics( &g_game );
 

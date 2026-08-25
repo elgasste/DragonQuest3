@@ -18,7 +18,7 @@
 #define STRING_SIZE_DEFAULT            512
 #define STRING_SIZE_LARGE              1024
 
-#define WORLD_UNITS_PER_PIXEL          100
+#define WORLD_UNITS_PER_PIXEL          480
 
 typedef int32_t b32;
 typedef uint8_t u8;

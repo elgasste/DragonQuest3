@@ -12,9 +12,9 @@
 #define MAX_GRAPHICS_SCALE       4.0f
 #define GRAPHICS_SCALE_STEP      0.5f
 
-#define MIN_GAME_FPS             15
+#define MIN_GAME_FPS             30
 #define MAX_GAME_FPS             120
-#define GAME_FPS_STEP            15
+#define GAME_FPS_STEP            30
 
 #define LOG_FILENAME             "dw3.log"
 #define GAME_DATA_FILENAME       "data.dw3d"
