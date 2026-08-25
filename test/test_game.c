@@ -33,7 +33,7 @@ global GameData_t* g_gameData;
 global TileTextureSet_t* g_tileTextureSet;
 global TileMap_t* g_tileMap;
 global Entity_t* g_playerEntity;
-global Vector4i32_t g_tileMapViewportUnits;
+global Vector4i32_t g_tileMapViewportInUnits;
 global Vector4i32_t g_anchorViewport;
 global i32 g_anchorX;
 global i32 g_anchorY;
@@ -197,23 +197,23 @@ void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
    g_tileMapFreeCount++;
 }
 
-Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap )
+Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )
 {
    UNUSED_PARAM( tileMap );
-   return g_tileMapViewportUnits;
+   return g_tileMapViewportInUnits;
 }
 
-void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
+void TileMap_SetViewportInUnits( TileMap_t* tileMap, Vector4i32_t viewportInUnits )
 {
    UNUSED_PARAM( tileMap );
-   g_tileMapViewportUnits = viewportUnits;
+   g_tileMapViewportInUnits = viewportInUnits;
 }
 
 void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
 {
    UNUSED_PARAM( tileMap );
    g_tileMapAnchorCount++;
-   g_anchorViewport = g_tileMapViewportUnits;
+   g_anchorViewport = g_tileMapViewportInUnits;
    g_anchorX = (i32)x;
    g_anchorY = (i32)y;
 }
@@ -299,7 +299,7 @@ void test_Game_GetStructSize_ReturnsNonZeroSize( void )
 
 void test_Game_Create_InitializesDependenciesAndDefaultState( void )
 {
-   Vector4i32_t viewportUnits;
+   Vector4i32_t viewportInUnits;
    Vector4i32_t playerRect;
    Game_t* game = CreateGame();
 
@@ -311,11 +311,11 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, Game_GetTileTextureSet( game ) );
    TEST_ASSERT_EQUAL_PTR( g_tileMap, Game_GetTileMap( game ) );
 
-   viewportUnits = TileMap_GetViewportUnits( Game_GetTileMap( game ) );
-   TEST_ASSERT_EQUAL_INT( 0, viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 0, viewportUnits.y );
-   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, viewportUnits.w );
-   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL, viewportUnits.h );
+   viewportInUnits = TileMap_GetViewportInUnits( Game_GetTileMap( game ) );
+   TEST_ASSERT_EQUAL_INT( 0, viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 0, viewportInUnits.y );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, viewportInUnits.w );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL, viewportInUnits.h );
 
    playerRect = Entity_GetRect( Game_GetPlayerEntity( game ) );
    TEST_ASSERT_EQUAL_INT( 100 * WORLD_UNITS_PER_PIXEL, playerRect.x );

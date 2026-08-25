@@ -57,7 +57,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
 
    // TODO: should this come from the game data file? or is it too integral to the game engine?
-   TileMap_SetViewportUnits( game->tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
+   TileMap_SetViewportInUnits( game->tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
 
 
    return game;

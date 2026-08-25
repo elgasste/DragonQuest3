@@ -46,7 +46,7 @@ static Display_t* g_display;
 static TileMap_t* g_tileMap;
 static TileTextureSet_t* g_tileTextureSet;
 static Entity_t g_playerEntity;
-static Vector4i32_t g_viewportPixels;
+static Vector4i32_t g_viewportInPixels;
 static Vector4i32_t g_playerRect;
 static DisplayFillCall_t g_displayFillCall;
 static DisplayDrawTileMapViewportCall_t g_displayDrawTileMapViewportCall;
@@ -58,10 +58,10 @@ void setUp( void )
    g_display = (Display_t*)1;
    g_tileMap = (TileMap_t*)2;
    g_tileTextureSet = (TileTextureSet_t*)3;
-   g_viewportPixels.x = 10;
-   g_viewportPixels.y = 20;
-   g_viewportPixels.w = 320;
-   g_viewportPixels.h = 240;
+   g_viewportInPixels.x = 10;
+   g_viewportInPixels.y = 20;
+   g_viewportInPixels.w = 320;
+   g_viewportInPixels.h = 240;
    g_playerRect.x = 40 * WORLD_UNITS_PER_PIXEL;
    g_playerRect.y = 60 * WORLD_UNITS_PER_PIXEL;
    g_playerRect.w = 12 * WORLD_UNITS_PER_PIXEL;
@@ -125,10 +125,10 @@ TileMap_t* Game_GetTileMap( Game_t* game )
    return g_tileMap;
 }
 
-Vector4i32_t TileMap_GetViewportPixels( TileMap_t* tileMap )
+Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap )
 {
    UNUSED_PARAM( tileMap );
-   return g_viewportPixels;
+   return g_viewportInPixels;
 }
 
 Entity_t* Game_GetPlayerEntity( Game_t* game )

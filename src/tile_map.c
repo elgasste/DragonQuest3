@@ -13,8 +13,8 @@ struct TileMap_t
    TileMapData_t data;
 
    u32 tileSizePixels;
-   Vector4i32_t viewportUnits;
-   Vector4i32_t viewportPixels;
+   Vector4i32_t viewportInUnits;
+   Vector4i32_t viewportInPixels;
 };
 
 size_t TileMap_GetStructSize( void )
@@ -110,34 +110,34 @@ Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
    return (Tile_t*)( (u8*)tileMap->data.tiles + ( y * tileMap->data.tilesX + x ) * Tile_GetStructSize() );
 }
 
-Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap )
+Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )
 {
-   return tileMap->viewportUnits;
+   return tileMap->viewportInUnits;
 }
 
-Vector4i32_t TileMap_GetViewportPixels( TileMap_t* tileMap )
+Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap )
 {
-   return tileMap->viewportPixels;
+   return tileMap->viewportInPixels;
 }
 
-void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
+void TileMap_SetViewportInUnits( TileMap_t* tileMap, Vector4i32_t viewportInUnits )
 {
-   tileMap->viewportUnits = viewportUnits;
+   tileMap->viewportInUnits = viewportInUnits;
 
-   tileMap->viewportPixels.x = viewportUnits.x / WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportPixels.y = viewportUnits.y / WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportPixels.w = viewportUnits.w / WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportPixels.h = viewportUnits.h / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.x = viewportInUnits.x / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.y = viewportInUnits.y / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.w = viewportInUnits.w / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.h = viewportInUnits.h / WORLD_UNITS_PER_PIXEL;
 }
 
-void TileMap_SetViewportPixels( TileMap_t* tileMap, Vector4i32_t viewportPixels )
+void TileMap_SetViewportInPixels( TileMap_t* tileMap, Vector4i32_t viewportInPixels )
 {
-   tileMap->viewportPixels = viewportPixels;
+   tileMap->viewportInPixels = viewportInPixels;
 
-   tileMap->viewportUnits.x = viewportPixels.x * WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportUnits.y = viewportPixels.y * WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportUnits.w = viewportPixels.w * WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportUnits.h = viewportPixels.h * WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.x = viewportInPixels.x * WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.y = viewportInPixels.y * WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.w = viewportInPixels.w * WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.h = viewportInPixels.h * WORLD_UNITS_PER_PIXEL;
 }
 
 void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
@@ -145,7 +145,7 @@ void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
    i32 newViewportX, newViewportY, halfViewportW, halfViewportH, tileMapW, tileMapH;
    Vector4i32_t viewport;
 
-   viewport = tileMap->viewportUnits;
+   viewport = tileMap->viewportInUnits;
 
    halfViewportW = (i32)( viewport.w / 2 );
    halfViewportH = (i32)( viewport.h / 2 );
@@ -185,10 +185,10 @@ void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
       }
    }
 
-   tileMap->viewportUnits.x = newViewportX;
-   tileMap->viewportUnits.y = newViewportY;
-   tileMap->viewportPixels.x = newViewportX / WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportPixels.y = newViewportY / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.x = newViewportX;
+   tileMap->viewportInUnits.y = newViewportY;
+   tileMap->viewportInPixels.x = newViewportX / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.y = newViewportY / WORLD_UNITS_PER_PIXEL;
 }
 
 void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity )

@@ -24,8 +24,8 @@ typedef struct TestTileMap_t
 {
    TestTileMapData_t data;
    u32 tileSizePixels;
-   Vector4i32_t viewportUnits;
-   Vector4i32_t viewportPixels;
+   Vector4i32_t viewportInUnits;
+   Vector4i32_t viewportInPixels;
 }
 TestTileMap_t;
 
@@ -193,8 +193,8 @@ void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtTopLeft( void )
    map.tileSizePixels = 16;
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 0, 0 );
 
-   TEST_ASSERT_EQUAL_INT( 0, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 0, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( 0, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 0, map.viewportInUnits.y );
 }
 
 void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtBottomRight( void )
@@ -204,8 +204,8 @@ void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtBottomRight( void )
    map.tileSizePixels = 16;
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL );
 
-   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
 }
 
 void test_TileMap_AnchorViewport_CentersSmallNonWrappingMap( void )
@@ -215,8 +215,8 @@ void test_TileMap_AnchorViewport_CentersSmallNonWrappingMap( void )
    map.tileSizePixels = 16;
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 32 * WORLD_UNITS_PER_PIXEL, 24 * WORLD_UNITS_PER_PIXEL );
 
-   TEST_ASSERT_EQUAL_INT( -48 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( -36 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( -48 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( -36 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
 }
 
 void test_TileMap_AnchorViewport_AllowsWrappingMapToMoveBeyondEdges( void )
@@ -226,51 +226,51 @@ void test_TileMap_AnchorViewport_AllowsWrappingMapToMoveBeyondEdges( void )
    map.tileSizePixels = 16;
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 0, 0 );
 
-   TEST_ASSERT_EQUAL_INT( -80 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( -60 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( -80 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( -60 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
 }
 
 void test_TileMap_GetViewportPixels_ReturnsStoredValue( void )
 {
    TestTileMap_t map = { { 0 }, 16, { 0 }, { 3, 4, 5, 6 } };
-   Vector4i32_t viewportPixels;
+   Vector4i32_t viewportInPixels;
 
-   viewportPixels = TileMap_GetViewportPixels( (TileMap_t*)&map );
+   viewportInPixels = TileMap_GetViewportInPixels( (TileMap_t*)&map );
 
-   TEST_ASSERT_EQUAL_INT( 3, viewportPixels.x );
-   TEST_ASSERT_EQUAL_INT( 4, viewportPixels.y );
-   TEST_ASSERT_EQUAL_INT( 5, viewportPixels.w );
-   TEST_ASSERT_EQUAL_INT( 6, viewportPixels.h );
+   TEST_ASSERT_EQUAL_INT( 3, viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 4, viewportInPixels.y );
+   TEST_ASSERT_EQUAL_INT( 5, viewportInPixels.w );
+   TEST_ASSERT_EQUAL_INT( 6, viewportInPixels.h );
 }
 
 void test_TileMap_SetViewportUnits_DerivesViewportPixels( void )
 {
    TestTileMap_t map = { { 0 }, 16, { 0 }, { 0 } };
-   Vector4i32_t viewportPixels;
+   Vector4i32_t viewportInPixels;
 
-   TileMap_SetViewportUnits( (TileMap_t*)&map, (Vector4i32_t){ 10 * WORLD_UNITS_PER_PIXEL, 20 * WORLD_UNITS_PER_PIXEL, 320 * WORLD_UNITS_PER_PIXEL, 240 * WORLD_UNITS_PER_PIXEL } );
+   TileMap_SetViewportInUnits( (TileMap_t*)&map, (Vector4i32_t){ 10 * WORLD_UNITS_PER_PIXEL, 20 * WORLD_UNITS_PER_PIXEL, 320 * WORLD_UNITS_PER_PIXEL, 240 * WORLD_UNITS_PER_PIXEL } );
 
-   viewportPixels = TileMap_GetViewportPixels( (TileMap_t*)&map );
+   viewportInPixels = TileMap_GetViewportInPixels( (TileMap_t*)&map );
 
-   TEST_ASSERT_EQUAL_INT( 10, viewportPixels.x );
-   TEST_ASSERT_EQUAL_INT( 20, viewportPixels.y );
-   TEST_ASSERT_EQUAL_INT( 320, viewportPixels.w );
-   TEST_ASSERT_EQUAL_INT( 240, viewportPixels.h );
+   TEST_ASSERT_EQUAL_INT( 10, viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 20, viewportInPixels.y );
+   TEST_ASSERT_EQUAL_INT( 320, viewportInPixels.w );
+   TEST_ASSERT_EQUAL_INT( 240, viewportInPixels.h );
 }
 
 void test_TileMap_SetViewportPixels_DerivesViewportUnits( void )
 {
    TestTileMap_t map = { { 0 }, 16, { 0 }, { 0 } };
-   Vector4i32_t viewportUnits;
+   Vector4i32_t viewportInUnits;
 
-   TileMap_SetViewportPixels( (TileMap_t*)&map, (Vector4i32_t){ 10, 20, 320, 240 } );
+   TileMap_SetViewportInPixels( (TileMap_t*)&map, (Vector4i32_t){ 10, 20, 320, 240 } );
 
-   viewportUnits = TileMap_GetViewportUnits( (TileMap_t*)&map );
+   viewportInUnits = TileMap_GetViewportInUnits( (TileMap_t*)&map );
 
-   TEST_ASSERT_EQUAL_INT( 10 * WORLD_UNITS_PER_PIXEL, viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, viewportUnits.y );
-   TEST_ASSERT_EQUAL_INT( 320 * WORLD_UNITS_PER_PIXEL, viewportUnits.w );
-   TEST_ASSERT_EQUAL_INT( 240 * WORLD_UNITS_PER_PIXEL, viewportUnits.h );
+   TEST_ASSERT_EQUAL_INT( 10 * WORLD_UNITS_PER_PIXEL, viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, viewportInUnits.y );
+   TEST_ASSERT_EQUAL_INT( 320 * WORLD_UNITS_PER_PIXEL, viewportInUnits.w );
+   TEST_ASSERT_EQUAL_INT( 240 * WORLD_UNITS_PER_PIXEL, viewportInUnits.h );
 }
 
 void test_TileMap_AnchorViewport_UpdatesViewportPixels( void )
@@ -279,8 +279,8 @@ void test_TileMap_AnchorViewport_UpdatesViewportPixels( void )
 
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL );
 
-   TEST_ASSERT_EQUAL_INT( 160, map.viewportPixels.x );
-   TEST_ASSERT_EQUAL_INT( 120, map.viewportPixels.y );
+   TEST_ASSERT_EQUAL_INT( 160, map.viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 120, map.viewportInPixels.y );
 }
 
 void test_TileMap_AnchorViewportToEntity_UsesEntityCenter( void )
@@ -290,10 +290,10 @@ void test_TileMap_AnchorViewportToEntity_UsesEntityCenter( void )
 
    TileMap_AnchorViewportToEntity( (TileMap_t*)&map, &entity );
 
-   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 30 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
-   TEST_ASSERT_EQUAL_INT( 20, map.viewportPixels.x );
-   TEST_ASSERT_EQUAL_INT( 30, map.viewportPixels.y );
+   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 30 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
+   TEST_ASSERT_EQUAL_INT( 20, map.viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 30, map.viewportInPixels.y );
 }
 
 void test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight( void )
@@ -303,10 +303,10 @@ void test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight( void )
 
    TileMap_AnchorViewportToEntity( (TileMap_t*)&map, &entity );
 
-   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
-   TEST_ASSERT_EQUAL_INT( 160, map.viewportPixels.x );
-   TEST_ASSERT_EQUAL_INT( 120, map.viewportPixels.y );
+   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
+   TEST_ASSERT_EQUAL_INT( 160, map.viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 120, map.viewportInPixels.y );
 }
 
 void test_TileMap_GetTileIndexForEntity_UsesEntityCenter( void )
