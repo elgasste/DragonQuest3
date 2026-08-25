@@ -21,7 +21,7 @@ TileMapData_t;
 
 typedef struct TileMap_t TileMap_t;
 size_t TileMap_GetStructSize( void );
-TileMap_t *TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t *gameData, u32 tileMapId );
+TileMap_t *TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t *gameData, u32 tileMapId, u32 tileSizePixels );
 void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena );
 
 u32 TileMap_GetId( TileMap_t* tileMap );
@@ -35,9 +35,8 @@ Vector4i32_t TileMap_GetViewportPixels( TileMap_t* tileMap );
 void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits );
 void TileMap_SetViewportPixels( TileMap_t* tileMap, Vector4i32_t viewportPixels );
 
-// TODO: how about we give the tile map a value for tile size, so it doesn't need to receive it every time?
-void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels );
-void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSizePixels );
-u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSizePixels );
+void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y );
+void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity );
+u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity );
 
 #endif // TILE_MAP_H

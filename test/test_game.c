@@ -180,9 +180,10 @@ u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
    return tileTextureSet->tileSize;
 }
 
-TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, u32 tileMapId )
+TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, u32 tileMapId, u32 tileSizePixels )
 {
    UNUSED_PARAM( gameData );
+   UNUSED_PARAM( tileSizePixels );
    g_tileMap = (TileMap_t*)MemArena_AllocMem( memArena, sizeof( TileMap_t ) );
    g_tileMap->width = tileMapId;
    g_tileMap->height = tileMapId;
@@ -208,29 +209,26 @@ void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
    g_tileMapViewportUnits = viewportUnits;
 }
 
-void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 tileSize )
+void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
 {
    UNUSED_PARAM( tileMap );
    g_tileMapAnchorCount++;
    g_anchorViewport = g_tileMapViewportUnits;
    g_anchorX = (i32)x;
    g_anchorY = (i32)y;
-   g_anchorTileSize = tileSize;
 }
 
-void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSize )
+void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity )
 {
    UNUSED_PARAM( tileMap );
    UNUSED_PARAM( entity );
    g_tileMapAnchorCount++;
-   g_anchorTileSize = tileSize;
 }
 
-u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSize )
+u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 {
    UNUSED_PARAM( tileMap );
    UNUSED_PARAM( entity );
-   UNUSED_PARAM( tileSize );
    return 7;
 }
 
@@ -345,7 +343,6 @@ void test_Game_Run_ExecutesOneFrameAndUpdatesViewport( void )
    TEST_ASSERT_EQUAL_UINT( 1, g_platformHandleMessagesCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_gameHandleInputCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_tileMapAnchorCount );
-   TEST_ASSERT_EQUAL_INT( 16, g_anchorTileSize );
    TEST_ASSERT_EQUAL_UINT( 1, g_gameRenderCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_clockEndCount );
 

@@ -61,7 +61,7 @@ void Game_TicPhysics( Game_t* game )
    }
 
    Entity_SetPosition( playerEntity, playerRect.x, playerRect.y );
-   newTileIndex = TileMap_GetTileIndexForEntity( tileMap, playerEntity, TileTextureSet_GetTileSize( tileTextureSet ) );
+   newTileIndex = TileMap_GetTileIndexForEntity( tileMap, playerEntity );
    Entity_SetTileIndex( playerEntity, newTileIndex );
    Entity_SetVelocity( playerEntity, 0, 0 );
 }

@@ -96,11 +96,10 @@ u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
    return tileTextureSet->tileSize;
 }
 
-u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSize )
+u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 {
    UNUSED_PARAM( tileMap );
    UNUSED_PARAM( entity );
-   UNUSED_PARAM( tileSize );
    return 7;
 }
 
@@ -205,7 +204,6 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtUpperBounds );
    RUN_TEST( test_Game_TicPhysics_DoesNotClampWrappingMap );
    RUN_TEST( test_Game_TicPhysics_UpdatesPlayerTileIndex );
-
    RUN_TEST( test_Game_TicPhysics_ClampsOversizedPlayerToOrigin );
 
    return UNITY_END();
