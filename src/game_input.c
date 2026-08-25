@@ -2,17 +2,17 @@
 #include "game.h"
 #include "input.h"
 
+// TODO : figure out the frickin' jitterbug issue
 void Game_HandleInput( Game_t* game )
 {
    b32 leftIsDown, upIsDown, rightIsDown, downIsDown;
    Input_t* input;
    Entity_t* playerEntity;
    Vector2i32_t playerVelocity;
-   i32 unitsPerSecond;
+   i32 newVelocity;
 
    playerEntity = Game_GetPlayerEntity( game );
-   // MUFFINS: 60 pixels per second
-   unitsPerSecond = 60 * WORLD_UNITS_PER_PIXEL;
+   newVelocity = 60 * WORLD_UNITS_PER_PIXEL;
 
    input = Game_GetInput( game );
    leftIsDown = Input_IsButtonDown( input, InputButton_Left );
@@ -24,7 +24,7 @@ void Game_HandleInput( Game_t* game )
    {
       playerVelocity = Entity_GetVelocity( playerEntity );
       // this should be units per second
-      playerVelocity.x = -unitsPerSecond;
+      playerVelocity.x = -newVelocity;
 
       // TODO
       // if ( !( upIsDown && sprite->direction == Direction_Up ) &&
@@ -43,7 +43,7 @@ void Game_HandleInput( Game_t* game )
    else if ( rightIsDown && !leftIsDown )
    {
       playerVelocity = Entity_GetVelocity( playerEntity );
-      playerVelocity.x = unitsPerSecond;
+      playerVelocity.x = newVelocity;
 
       // TODO
       // if ( !( upIsDown && sprite->direction == Direction_Up ) &&
@@ -63,7 +63,7 @@ void Game_HandleInput( Game_t* game )
    if ( upIsDown && !downIsDown )
    {
       playerVelocity = Entity_GetVelocity( playerEntity );
-      playerVelocity.y = -unitsPerSecond;
+      playerVelocity.y = -newVelocity;
 
       // TODO
       // if ( !( leftIsDown && sprite->direction == Direction_Left ) &&
@@ -82,7 +82,7 @@ void Game_HandleInput( Game_t* game )
    else if ( downIsDown && !upIsDown )
    {
       playerVelocity = Entity_GetVelocity( playerEntity );
-      playerVelocity.y = unitsPerSecond;
+      playerVelocity.y = newVelocity;
 
       // TODO
       // if ( !( leftIsDown && sprite->direction == Direction_Left ) &&
