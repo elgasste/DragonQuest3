@@ -1,4 +1,5 @@
 #include "mocks/mock_tile.h"
+#include "mocks/mock_entity.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +34,11 @@ global File_t g_file;
 global u32 g_fatalErrorCount;
 global GameDataFileOffsets_t g_fileOffsets;
 global GameDataObjectOffset_t g_tileMapOffset;
+
+Vector4i32_t Entity_GetRect( Entity_t* entity )
+{
+   return entity->rect;
+}
 
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
@@ -261,6 +267,32 @@ void test_TileMap_AnchorViewport_UpdatesViewportPixels( void )
    TEST_ASSERT_EQUAL_INT( 120, map.viewportPixels.y );
 }
 
+void test_TileMap_AnchorViewportToEntity_UsesEntityCenter( void )
+{
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   Entity_t entity = { { 95 * WORLD_UNITS_PER_PIXEL, 85 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+
+   TileMap_AnchorViewportToEntity( (TileMap_t*)&map, &entity, 16 );
+
+   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
+   TEST_ASSERT_EQUAL_INT( 30 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( 20, map.viewportPixels.x );
+   TEST_ASSERT_EQUAL_INT( 30, map.viewportPixels.y );
+}
+
+void test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight( void )
+{
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   Entity_t entity = { { 310 * WORLD_UNITS_PER_PIXEL, 230 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+
+   TileMap_AnchorViewportToEntity( (TileMap_t*)&map, &entity, 16 );
+
+   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
+   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( 160, map.viewportPixels.x );
+   TEST_ASSERT_EQUAL_INT( 120, map.viewportPixels.y );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -280,6 +312,8 @@ int main( void )
    RUN_TEST( test_TileMap_SetViewportUnits_DerivesViewportPixels );
    RUN_TEST( test_TileMap_SetViewportPixels_DerivesViewportUnits );
    RUN_TEST( test_TileMap_AnchorViewport_UpdatesViewportPixels );
+   RUN_TEST( test_TileMap_AnchorViewportToEntity_UsesEntityCenter );
+   RUN_TEST( test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight );
 
    return UNITY_END();
 }

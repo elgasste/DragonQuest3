@@ -4,6 +4,7 @@
 #include "common.h"
 #include "vector.h"
 
+typedef struct Entity_t Entity_t;
 typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
 typedef struct Tile_t Tile_t;
@@ -35,5 +36,6 @@ void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits );
 void TileMap_SetViewportPixels( TileMap_t* tileMap, Vector4i32_t viewportPixels );
 
 void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels );
+void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSizePixels );
 
 #endif // TILE_MAP_H

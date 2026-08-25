@@ -151,13 +151,6 @@ void Game_Stop( Game_t* game )
 
 internal void Game_Tic( Game_t* game )
 {
-   i32 centerX, centerY;
-   Vector4i32_t playerRect;
-
    Game_TicPhysics( game );
-
-   playerRect = Entity_GetRect( game->playerEntity );
-   centerX = playerRect.x + ( playerRect.w / 2 );
-   centerY = playerRect.y + ( playerRect.h / 2 );
-   TileMap_AnchorViewportToPointUnits( game->tileMap, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 }

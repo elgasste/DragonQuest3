@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "entity.h"
 #include "file.h"
 #include "game_data.h"
 #include "mem_arena.h"
@@ -187,4 +188,12 @@ void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 t
    tileMap->viewportUnits.y = newViewportY;
    tileMap->viewportPixels.x = newViewportX / WORLD_UNITS_PER_PIXEL;
    tileMap->viewportPixels.y = newViewportY / WORLD_UNITS_PER_PIXEL;
+}
+
+void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSizePixels )
+{
+   Vector4i32_t entityRect;
+
+   entityRect = Entity_GetRect( entity );
+   TileMap_AnchorViewportToPointUnits( tileMap, entityRect.x + ( entityRect.w / 2 ), entityRect.y + ( entityRect.h / 2 ), tileSizePixels );
 }

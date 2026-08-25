@@ -213,6 +213,14 @@ void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 t
    g_anchorTileSize = tileSize;
 }
 
+void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSize )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( entity );
+   g_tileMapAnchorCount++;
+   g_anchorTileSize = tileSize;
+}
+
 void Platform_HandleMessages( Game_t* game )
 {
    g_platformHandleMessagesCount++;
