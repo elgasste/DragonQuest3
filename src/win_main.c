@@ -446,7 +446,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.bottom = 0;
 
    // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 256, 224, RGB( 0, 0, 128 ), 200 );
+   DrawTranslucentRectangle( *dcMem, 0, 0, 302, 224, RGB( 0, 0, 128 ), 200 );
 
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
 
