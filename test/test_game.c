@@ -33,7 +33,7 @@ global GameData_t* g_gameData;
 global TileTextureSet_t* g_tileTextureSet;
 global TileMap_t* g_tileMap;
 global Entity_t* g_playerEntity;
-global Vector4i32_t g_tileMapViewportUnits;
+global Vector4i32_t g_tileMapViewportInUnits;
 global Vector4i32_t g_anchorViewport;
 global i32 g_anchorX;
 global i32 g_anchorY;
@@ -143,6 +143,11 @@ void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
    entity->velocity.y = vy;
 }
 
+void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
+{
+   entity->tileIndex = tileIndex;
+}
+
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
 {
    UNUSED_PARAM( filePath );
@@ -175,9 +180,10 @@ u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
    return tileTextureSet->tileSize;
 }
 
-TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, u32 tileMapId )
+TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, u32 tileMapId, u32 tileSizePixels )
 {
    UNUSED_PARAM( gameData );
+   UNUSED_PARAM( tileSizePixels );
    g_tileMap = (TileMap_t*)MemArena_AllocMem( memArena, sizeof( TileMap_t ) );
    g_tileMap->width = tileMapId;
    g_tileMap->height = tileMapId;
@@ -191,26 +197,51 @@ void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
    g_tileMapFreeCount++;
 }
 
-Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap )
+Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )
 {
    UNUSED_PARAM( tileMap );
-   return g_tileMapViewportUnits;
+   return g_tileMapViewportInUnits;
 }
 
-void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
+void TileMap_SetViewportInUnits( TileMap_t* tileMap, Vector4i32_t viewportInUnits )
 {
    UNUSED_PARAM( tileMap );
-   g_tileMapViewportUnits = viewportUnits;
+   g_tileMapViewportInUnits = viewportInUnits;
 }
 
-void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 tileSize )
+void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
 {
    UNUSED_PARAM( tileMap );
    g_tileMapAnchorCount++;
-   g_anchorViewport = g_tileMapViewportUnits;
+   g_anchorViewport = g_tileMapViewportInUnits;
    g_anchorX = (i32)x;
    g_anchorY = (i32)y;
-   g_anchorTileSize = tileSize;
+}
+
+void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( entity );
+   g_tileMapAnchorCount++;
+}
+
+u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( entity );
+   return 7;
+}
+
+u32 TileMap_GetTilesX( TileMap_t* tileMap )
+{
+   return tileMap->width;
+}
+
+void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )
+{
+   UNUSED_PARAM( tileMap );
+   Entity_SetPosition( entity, 100 * WORLD_UNITS_PER_PIXEL, 100 * WORLD_UNITS_PER_PIXEL );
+   Entity_SetTileIndex( entity, tileIndex );
 }
 
 void Platform_HandleMessages( Game_t* game )
@@ -268,7 +299,7 @@ void test_Game_GetStructSize_ReturnsNonZeroSize( void )
 
 void test_Game_Create_InitializesDependenciesAndDefaultState( void )
 {
-   Vector4i32_t viewportUnits;
+   Vector4i32_t viewportInUnits;
    Vector4i32_t playerRect;
    Game_t* game = CreateGame();
 
@@ -280,17 +311,18 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, Game_GetTileTextureSet( game ) );
    TEST_ASSERT_EQUAL_PTR( g_tileMap, Game_GetTileMap( game ) );
 
-   viewportUnits = TileMap_GetViewportUnits( Game_GetTileMap( game ) );
-   TEST_ASSERT_EQUAL_INT( 0, viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 0, viewportUnits.y );
-   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, viewportUnits.w );
-   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL, viewportUnits.h );
+   viewportInUnits = TileMap_GetViewportInUnits( Game_GetTileMap( game ) );
+   TEST_ASSERT_EQUAL_INT( 0, viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 0, viewportInUnits.y );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, viewportInUnits.w );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL, viewportInUnits.h );
 
    playerRect = Entity_GetRect( Game_GetPlayerEntity( game ) );
    TEST_ASSERT_EQUAL_INT( 100 * WORLD_UNITS_PER_PIXEL, playerRect.x );
    TEST_ASSERT_EQUAL_INT( 100 * WORLD_UNITS_PER_PIXEL, playerRect.y );
    TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.w );
    TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.h );
+   TEST_ASSERT_EQUAL_UINT( 40, Game_GetPlayerEntity( game )->tileIndex );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
 
    Game_Free( game, (MemArena_t*)1 );
@@ -323,7 +355,6 @@ void test_Game_Run_ExecutesOneFrameAndUpdatesViewport( void )
    TEST_ASSERT_EQUAL_UINT( 1, g_platformHandleMessagesCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_gameHandleInputCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_tileMapAnchorCount );
-   TEST_ASSERT_EQUAL_INT( 16, g_anchorTileSize );
    TEST_ASSERT_EQUAL_UINT( 1, g_gameRenderCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_clockEndCount );
 

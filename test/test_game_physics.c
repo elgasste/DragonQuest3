@@ -71,6 +71,11 @@ void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
    entity->velocity.y = vy;
 }
 
+void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
+{
+   entity->tileIndex = tileIndex;
+}
+
 u32 TileMap_GetTilesX( TileMap_t* tileMap )
 {
    return tileMap->width;
@@ -86,9 +91,35 @@ b32 TileMap_GetWraps( TileMap_t* tileMap )
    return tileMap->wraps;
 }
 
+void TileMap_WrapEntityPosition( TileMap_t* tileMap, Entity_t* entity )
+{
+   Vector4i32_t rect = Entity_GetRect( entity );
+   i32 mapWidth = (i32)tileMap->width * 16 * WORLD_UNITS_PER_PIXEL;
+   i32 mapHeight = (i32)tileMap->height * 16 * WORLD_UNITS_PER_PIXEL;
+
+   rect.x %= mapWidth;
+   rect.y %= mapHeight;
+   if ( rect.x < 0 )
+   {
+      rect.x += mapWidth;
+   }
+   if ( rect.y < 0 )
+   {
+      rect.y += mapHeight;
+   }
+   Entity_SetPosition( entity, rect.x, rect.y );
+}
+
 u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
 {
    return tileTextureSet->tileSize;
+}
+
+u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( entity );
+   return 7;
 }
 
 void setUp( void )
@@ -157,8 +188,17 @@ void test_Game_TicPhysics_DoesNotClampWrappingMap( void )
 
    Game_TicPhysics( &g_game );
 
-   TEST_ASSERT_EQUAL_INT( 170 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
-   TEST_ASSERT_EQUAL_INT( 130 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
+   TEST_ASSERT_EQUAL_INT( 10 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 2 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
+}
+
+void test_Game_TicPhysics_UpdatesPlayerTileIndex( void )
+{
+   g_entity.tileIndex = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_UINT( 7, g_entity.tileIndex );
 }
 
 void test_Game_TicPhysics_ClampsOversizedPlayerToOrigin( void )
@@ -174,18 +214,31 @@ void test_Game_TicPhysics_ClampsOversizedPlayerToOrigin( void )
    TEST_ASSERT_EQUAL_INT( 0, g_entity.rect.y );
 }
 
+void test_Game_TicPhysics_WrapsPlayerAtLowerBounds( void )
+{
+   g_tileMap.wraps = True;
+   g_entity.rect.x = 5 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.y = 3 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = -10 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = -5 * WORLD_UNITS_PER_PIXEL * 60;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 155 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 126 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_TicPhysics_MovesPlayerByVelocity );
-
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtLowerBounds );
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtUpperBounds );
-
    RUN_TEST( test_Game_TicPhysics_DoesNotClampWrappingMap );
-   
+   RUN_TEST( test_Game_TicPhysics_UpdatesPlayerTileIndex );
    RUN_TEST( test_Game_TicPhysics_ClampsOversizedPlayerToOrigin );
+   RUN_TEST( test_Game_TicPhysics_WrapsPlayerAtLowerBounds );
 
    return UNITY_END();
 }

@@ -5,6 +5,7 @@ struct Entity_t
 {
    Vector4i32_t rect;
    Vector2i32_t velocity;
+   u32 tileIndex;
 };
 
 size_t Entity_GetStructSize( void )
@@ -35,6 +36,11 @@ Vector2i32_t Entity_GetVelocity( Entity_t* entity )
    return entity->velocity;
 }
 
+u32 Entity_GetTileIndex( Entity_t* entity )
+{
+   return entity->tileIndex;
+}
+
 void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
 {
    entity->rect.x = x;
@@ -51,4 +57,9 @@ void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
 {
    entity->velocity.x = vx;
    entity->velocity.y = vy;
+}
+
+void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
+{
+   entity->tileIndex = tileIndex;
 }

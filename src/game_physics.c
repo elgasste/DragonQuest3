@@ -7,6 +7,7 @@
 void Game_TicPhysics( Game_t* game )
 {
    i32 mapWidth, mapHeight, maxX, maxY;
+   u32 newTileIndex;
    r32 frameSeconds;
    Vector4i32_t playerRect;
    Vector2i32_t playerVelocity;
@@ -23,6 +24,7 @@ void Game_TicPhysics( Game_t* game )
 
    playerRect.x += (i32)( playerVelocity.x * frameSeconds );
    playerRect.y += (i32)( playerVelocity.y * frameSeconds );
+   Entity_SetPosition( playerEntity, playerRect.x, playerRect.y );
 
    if ( !TileMap_GetWraps( tileMap ) )
    {
@@ -58,7 +60,14 @@ void Game_TicPhysics( Game_t* game )
          playerRect.y = maxY;
       }
    }
+   else
+   {
+      TileMap_WrapEntityPosition( tileMap, playerEntity );
+      playerRect = Entity_GetRect( playerEntity );
+   }
 
    Entity_SetPosition( playerEntity, playerRect.x, playerRect.y );
+   newTileIndex = TileMap_GetTileIndexForEntity( tileMap, playerEntity );
+   Entity_SetTileIndex( playerEntity, newTileIndex );
    Entity_SetVelocity( playerEntity, 0, 0 );
 }

@@ -8,6 +8,7 @@
 #include "input.h"
 #include "mem_arena.h"
 #include "platform.h"
+#include "tile_map.h"
 #include "win_common.h"
 
 internal void MemArena_DumpStats( MemArena_t* memArena );
@@ -424,7 +425,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 
 internal void DrawDiagnostics( HDC* dcMem )
 {
-   u32 gameSeconds, realSeconds;
+   u32 gameSeconds, realSeconds, playerTileIndex, playerTileX, playerTileY;
    RECT r;
    HFONT oldFont;
    Game_t* game;
@@ -446,7 +447,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.bottom = 0;
 
    // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 302, 224, RGB( 0, 0, 128 ), 200 );
+   DrawTranslucentRectangle( *dcMem, 0, 0, 314, 240, RGB( 0, 0, 128 ), 200 );
 
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
 
@@ -484,6 +485,13 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.top += 16;
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "  Player Position: (%d, %d)", playerRect.x, playerRect.y );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   playerTileIndex = Entity_GetTileIndex( Game_GetPlayerEntity( game ) );
+   playerTileX = playerTileIndex % TileMap_GetTilesX( Game_GetTileMap( game ) );
+   playerTileY = playerTileIndex / TileMap_GetTilesX( Game_GetTileMap( game ) );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u (%u, %u)", playerTileIndex, playerTileX, playerTileY );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 

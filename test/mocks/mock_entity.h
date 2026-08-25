@@ -7,6 +7,7 @@ typedef struct Entity_t
 {
    Vector4i32_t rect;
    Vector2i32_t velocity;
+   u32 tileIndex;
 }
 Entity_t;
 

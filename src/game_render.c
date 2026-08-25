@@ -30,13 +30,13 @@ internal void GameRender_DrawPlayer( Game_t* game )
 {
    Display_t* display;
    TileMap_t* tileMap;
-   Vector4i32_t viewportPixels;
+   Vector4i32_t viewportInPixels;
    Vector4i32_t playerRect;
    Entity_t* playerEntity;
 
    display = Game_GetDisplay( game );
    tileMap = Game_GetTileMap( game );
-   viewportPixels = TileMap_GetViewportPixels( tileMap );
+   viewportInPixels = TileMap_GetViewportInPixels( tileMap );
    playerEntity = Game_GetPlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
 
@@ -45,5 +45,5 @@ internal void GameRender_DrawPlayer( Game_t* game )
    playerRect.w /= WORLD_UNITS_PER_PIXEL;
    playerRect.h /= WORLD_UNITS_PER_PIXEL;
 
-   Display_DrawRect( display, playerRect.x - viewportPixels.x, playerRect.y - viewportPixels.y, playerRect.w, playerRect.h, 0x00990000u );
+   Display_DrawRect( display, playerRect.x - viewportInPixels.x, playerRect.y - viewportInPixels.y, playerRect.w, playerRect.h, 0x00990000u );
 }

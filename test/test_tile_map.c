@@ -1,4 +1,5 @@
 #include "mocks/mock_tile.h"
+#include "mocks/mock_entity.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,8 +23,9 @@ TestTileMapData_t;
 typedef struct TestTileMap_t
 {
    TestTileMapData_t data;
-   Vector4i32_t viewportUnits;
-   Vector4i32_t viewportPixels;
+   u32 tileSizePixels;
+   Vector4i32_t viewportInUnits;
+   Vector4i32_t viewportInPixels;
 }
 TestTileMap_t;
 
@@ -33,6 +35,22 @@ global File_t g_file;
 global u32 g_fatalErrorCount;
 global GameDataFileOffsets_t g_fileOffsets;
 global GameDataObjectOffset_t g_tileMapOffset;
+
+Vector4i32_t Entity_GetRect( Entity_t* entity )
+{
+   return entity->rect;
+}
+
+void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
+{
+   entity->rect.x = x;
+   entity->rect.y = y;
+}
+
+void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
+{
+   entity->tileIndex = tileIndex;
+}
 
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
@@ -110,7 +128,7 @@ internal void SetUpMapFixture( TestTileMapData_t map, Tile_t* tiles )
 
 internal TileMap_t* LoadMap( u32 id )
 {
-   return TileMap_CreateFromGameData( (MemArena_t*)1, (GameData_t*)1, id );
+   return TileMap_CreateFromGameData( (MemArena_t*)1, (GameData_t*)1, id, 16 );
 }
 
 void setUp( void )
@@ -170,95 +188,169 @@ void test_TileMap_GetTile_ReturnsTilesInRowMajorOrder( void )
 
 void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtTopLeft( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL } };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
-   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 0, 0, 16 );
+   map.tileSizePixels = 16;
+   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 0, 0 );
 
-   TEST_ASSERT_EQUAL_INT( 0, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 0, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( 0, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 0, map.viewportInUnits.y );
 }
 
 void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtBottomRight( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL } };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
-   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL, 16 );
+   map.tileSizePixels = 16;
+   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL );
 
-   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
 }
 
 void test_TileMap_AnchorViewport_CentersSmallNonWrappingMap( void )
 {
-   TestTileMap_t map = { { 1, 4, 3, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL } };
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
-   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 32 * WORLD_UNITS_PER_PIXEL, 24 * WORLD_UNITS_PER_PIXEL, 16 );
+   map.tileSizePixels = 16;
+   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 32 * WORLD_UNITS_PER_PIXEL, 24 * WORLD_UNITS_PER_PIXEL );
 
-   TEST_ASSERT_EQUAL_INT( -48 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( -36 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( -48 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( -36 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
 }
 
 void test_TileMap_AnchorViewport_AllowsWrappingMapToMoveBeyondEdges( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, True, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL } };
+   TestTileMap_t map = { { 1, 20, 15, True, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
-   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 0, 0, 16 );
+   map.tileSizePixels = 16;
+   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 0, 0 );
 
-   TEST_ASSERT_EQUAL_INT( -80 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( -60 * WORLD_UNITS_PER_PIXEL, map.viewportUnits.y );
+   TEST_ASSERT_EQUAL_INT( -80 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( -60 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
 }
 
 void test_TileMap_GetViewportPixels_ReturnsStoredValue( void )
 {
-   TestTileMap_t map = { { 0 }, { 0 }, { 3, 4, 5, 6 } };
-   Vector4i32_t viewportPixels;
+   TestTileMap_t map = { { 0 }, 16, { 0 }, { 3, 4, 5, 6 } };
+   Vector4i32_t viewportInPixels;
 
-   viewportPixels = TileMap_GetViewportPixels( (TileMap_t*)&map );
+   viewportInPixels = TileMap_GetViewportInPixels( (TileMap_t*)&map );
 
-   TEST_ASSERT_EQUAL_INT( 3, viewportPixels.x );
-   TEST_ASSERT_EQUAL_INT( 4, viewportPixels.y );
-   TEST_ASSERT_EQUAL_INT( 5, viewportPixels.w );
-   TEST_ASSERT_EQUAL_INT( 6, viewportPixels.h );
+   TEST_ASSERT_EQUAL_INT( 3, viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 4, viewportInPixels.y );
+   TEST_ASSERT_EQUAL_INT( 5, viewportInPixels.w );
+   TEST_ASSERT_EQUAL_INT( 6, viewportInPixels.h );
 }
 
 void test_TileMap_SetViewportUnits_DerivesViewportPixels( void )
 {
-   TestTileMap_t map = { { 0 }, { 0 }, { 0 } };
-   Vector4i32_t viewportPixels;
+   TestTileMap_t map = { { 0 }, 16, { 0 }, { 0 } };
+   Vector4i32_t viewportInPixels;
 
-   TileMap_SetViewportUnits( (TileMap_t*)&map, (Vector4i32_t){ 10 * WORLD_UNITS_PER_PIXEL, 20 * WORLD_UNITS_PER_PIXEL, 320 * WORLD_UNITS_PER_PIXEL, 240 * WORLD_UNITS_PER_PIXEL } );
+   TileMap_SetViewportInUnits( (TileMap_t*)&map, (Vector4i32_t){ 10 * WORLD_UNITS_PER_PIXEL, 20 * WORLD_UNITS_PER_PIXEL, 320 * WORLD_UNITS_PER_PIXEL, 240 * WORLD_UNITS_PER_PIXEL } );
 
-   viewportPixels = TileMap_GetViewportPixels( (TileMap_t*)&map );
+   viewportInPixels = TileMap_GetViewportInPixels( (TileMap_t*)&map );
 
-   TEST_ASSERT_EQUAL_INT( 10, viewportPixels.x );
-   TEST_ASSERT_EQUAL_INT( 20, viewportPixels.y );
-   TEST_ASSERT_EQUAL_INT( 320, viewportPixels.w );
-   TEST_ASSERT_EQUAL_INT( 240, viewportPixels.h );
+   TEST_ASSERT_EQUAL_INT( 10, viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 20, viewportInPixels.y );
+   TEST_ASSERT_EQUAL_INT( 320, viewportInPixels.w );
+   TEST_ASSERT_EQUAL_INT( 240, viewportInPixels.h );
 }
 
 void test_TileMap_SetViewportPixels_DerivesViewportUnits( void )
 {
-   TestTileMap_t map = { { 0 }, { 0 }, { 0 } };
-   Vector4i32_t viewportUnits;
+   TestTileMap_t map = { { 0 }, 16, { 0 }, { 0 } };
+   Vector4i32_t viewportInUnits;
 
-   TileMap_SetViewportPixels( (TileMap_t*)&map, (Vector4i32_t){ 10, 20, 320, 240 } );
+   TileMap_SetViewportInPixels( (TileMap_t*)&map, (Vector4i32_t){ 10, 20, 320, 240 } );
 
-   viewportUnits = TileMap_GetViewportUnits( (TileMap_t*)&map );
+   viewportInUnits = TileMap_GetViewportInUnits( (TileMap_t*)&map );
 
-   TEST_ASSERT_EQUAL_INT( 10 * WORLD_UNITS_PER_PIXEL, viewportUnits.x );
-   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, viewportUnits.y );
-   TEST_ASSERT_EQUAL_INT( 320 * WORLD_UNITS_PER_PIXEL, viewportUnits.w );
-   TEST_ASSERT_EQUAL_INT( 240 * WORLD_UNITS_PER_PIXEL, viewportUnits.h );
+   TEST_ASSERT_EQUAL_INT( 10 * WORLD_UNITS_PER_PIXEL, viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, viewportInUnits.y );
+   TEST_ASSERT_EQUAL_INT( 320 * WORLD_UNITS_PER_PIXEL, viewportInUnits.w );
+   TEST_ASSERT_EQUAL_INT( 240 * WORLD_UNITS_PER_PIXEL, viewportInUnits.h );
 }
 
 void test_TileMap_AnchorViewport_UpdatesViewportPixels( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, False, 0 }, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
-   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL, 16 );
+   TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL );
 
-   TEST_ASSERT_EQUAL_INT( 160, map.viewportPixels.x );
-   TEST_ASSERT_EQUAL_INT( 120, map.viewportPixels.y );
+   TEST_ASSERT_EQUAL_INT( 160, map.viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 120, map.viewportInPixels.y );
+}
+
+void test_TileMap_AnchorViewportToEntity_UsesEntityCenter( void )
+{
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   Entity_t entity = { { 95 * WORLD_UNITS_PER_PIXEL, 85 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+
+   TileMap_AnchorViewportToEntity( (TileMap_t*)&map, &entity );
+
+   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 30 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
+   TEST_ASSERT_EQUAL_INT( 20, map.viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 30, map.viewportInPixels.y );
+}
+
+void test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight( void )
+{
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   Entity_t entity = { { 310 * WORLD_UNITS_PER_PIXEL, 230 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+
+   TileMap_AnchorViewportToEntity( (TileMap_t*)&map, &entity );
+
+   TEST_ASSERT_EQUAL_INT( 160 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.x );
+   TEST_ASSERT_EQUAL_INT( 120 * WORLD_UNITS_PER_PIXEL, map.viewportInUnits.y );
+   TEST_ASSERT_EQUAL_INT( 160, map.viewportInPixels.x );
+   TEST_ASSERT_EQUAL_INT( 120, map.viewportInPixels.y );
+}
+
+void test_TileMap_GetTileIndexForEntity_UsesEntityCenter( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 16, { 0 }, { 0 } };
+   Entity_t entity = { { 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+
+   TEST_ASSERT_EQUAL_UINT( 5, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
+}
+
+void test_TileMap_GetTileIndexForEntity_AdvancesAtTileBoundary( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 16, { 0 }, { 0 } };
+   Entity_t entity = { { 32 * WORLD_UNITS_PER_PIXEL, 0, 1, 1 }, { 0 } };
+
+   TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
+}
+
+void test_TileMap_GetTileIndexForEntity_WrapsCoordinates( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, True, 0 }, 16, { 0 }, { 0 } };
+   Entity_t entity = { { 64 * WORLD_UNITS_PER_PIXEL, 48 * WORLD_UNITS_PER_PIXEL, 1, 1 }, { 0 } };
+
+   TEST_ASSERT_EQUAL_UINT( 0, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
+
+   entity.rect.x = -16 * WORLD_UNITS_PER_PIXEL;
+   entity.rect.y = -16 * WORLD_UNITS_PER_PIXEL;
+   TEST_ASSERT_EQUAL_UINT( 11, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
+}
+
+void test_TileMap_WrapEntityPosition_WrapsBothDirections( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, True, 0 }, 16, { 0 }, { 0 } };
+   Entity_t entity = { { 64 * WORLD_UNITS_PER_PIXEL, 48 * WORLD_UNITS_PER_PIXEL, 1, 1 }, { 0 } };
+
+   TileMap_WrapEntityPosition( (TileMap_t*)&map, &entity );
+   TEST_ASSERT_EQUAL_INT( 0, entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 0, entity.rect.y );
+
+   entity.rect.x = -16 * WORLD_UNITS_PER_PIXEL;
+   entity.rect.y = -16 * WORLD_UNITS_PER_PIXEL;
+   TileMap_WrapEntityPosition( (TileMap_t*)&map, &entity );
+   TEST_ASSERT_EQUAL_INT( 48 * WORLD_UNITS_PER_PIXEL, entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 32 * WORLD_UNITS_PER_PIXEL, entity.rect.y );
 }
 
 int main( void )
@@ -277,9 +369,21 @@ int main( void )
    RUN_TEST( test_TileMap_AnchorViewport_AllowsWrappingMapToMoveBeyondEdges );
 
    RUN_TEST( test_TileMap_GetViewportPixels_ReturnsStoredValue );
+   
    RUN_TEST( test_TileMap_SetViewportUnits_DerivesViewportPixels );
+   
    RUN_TEST( test_TileMap_SetViewportPixels_DerivesViewportUnits );
+   
    RUN_TEST( test_TileMap_AnchorViewport_UpdatesViewportPixels );
+   
+   RUN_TEST( test_TileMap_AnchorViewportToEntity_UsesEntityCenter );
+   RUN_TEST( test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight );
+   
+   RUN_TEST( test_TileMap_GetTileIndexForEntity_UsesEntityCenter );
+   RUN_TEST( test_TileMap_GetTileIndexForEntity_AdvancesAtTileBoundary );
+   RUN_TEST( test_TileMap_GetTileIndexForEntity_WrapsCoordinates );
+
+   RUN_TEST( test_TileMap_WrapEntityPosition_WrapsBothDirections );
 
    return UNITY_END();
 }

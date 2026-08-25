@@ -1,19 +1,30 @@
 #include <stdio.h>
 
+#include "entity.h"
 #include "file.h"
 #include "game_data.h"
 #include "mem_arena.h"
 #include "tile.h"
 #include "tile_map.h"
 #include "platform.h"
-#include "vector.h"
+
+internal i32 TileMap_FloorDiv( i32 value, i32 divisor )
+{
+   if ( value >= 0 )
+   {
+      return value / divisor;
+   }
+
+   return -( ( -value + divisor - 1 ) / divisor );
+}
 
 struct TileMap_t
 {
    TileMapData_t data;
 
-   Vector4i32_t viewportUnits;
-   Vector4i32_t viewportPixels;
+   u32 tileSizePixels;
+   Vector4i32_t viewportInUnits;
+   Vector4i32_t viewportInPixels;
 };
 
 size_t TileMap_GetStructSize( void )
@@ -21,7 +32,7 @@ size_t TileMap_GetStructSize( void )
    return sizeof( TileMap_t );
 }
 
-TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameData, u32 tileMapId )
+TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameData, u32 tileMapId, u32 tileSizePixels )
 {
    u32 tileMapCount, i;
    i32 chunkOffset, tileMapOffset, tileCount, tilesOffset;
@@ -51,6 +62,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          }
 
          tileMap = (TileMap_t*)MemArena_AllocMem( memArena, TileMap_GetStructSize() );
+         tileMap->tileSizePixels = tileSizePixels;
          Platform_FileSeek( file, tileMapOffset, 0 );
          Platform_ReadFileBytes( file, (u8*)( &tileMap->data ), sizeof( TileMapData_t ) );
 
@@ -108,48 +120,48 @@ Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
    return (Tile_t*)( (u8*)tileMap->data.tiles + ( y * tileMap->data.tilesX + x ) * Tile_GetStructSize() );
 }
 
-Vector4i32_t TileMap_GetViewportUnits( TileMap_t* tileMap )
+Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )
 {
-   return tileMap->viewportUnits;
+   return tileMap->viewportInUnits;
 }
 
-Vector4i32_t TileMap_GetViewportPixels( TileMap_t* tileMap )
+Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap )
 {
-   return tileMap->viewportPixels;
+   return tileMap->viewportInPixels;
 }
 
-void TileMap_SetViewportUnits( TileMap_t* tileMap, Vector4i32_t viewportUnits )
+void TileMap_SetViewportInUnits( TileMap_t* tileMap, Vector4i32_t viewportInUnits )
 {
-   tileMap->viewportUnits = viewportUnits;
+   tileMap->viewportInUnits = viewportInUnits;
 
-   tileMap->viewportPixels.x = viewportUnits.x / WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportPixels.y = viewportUnits.y / WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportPixels.w = viewportUnits.w / WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportPixels.h = viewportUnits.h / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.x = viewportInUnits.x / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.y = viewportInUnits.y / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.w = viewportInUnits.w / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.h = viewportInUnits.h / WORLD_UNITS_PER_PIXEL;
 }
 
-void TileMap_SetViewportPixels( TileMap_t* tileMap, Vector4i32_t viewportPixels )
+void TileMap_SetViewportInPixels( TileMap_t* tileMap, Vector4i32_t viewportInPixels )
 {
-   tileMap->viewportPixels = viewportPixels;
+   tileMap->viewportInPixels = viewportInPixels;
 
-   tileMap->viewportUnits.x = viewportPixels.x * WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportUnits.y = viewportPixels.y * WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportUnits.w = viewportPixels.w * WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportUnits.h = viewportPixels.h * WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.x = viewportInPixels.x * WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.y = viewportInPixels.y * WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.w = viewportInPixels.w * WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.h = viewportInPixels.h * WORLD_UNITS_PER_PIXEL;
 }
 
-void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 tileSizePixels )
+void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
 {
    i32 newViewportX, newViewportY, halfViewportW, halfViewportH, tileMapW, tileMapH;
    Vector4i32_t viewport;
 
-   viewport = tileMap->viewportUnits;
+   viewport = tileMap->viewportInUnits;
 
    halfViewportW = (i32)( viewport.w / 2 );
    halfViewportH = (i32)( viewport.h / 2 );
 
-   tileMapW = (i32)tileMap->data.tilesX * (i32)tileSizePixels * WORLD_UNITS_PER_PIXEL;
-   tileMapH = (i32)tileMap->data.tilesY * (i32)tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   tileMapW = (i32)tileMap->data.tilesX * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   tileMapH = (i32)tileMap->data.tilesY * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
 
    newViewportX = (i32)x - halfViewportW;
    newViewportY = (i32)y - halfViewportH;
@@ -183,8 +195,92 @@ void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y, u32 t
       }
    }
 
-   tileMap->viewportUnits.x = newViewportX;
-   tileMap->viewportUnits.y = newViewportY;
-   tileMap->viewportPixels.x = newViewportX / WORLD_UNITS_PER_PIXEL;
-   tileMap->viewportPixels.y = newViewportY / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInUnits.x = newViewportX;
+   tileMap->viewportInUnits.y = newViewportY;
+   tileMap->viewportInPixels.x = newViewportX / WORLD_UNITS_PER_PIXEL;
+   tileMap->viewportInPixels.y = newViewportY / WORLD_UNITS_PER_PIXEL;
+}
+
+void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity )
+{
+   Vector4i32_t entityRect;
+
+   entityRect = Entity_GetRect( entity );
+   TileMap_AnchorViewportToPointUnits( tileMap, entityRect.x + ( entityRect.w / 2 ), entityRect.y + ( entityRect.h / 2 ) );
+}
+
+void TileMap_WrapEntityPosition( TileMap_t* tileMap, Entity_t* entity )
+{
+   Vector4i32_t entityRect;
+   i32 mapWidth, mapHeight;
+
+   entityRect = Entity_GetRect( entity );
+   mapWidth = (i32)tileMap->data.tilesX * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   mapHeight = (i32)tileMap->data.tilesY * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+
+   if ( mapWidth > 0 )
+   {
+      entityRect.x %= mapWidth;
+      if ( entityRect.x < 0 )
+      {
+         entityRect.x += mapWidth;
+      }
+   }
+   if ( mapHeight > 0 )
+   {
+      entityRect.y %= mapHeight;
+      if ( entityRect.y < 0 )
+      {
+         entityRect.y += mapHeight;
+      }
+   }
+
+   Entity_SetPosition( entity, entityRect.x, entityRect.y );
+}
+
+u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
+{
+   Vector4i32_t entityRect;
+   i32 tileX, tileY, tilesX, tilesY;
+
+   entityRect = Entity_GetRect( entity );
+   tileX = TileMap_FloorDiv( entityRect.x + ( entityRect.w / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
+   tileY = TileMap_FloorDiv( entityRect.y + ( entityRect.h / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
+
+   tilesX = (i32)tileMap->data.tilesX;
+   tilesY = (i32)tileMap->data.tilesY;
+   if ( tileMap->data.wraps )
+   {
+      tileX %= tilesX;
+      tileY %= tilesY;
+      if ( tileX < 0 )
+      {
+         tileX += tilesX;
+      }
+      if ( tileY < 0 )
+      {
+         tileY += tilesY;
+      }
+   }
+
+   return (u32)tileY * tileMap->data.tilesX + (u32)tileX;
+}
+
+void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )
+{
+   u32 tileX, tileY;
+   i32 entityCenterOffsetX, entityCenterOffsetY;
+   Vector4i32_t entityRect;
+
+   tileX = tileIndex % tileMap->data.tilesX;
+   tileY = tileIndex / tileMap->data.tilesX;
+
+   entityRect = Entity_GetRect( entity );
+   entityCenterOffsetX = (i32)( entityRect.w / 2 );
+   entityCenterOffsetY = (i32)( entityRect.h / 2 );
+
+   Entity_SetPosition( entity,
+      (i32)( tileX * tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL + ( tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL / 2 ) - entityCenterOffsetX ),
+      (i32)( tileY * tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL + ( tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL / 2 ) - entityCenterOffsetY ) );
+   Entity_SetTileIndex( entity, tileIndex );
 }
