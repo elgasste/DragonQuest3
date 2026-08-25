@@ -210,3 +210,22 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 
    return tileY * tileMap->data.tilesX + tileX;
 }
+
+void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )
+{
+   u32 tileX, tileY;
+   i32 entityCenterOffsetX, entityCenterOffsetY;
+   Vector4i32_t entityRect;
+
+   tileX = tileIndex % tileMap->data.tilesX;
+   tileY = tileIndex / tileMap->data.tilesX;
+
+   entityRect = Entity_GetRect( entity );
+   entityCenterOffsetX = (i32)( entityRect.w / 2 );
+   entityCenterOffsetY = (i32)( entityRect.h / 2 );
+
+   Entity_SetPosition( entity,
+      (i32)( tileX * tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL + ( tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL / 2 ) - entityCenterOffsetX ),
+      (i32)( tileY * tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL + ( tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL / 2 ) - entityCenterOffsetY ) );
+   Entity_SetTileIndex( entity, tileIndex );
+}

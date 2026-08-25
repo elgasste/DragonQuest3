@@ -38,5 +38,6 @@ void TileMap_SetViewportPixels( TileMap_t* tileMap, Vector4i32_t viewportPixels 
 void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y );
 void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity );
 u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity );
+void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex );
 
 #endif // TILE_MAP_H

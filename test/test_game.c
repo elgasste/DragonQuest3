@@ -232,6 +232,18 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
    return 7;
 }
 
+u32 TileMap_GetTilesX( TileMap_t* tileMap )
+{
+   return tileMap->width;
+}
+
+void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )
+{
+   UNUSED_PARAM( tileMap );
+   Entity_SetPosition( entity, 100 * WORLD_UNITS_PER_PIXEL, 100 * WORLD_UNITS_PER_PIXEL );
+   Entity_SetTileIndex( entity, tileIndex );
+}
+
 void Platform_HandleMessages( Game_t* game )
 {
    g_platformHandleMessagesCount++;
@@ -310,7 +322,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_INT( 100 * WORLD_UNITS_PER_PIXEL, playerRect.y );
    TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.w );
    TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.h );
-   TEST_ASSERT_EQUAL_UINT( 7, Game_GetPlayerEntity( game )->tileIndex );
+   TEST_ASSERT_EQUAL_UINT( 60, Game_GetPlayerEntity( game )->tileIndex );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
 
    Game_Free( game, (MemArena_t*)1 );

@@ -53,12 +53,12 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
 
    game->playerEntity = Entity_Create( game->memArena );
    Entity_SetSize( game->playerEntity, 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL );
-   Entity_SetPosition( game->playerEntity, 100 * WORLD_UNITS_PER_PIXEL, 100 * WORLD_UNITS_PER_PIXEL );
    Entity_SetVelocity( game->playerEntity, 0, 0 );
-   Entity_SetTileIndex( game->playerEntity, TileMap_GetTileIndexForEntity( game->tileMap, game->playerEntity ) );
+   TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
 
    // TODO: should this come from the game data file? or is it too integral to the game engine?
    TileMap_SetViewportUnits( game->tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
+
 
    return game;
 }

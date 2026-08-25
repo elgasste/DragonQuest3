@@ -8,6 +8,7 @@
 #include "input.h"
 #include "mem_arena.h"
 #include "platform.h"
+#include "tile_map.h"
 #include "win_common.h"
 
 internal void MemArena_DumpStats( MemArena_t* memArena );
@@ -424,7 +425,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 
 internal void DrawDiagnostics( HDC* dcMem )
 {
-   u32 gameSeconds, realSeconds;
+   u32 gameSeconds, realSeconds, playerTileIndex, playerTileX, playerTileY;
    RECT r;
    HFONT oldFont;
    Game_t* game;
@@ -487,7 +488,10 @@ internal void DrawDiagnostics( HDC* dcMem )
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u", Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
+   playerTileIndex = Entity_GetTileIndex( Game_GetPlayerEntity( game ) );
+   playerTileX = playerTileIndex % TileMap_GetTilesX( Game_GetTileMap( game ) );
+   playerTileY = playerTileIndex / TileMap_GetTilesX( Game_GetTileMap( game ) );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u (%u, %u)", playerTileIndex, playerTileX, playerTileY );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 

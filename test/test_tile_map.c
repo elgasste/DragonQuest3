@@ -41,6 +41,17 @@ Vector4i32_t Entity_GetRect( Entity_t* entity )
    return entity->rect;
 }
 
+void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
+{
+   entity->rect.x = x;
+   entity->rect.y = y;
+}
+
+void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
+{
+   entity->tileIndex = tileIndex;
+}
+
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
    UNUSED_PARAM( arena );
