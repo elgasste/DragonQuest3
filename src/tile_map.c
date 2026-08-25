@@ -8,6 +8,16 @@
 #include "tile_map.h"
 #include "platform.h"
 
+internal i32 TileMap_FloorDiv( i32 value, i32 divisor )
+{
+   if ( value >= 0 )
+   {
+      return value / divisor;
+   }
+
+   return -( ( -value + divisor - 1 ) / divisor );
+}
+
 struct TileMap_t
 {
    TileMapData_t data;
@@ -199,16 +209,61 @@ void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity )
    TileMap_AnchorViewportToPointUnits( tileMap, entityRect.x + ( entityRect.w / 2 ), entityRect.y + ( entityRect.h / 2 ) );
 }
 
+void TileMap_WrapEntityPosition( TileMap_t* tileMap, Entity_t* entity )
+{
+   Vector4i32_t entityRect;
+   i32 mapWidth, mapHeight;
+
+   entityRect = Entity_GetRect( entity );
+   mapWidth = (i32)tileMap->data.tilesX * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   mapHeight = (i32)tileMap->data.tilesY * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+
+   if ( mapWidth > 0 )
+   {
+      entityRect.x %= mapWidth;
+      if ( entityRect.x < 0 )
+      {
+         entityRect.x += mapWidth;
+      }
+   }
+   if ( mapHeight > 0 )
+   {
+      entityRect.y %= mapHeight;
+      if ( entityRect.y < 0 )
+      {
+         entityRect.y += mapHeight;
+      }
+   }
+
+   Entity_SetPosition( entity, entityRect.x, entityRect.y );
+}
+
 u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 {
    Vector4i32_t entityRect;
-   u32 tileX, tileY;
+   i32 tileX, tileY, tilesX, tilesY;
 
    entityRect = Entity_GetRect( entity );
-   tileX = ( entityRect.x + ( entityRect.w / 2 ) ) / ( tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
-   tileY = ( entityRect.y + ( entityRect.h / 2 ) ) / ( tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
+   tileX = TileMap_FloorDiv( entityRect.x + ( entityRect.w / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
+   tileY = TileMap_FloorDiv( entityRect.y + ( entityRect.h / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
 
-   return tileY * tileMap->data.tilesX + tileX;
+   tilesX = (i32)tileMap->data.tilesX;
+   tilesY = (i32)tileMap->data.tilesY;
+   if ( tileMap->data.wraps )
+   {
+      tileX %= tilesX;
+      tileY %= tilesY;
+      if ( tileX < 0 )
+      {
+         tileX += tilesX;
+      }
+      if ( tileY < 0 )
+      {
+         tileY += tilesY;
+      }
+   }
+
+   return (u32)tileY * tileMap->data.tilesX + (u32)tileX;
 }
 
 void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )

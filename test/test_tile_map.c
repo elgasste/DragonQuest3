@@ -325,6 +325,34 @@ void test_TileMap_GetTileIndexForEntity_AdvancesAtTileBoundary( void )
    TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
 }
 
+void test_TileMap_GetTileIndexForEntity_WrapsCoordinates( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, True, 0 }, 16, { 0 }, { 0 } };
+   Entity_t entity = { { 64 * WORLD_UNITS_PER_PIXEL, 48 * WORLD_UNITS_PER_PIXEL, 1, 1 }, { 0 } };
+
+   TEST_ASSERT_EQUAL_UINT( 0, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
+
+   entity.rect.x = -16 * WORLD_UNITS_PER_PIXEL;
+   entity.rect.y = -16 * WORLD_UNITS_PER_PIXEL;
+   TEST_ASSERT_EQUAL_UINT( 11, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
+}
+
+void test_TileMap_WrapEntityPosition_WrapsBothDirections( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, True, 0 }, 16, { 0 }, { 0 } };
+   Entity_t entity = { { 64 * WORLD_UNITS_PER_PIXEL, 48 * WORLD_UNITS_PER_PIXEL, 1, 1 }, { 0 } };
+
+   TileMap_WrapEntityPosition( (TileMap_t*)&map, &entity );
+   TEST_ASSERT_EQUAL_INT( 0, entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 0, entity.rect.y );
+
+   entity.rect.x = -16 * WORLD_UNITS_PER_PIXEL;
+   entity.rect.y = -16 * WORLD_UNITS_PER_PIXEL;
+   TileMap_WrapEntityPosition( (TileMap_t*)&map, &entity );
+   TEST_ASSERT_EQUAL_INT( 48 * WORLD_UNITS_PER_PIXEL, entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 32 * WORLD_UNITS_PER_PIXEL, entity.rect.y );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -353,6 +381,9 @@ int main( void )
    
    RUN_TEST( test_TileMap_GetTileIndexForEntity_UsesEntityCenter );
    RUN_TEST( test_TileMap_GetTileIndexForEntity_AdvancesAtTileBoundary );
+   RUN_TEST( test_TileMap_GetTileIndexForEntity_WrapsCoordinates );
+
+   RUN_TEST( test_TileMap_WrapEntityPosition_WrapsBothDirections );
 
    return UNITY_END();
 }
