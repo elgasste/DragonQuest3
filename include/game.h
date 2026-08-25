@@ -16,6 +16,7 @@
 
 typedef struct MemArena_t MemArena_t;
 typedef struct Clock_t Clock_t;
+typedef struct Entity_t Entity_t;
 typedef struct GameData_t GameData_t;
 typedef struct Input_t Input_t;
 typedef struct Display_t Display_t;
@@ -34,8 +35,7 @@ Display_t* Game_GetDisplay( Game_t* game );
 GameData_t* Game_GetGameData( Game_t* game );
 TileTextureSet_t* Game_GetTileTextureSet( Game_t* game );
 TileMap_t* Game_GetTileMap( Game_t* game );
-Vector4i32_t Game_GetTileMapViewport( Game_t* game );
-Vector4i32_t Game_GetPlayerRect( Game_t* game );
+Entity_t* Game_GetPlayerEntity( Game_t* game );
 
 void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect );
 
@@ -44,6 +44,9 @@ void Game_Stop( Game_t* game );
 
 // game_input.c
 void Game_HandleInput( Game_t* game );
+
+// game_physics.c
+void Game_TicPhysics( Game_t* game );
 
 // game_render.c
 void Game_Render( Game_t* game );

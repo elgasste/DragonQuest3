@@ -1,5 +1,6 @@
 #include "display.h"
 #include "game.h"
+#include "mocks/mock_entity.h"
 #include "tile_map.h"
 #include "unity.h"
 
@@ -16,7 +17,6 @@ typedef struct DisplayDrawTileMapViewportCall_t
    Display_t* display;
    TileMap_t* tileMap;
    TileTextureSet_t* tileTextureSet;
-   Vector4i32_t viewport;
    i32 displayX;
    i32 displayY;
    int callCount;
@@ -45,7 +45,8 @@ PlatformRenderDisplayBufferCall_t;
 static Display_t* g_display;
 static TileMap_t* g_tileMap;
 static TileTextureSet_t* g_tileTextureSet;
-static Vector4i32_t g_viewport;
+static Entity_t g_playerEntity;
+static Vector4i32_t g_viewportPixels;
 static Vector4i32_t g_playerRect;
 static DisplayFillCall_t g_displayFillCall;
 static DisplayDrawTileMapViewportCall_t g_displayDrawTileMapViewportCall;
@@ -57,14 +58,15 @@ void setUp( void )
    g_display = (Display_t*)1;
    g_tileMap = (TileMap_t*)2;
    g_tileTextureSet = (TileTextureSet_t*)3;
-   g_viewport.x = 10;
-   g_viewport.y = 20;
-   g_viewport.w = 320;
-   g_viewport.h = 240;
-   g_playerRect.x = 40;
-   g_playerRect.y = 60;
-   g_playerRect.w = 12;
-   g_playerRect.h = 14;
+   g_viewportPixels.x = 10;
+   g_viewportPixels.y = 20;
+   g_viewportPixels.w = 320;
+   g_viewportPixels.h = 240;
+   g_playerRect.x = 40 * WORLD_UNITS_PER_PIXEL;
+   g_playerRect.y = 60 * WORLD_UNITS_PER_PIXEL;
+   g_playerRect.w = 12 * WORLD_UNITS_PER_PIXEL;
+   g_playerRect.h = 14 * WORLD_UNITS_PER_PIXEL;
+   g_playerEntity.rect = g_playerRect;
 
    g_displayFillCall.display = 0;
    g_displayFillCall.color = 0;
@@ -73,10 +75,6 @@ void setUp( void )
    g_displayDrawTileMapViewportCall.display = 0;
    g_displayDrawTileMapViewportCall.tileMap = 0;
    g_displayDrawTileMapViewportCall.tileTextureSet = 0;
-   g_displayDrawTileMapViewportCall.viewport.x = 0;
-   g_displayDrawTileMapViewportCall.viewport.y = 0;
-   g_displayDrawTileMapViewportCall.viewport.w = 0;
-   g_displayDrawTileMapViewportCall.viewport.h = 0;
    g_displayDrawTileMapViewportCall.displayX = 0;
    g_displayDrawTileMapViewportCall.displayY = 0;
    g_displayDrawTileMapViewportCall.callCount = 0;
@@ -127,16 +125,21 @@ TileMap_t* Game_GetTileMap( Game_t* game )
    return g_tileMap;
 }
 
-Vector4i32_t Game_GetTileMapViewport( Game_t* game )
+Vector4i32_t TileMap_GetViewportPixels( TileMap_t* tileMap )
 {
-   UNUSED_PARAM( game );
-   return g_viewport;
+   UNUSED_PARAM( tileMap );
+   return g_viewportPixels;
 }
 
-Vector4i32_t Game_GetPlayerRect( Game_t* game )
+Entity_t* Game_GetPlayerEntity( Game_t* game )
 {
    UNUSED_PARAM( game );
-   return g_playerRect;
+   return &g_playerEntity;
+}
+
+Vector4i32_t Entity_GetRect( Entity_t* entity )
+{
+   return entity->rect;
 }
 
 void Display_Fill( Display_t* display, u32 color )
@@ -156,12 +159,11 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
    UNUSED_PARAM( displayY );
 }
 
-void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, Vector4i32_t viewport, i32 displayX, i32 displayY )
+void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY )
 {
    g_displayDrawTileMapViewportCall.display = display;
    g_displayDrawTileMapViewportCall.tileMap = tileMap;
    g_displayDrawTileMapViewportCall.tileTextureSet = tileTextureSet;
-   g_displayDrawTileMapViewportCall.viewport = viewport;
    g_displayDrawTileMapViewportCall.displayX = displayX;
    g_displayDrawTileMapViewportCall.displayY = displayY;
    g_displayDrawTileMapViewportCall.callCount++;
@@ -201,10 +203,6 @@ void test_Game_Render_RendersTileMapViewport( void )
    TEST_ASSERT_EQUAL_PTR( g_display, g_displayDrawTileMapViewportCall.display );
    TEST_ASSERT_EQUAL_PTR( g_tileMap, g_displayDrawTileMapViewportCall.tileMap );
    TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, g_displayDrawTileMapViewportCall.tileTextureSet );
-   TEST_ASSERT_EQUAL_INT( 10, g_displayDrawTileMapViewportCall.viewport.x );
-   TEST_ASSERT_EQUAL_INT( 20, g_displayDrawTileMapViewportCall.viewport.y );
-   TEST_ASSERT_EQUAL_INT( 320, g_displayDrawTileMapViewportCall.viewport.w );
-   TEST_ASSERT_EQUAL_INT( 240, g_displayDrawTileMapViewportCall.viewport.h );
    TEST_ASSERT_EQUAL_INT( 0, g_displayDrawTileMapViewportCall.displayX );
    TEST_ASSERT_EQUAL_INT( 0, g_displayDrawTileMapViewportCall.displayY );
    TEST_ASSERT_EQUAL_INT( 1, g_displayDrawTileMapViewportCall.callCount );
@@ -219,7 +217,7 @@ void test_Game_Render_DrawsPlayerRelativeToViewport( void )
    TEST_ASSERT_EQUAL_INT( 40, g_displayDrawRectCall.y );
    TEST_ASSERT_EQUAL_INT( 12, g_displayDrawRectCall.w );
    TEST_ASSERT_EQUAL_INT( 14, g_displayDrawRectCall.h );
-   TEST_ASSERT_EQUAL_HEX32( 0x00666666, g_displayDrawRectCall.color );
+   TEST_ASSERT_EQUAL_HEX32( 0x00990000, g_displayDrawRectCall.color );
    TEST_ASSERT_EQUAL_INT( 1, g_displayDrawRectCall.callCount );
 }
 

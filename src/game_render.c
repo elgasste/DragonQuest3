@@ -1,6 +1,8 @@
 #include "display.h"
+#include "entity.h"
 #include "game.h"
 #include "platform.h"
+#include "tile_map.h"
 
 internal void GameRender_DrawPlayer( Game_t* game );
 
@@ -9,17 +11,15 @@ void Game_Render( Game_t* game )
    Display_t* display;
    TileTextureSet_t* tileTextureSet;
    TileMap_t* tileMap;
-   Vector4i32_t viewport;
 
    display = Game_GetDisplay( game );
    tileTextureSet = Game_GetTileTextureSet( game );
    tileMap = Game_GetTileMap( game );
-   viewport = Game_GetTileMapViewport( game );
    
    Display_Fill( display, 0 );
 
    // TODO: draw this in the correct place based on the game state
-   Display_DrawTileMapViewport( display, tileMap, tileTextureSet, viewport, 0, 0 );
+   Display_DrawTileMapViewport( display, tileMap, tileTextureSet, 0, 0 );
 
    GameRender_DrawPlayer( game );
 
@@ -29,12 +29,21 @@ void Game_Render( Game_t* game )
 internal void GameRender_DrawPlayer( Game_t* game )
 {
    Display_t* display;
-   Vector4i32_t viewport;
+   TileMap_t* tileMap;
+   Vector4i32_t viewportPixels;
    Vector4i32_t playerRect;
+   Entity_t* playerEntity;
 
    display = Game_GetDisplay( game );
-   viewport = Game_GetTileMapViewport( game );
-   playerRect = Game_GetPlayerRect( game );
+   tileMap = Game_GetTileMap( game );
+   viewportPixels = TileMap_GetViewportPixels( tileMap );
+   playerEntity = Game_GetPlayerEntity( game );
+   playerRect = Entity_GetRect( playerEntity );
 
-   Display_DrawRect( display, playerRect.x - viewport.x, playerRect.y - viewport.y, playerRect.w, playerRect.h, 0x00666666u );
+   playerRect.x /= WORLD_UNITS_PER_PIXEL;
+   playerRect.y /= WORLD_UNITS_PER_PIXEL;
+   playerRect.w /= WORLD_UNITS_PER_PIXEL;
+   playerRect.h /= WORLD_UNITS_PER_PIXEL;
+
+   Display_DrawRect( display, playerRect.x - viewportPixels.x, playerRect.y - viewportPixels.y, playerRect.w, playerRect.h, 0x00990000u );
 }

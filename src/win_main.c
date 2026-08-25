@@ -3,12 +3,11 @@
 
 #include "clock.h"
 #include "display.h"
+#include "entity.h"
 #include "game.h"
 #include "input.h"
 #include "mem_arena.h"
-#include "pixel_buffer.h"
 #include "platform.h"
-#include "tile_map.h"
 #include "win_common.h"
 
 internal void MemArena_DumpStats( MemArena_t* memArena );
@@ -431,13 +430,15 @@ internal void DrawDiagnostics( HDC* dcMem )
    Game_t* game;
    Clock_t* clock;
    Input_t* input;
+   Entity_t* playerEntity;
    Vector4i32_t playerRect;
    char str[STRING_SIZE_DEFAULT];
 
    game = g_winGlobals.game;
    clock = Game_GetClock( game );
    input = Game_GetInput( game );
-   playerRect = Game_GetPlayerRect( game );
+   playerEntity = Game_GetPlayerEntity( game );
+   playerRect = Entity_GetRect( playerEntity );
 
    r.left = 10;
    r.top = 10;

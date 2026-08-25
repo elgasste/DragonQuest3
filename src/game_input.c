@@ -1,78 +1,101 @@
+#include "entity.h"
 #include "game.h"
 #include "input.h"
-#include "tile_map.h"
-#include "tile_texture_set.h"
 
-// TODO: this is all temporary
+// TODO : figure out the frickin' jitterbug issue
 void Game_HandleInput( Game_t* game )
 {
-   b32 wraps;
-   u32 tilesX, tilesY, tileSize;
+   b32 leftIsDown, upIsDown, rightIsDown, downIsDown;
    Input_t* input;
-   TileTextureSet_t* tileTextureSet;
-   TileMap_t* tileMap;
-   Vector4i32_t playerRect;
+   Entity_t* playerEntity;
+   Vector2i32_t playerVelocity;
+   i32 newVelocity;
+
+   playerEntity = Game_GetPlayerEntity( game );
+   newVelocity = 60 * WORLD_UNITS_PER_PIXEL;
 
    input = Game_GetInput( game );
-   tileTextureSet = Game_GetTileTextureSet( game );
-   tileMap = Game_GetTileMap( game );
-   playerRect = Game_GetPlayerRect( game );
+   leftIsDown = Input_IsButtonDown( input, InputButton_Left );
+   upIsDown = Input_IsButtonDown( input, InputButton_Up );
+   rightIsDown = Input_IsButtonDown( input, InputButton_Right );
+   downIsDown = Input_IsButtonDown( input, InputButton_Down );
 
-   wraps = TileMap_GetWraps( tileMap );
-   tilesX = TileMap_GetTilesX( tileMap );
-   tilesY = TileMap_GetTilesY( tileMap );
-   tileSize = TileTextureSet_GetTileSize( tileTextureSet );
+   if ( leftIsDown && !rightIsDown )
+   {
+      playerVelocity = Entity_GetVelocity( playerEntity );
+      // this should be units per second
+      playerVelocity.x = -newVelocity;
 
-   if ( Input_IsButtonDown( input, InputButton_Left ) )
-   {
-      playerRect.x -= 1;
-      if ( playerRect.x < 0 )
-      {
-         if ( wraps )
-            playerRect.x = ( tilesX * tileSize ) - 1;
-         else
-            playerRect.x = 0;
-      }
+      // TODO
+      // if ( !( upIsDown && sprite->direction == Direction_Up ) &&
+      //      !( downIsDown && sprite->direction == Direction_Down ) )
+      // {
+      //    ActiveSprite_SetDirection( sprite, Direction_Left );
+      // }
+
+      // if ( upIsDown || downIsDown )
+      // {
+      //    entity->velocity.x = ( entity->velocity.x < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
+      // }
+
+      Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
    }
-   if ( Input_IsButtonDown( input, InputButton_Up ) )
+   else if ( rightIsDown && !leftIsDown )
    {
-      playerRect.y -= 1;
-      if ( playerRect.y < 0 )
-      {
-         if ( wraps )
-            playerRect.y = ( tilesY * tileSize ) - 1;
-         else
-            playerRect.y = 0;
-      }
-   }
-   if ( Input_IsButtonDown( input, InputButton_Right ) )
-   {
-      playerRect.x += 1;
-      if ( playerRect.x + playerRect.w > (i32)( tilesX * tileSize ) )
-      {
-         if ( wraps )
-         {
-            if ( playerRect.x > (i32)( tilesX * tileSize ) )
-               playerRect.x = 0;
-         }
-         else
-            playerRect.x = ( tilesX * tileSize ) - playerRect.w;
-      }
-   }
-   if ( Input_IsButtonDown( input, InputButton_Down ) )
-   {
-      playerRect.y += 1;
-      if ( playerRect.y + playerRect.h > (i32)( tilesY * tileSize ) )
-      {
-         if ( wraps )
-         {
-            if ( playerRect.y > (i32)( tilesY * tileSize ) )
-               playerRect.y = 0;
-         }
-         else
-            playerRect.y = ( tilesY * tileSize ) - playerRect.h;
-      }
+      playerVelocity = Entity_GetVelocity( playerEntity );
+      playerVelocity.x = newVelocity;
+
+      // TODO
+      // if ( !( upIsDown && sprite->direction == Direction_Up ) &&
+      //      !( downIsDown && sprite->direction == Direction_Down ) )
+      // {
+      //    ActiveSprite_SetDirection( sprite, Direction_Right );
+      // }
+
+      // if ( upIsDown || downIsDown )
+      // {
+      //    entity->velocity.x = ( entity->velocity.x < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
+      // }
+
+      Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
    }
 
-   Game_SetPlayerRect( game, playerRect );
+   if ( upIsDown && !downIsDown )
+   {
+      playerVelocity = Entity_GetVelocity( playerEntity );
+      playerVelocity.y = -newVelocity;
+
+      // TODO
+      // if ( !( leftIsDown && sprite->direction == Direction_Left ) &&
+      //      !( rightIsDown && sprite->direction == Direction_Right ) )
+      // {
+      //    ActiveSprite_SetDirection( sprite, Direction_Up );
+      // }
+
+      // if ( leftIsDown || rightIsDown )
+      // {
+      //    entity->velocity.y = ( entity->velocity.y < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
+      // }
+
+      Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
+   }
+   else if ( downIsDown && !upIsDown )
+   {
+      playerVelocity = Entity_GetVelocity( playerEntity );
+      playerVelocity.y = newVelocity;
+
+      // TODO
+      // if ( !( leftIsDown && sprite->direction == Direction_Left ) &&
+      //      !( rightIsDown && sprite->direction == Direction_Right ) )
+      // {
+      //    ActiveSprite_SetDirection( sprite, Direction_Down );
+      // }
+
+      // if ( leftIsDown || rightIsDown )
+      // {
+      //    entity->velocity.y = ( entity->velocity.y < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
+      // }
+
+      Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
+   }
 }

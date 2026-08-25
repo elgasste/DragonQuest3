@@ -82,29 +82,115 @@ void WriteTestGameDataFile( const char* filePath )
    CloseHandle( hFile );
 }
 
+internal u32 LandscapeTilePixel( u32 tileIndex, u32 x, u32 y )
+{
+   u32 speckle = ( ( x * 7 + y * 13 ) % 5 == 0 );
+
+   if ( tileIndex == 0 ) // grass
+   {
+      if ( speckle )
+      {
+         return RGB( 60, 140, 50 );
+      }
+      return RGB( 80, 170, 70 );
+   }
+   else if ( tileIndex == 1 ) // dirt
+   {
+      if ( speckle )
+      {
+         return RGB( 110, 80, 50 );
+      }
+      return RGB( 140, 100, 65 );
+   }
+   else if ( tileIndex == 2 ) // sand
+   {
+      if ( speckle )
+      {
+         return RGB( 220, 195, 130 );
+      }
+      return RGB( 235, 210, 150 );
+   }
+   else if ( tileIndex == 3 ) // water
+   {
+      if ( ( x + ( y % 4 ) ) % 6 < 2 )
+      {
+         return RGB( 60, 110, 200 );
+      }
+      return RGB( 80, 140, 220 );
+   }
+   else if ( tileIndex == 4 ) // stone
+   {
+      if ( speckle )
+      {
+         return RGB( 110, 110, 115 );
+      }
+      return RGB( 140, 140, 145 );
+   }
+   else if ( tileIndex == 5 ) // path
+   {
+      if ( speckle )
+      {
+         return RGB( 190, 160, 110 );
+      }
+      return RGB( 205, 175, 125 );
+   }
+   else if ( tileIndex == 6 ) // snow
+   {
+      if ( speckle )
+      {
+         return RGB( 225, 230, 235 );
+      }
+      return RGB( 245, 248, 250 );
+   }
+   else if ( tileIndex == 7 ) // tree
+   {
+      if ( y < 6 )
+      {
+         return ( speckle ) ? RGB( 40, 110, 45 ) : RGB( 55, 130, 55 );
+      }
+      if ( x >= 6 && x <= 9 )
+      {
+         return RGB( 90, 60, 35 );
+      }
+      return RGB( 80, 170, 70 );
+   }
+   else if ( tileIndex == 8 ) // bush
+   {
+      if ( x >= 3 && x <= 12 && y >= 4 && y <= 11 )
+      {
+         return ( speckle ) ? RGB( 50, 120, 55 ) : RGB( 65, 140, 60 );
+      }
+      return RGB( 80, 170, 70 );
+   }
+   else // mountain
+   {
+      if ( y + ( x / 2 ) < 10 )
+      {
+         return RGB( 130, 130, 135 );
+      }
+      return RGB( 100, 100, 105 );
+   }
+}
+
 internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
 {
-   u32 pixel, tilePixels, tileIndex, pixelIndex;
-   u32 tileColors[5];
+   u32 pixel, tilePixels, tileIndex, pixelIndex, x, y;
    TileTextureSetMock_t* textureSet;
 
    textureSet = (TileTextureSetMock_t*)malloc( sizeof( TileTextureSetMock_t ) );
-   textureSet->count = 5;
+   textureSet->count = 10;
    textureSet->tileSize = 16;
    textureSet->textures = (u32*)malloc( textureSet->count * textureSet->tileSize * textureSet->tileSize * sizeof( u32 ) );
 
-   tileColors[0] = RGB( 0, 0, 0 );
-   tileColors[1] = RGB( 255, 255, 255 );
-   tileColors[2] = RGB( 255, 0, 0 );
-   tileColors[3] = RGB( 0, 0, 255 );
-   tileColors[4] = RGB( 0, 255, 0 );
    tilePixels = textureSet->tileSize * textureSet->tileSize;
 
    for ( tileIndex = 0; tileIndex < textureSet->count; tileIndex++ )
    {
       for ( pixelIndex = 0; pixelIndex < tilePixels; pixelIndex++ )
       {
-         pixel = tileColors[tileIndex];
+         x = pixelIndex % textureSet->tileSize;
+         y = pixelIndex / textureSet->tileSize;
+         pixel = LandscapeTilePixel( tileIndex, x, y );
          textureSet->textures[tileIndex * tilePixels + pixelIndex] = pixel;
       }
    }
@@ -167,7 +253,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
       // random
-      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
+      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
    }
 
    // make the edges all the same so we can test wrapping
@@ -194,7 +280,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
    {
       // random
-      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 4 ) % 5;
+      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
    }
 
    // 3: 3x3, no wrapping

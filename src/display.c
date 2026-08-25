@@ -11,7 +11,7 @@ struct Display_t
 };
 
 internal i32 Display_FloorDiv( i32 value, i32 divisor );
-internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, Vector4i32_t viewport, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSize );
+internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSizePixels );
 
 size_t Display_GetStructSize( void )
 {
@@ -174,19 +174,22 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
    }
 }
 
-void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, Vector4i32_t viewport, i32 displayX, i32 displayY )
+void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY )
 {
    i32 tileX, tileY, viewportR, viewportB, tileMapSizeX, tileMapSizeY;
    i32 tileWorldX, tileWorldY, drawX, drawY;
    i32 mapOffsetX, mapOffsetY;
-   u32 tilesX, tilesY, tileSize, tileIndex, tileTextureIndex;
+   u32 tilesX, tilesY, tileSizePixels, tileIndex, tileTextureIndex;
+   Vector4i32_t viewportPixels;
    Tile_t* tile;
    u32* texture;
    b32 wraps, smallMapCentered;
 
-   viewportR = viewport.x + viewport.w;
-   viewportB = viewport.y + viewport.h;
-   tileSize = TileTextureSet_GetTileSize( tileTextureSet );
+   viewportPixels = TileMap_GetViewportPixels( tileMap );
+
+   viewportR = viewportPixels.x + viewportPixels.w;
+   viewportB = viewportPixels.y + viewportPixels.h;
+   tileSizePixels = TileTextureSet_GetTileSize( tileTextureSet );
 
    mapOffsetX = 0;
    mapOffsetY = 0;
@@ -194,26 +197,26 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
 
    tilesX = TileMap_GetTilesX( tileMap );
    tilesY = TileMap_GetTilesY( tileMap );
-   tileMapSizeX = (i32)( tilesX * tileSize );
-   tileMapSizeY = (i32)( tilesY * tileSize );
+   tileMapSizeX = (i32)( tilesX * tileSizePixels );
+   tileMapSizeY = (i32)( tilesY * tileSizePixels );
    wraps = TileMap_GetWraps( tileMap );
 
-   if ( !wraps && viewport.w >= tileMapSizeX && viewport.h >= tileMapSizeY )
+   if ( !wraps && viewportPixels.w >= tileMapSizeX && viewportPixels.h >= tileMapSizeY )
    {
-      mapOffsetX = ( viewport.w - tileMapSizeX ) / 2;
-      mapOffsetY = ( viewport.h - tileMapSizeY ) / 2;
+      mapOffsetX = ( viewportPixels.w - tileMapSizeX ) / 2;
+      mapOffsetY = ( viewportPixels.h - tileMapSizeY ) / 2;
       smallMapCentered = True;
    }
 
    if ( wraps )
    {
-      Display_DrawWrappedTileMapViewport( display, tileMap, tileTextureSet, viewport, displayX, displayY, tilesX, tilesY, tileSize );
+      Display_DrawWrappedTileMapViewport( display, tileMap, tileTextureSet, displayX, displayY, tilesX, tilesY, tileSizePixels );
       return;
    }
 
    for ( tileY = 0; tileY < (i32)tilesY; tileY++ )
    {
-      tileWorldY = tileY * (i32)tileSize;
+      tileWorldY = tileY * (i32)tileSizePixels;
 
       if ( !smallMapCentered )
       {
@@ -222,7 +225,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
             break;
          }
 
-         if ( ( tileWorldY + (i32)tileSize ) <= viewport.y )
+         if ( ( tileWorldY + (i32)tileSizePixels ) <= viewportPixels.y )
          {
             continue;
          }
@@ -230,7 +233,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
 
       for ( tileX = 0; tileX < (i32)tilesX; tileX++ )
       {
-         tileWorldX = tileX * (i32)tileSize;
+         tileWorldX = tileX * (i32)tileSizePixels;
 
          if ( !smallMapCentered )
          {
@@ -239,7 +242,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
                break;
             }
 
-            if ( ( tileWorldX + (i32)tileSize ) <= viewport.x )
+            if ( ( tileWorldX + (i32)tileSizePixels ) <= viewportPixels.x )
             {
                continue;
             }
@@ -249,9 +252,9 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
          tile = TileMap_GetTile( tileMap, (u32)tileX, (u32)tileY );
          tileTextureIndex = Tile_GetTextureIndex( tile );
          texture = TileTextureSet_GetTexture( tileTextureSet, tileTextureIndex );
-         drawX = displayX + ( smallMapCentered ? ( mapOffsetX + tileWorldX ) : ( tileWorldX - viewport.x ) );
-         drawY = displayY + ( smallMapCentered ? ( mapOffsetY + tileWorldY ) : ( tileWorldY - viewport.y ) );
-         Display_DrawBuffer( display, texture, tileSize, tileSize, drawX, drawY );
+         drawX = displayX + ( smallMapCentered ? ( mapOffsetX + tileWorldX ) : ( tileWorldX - viewportPixels.x ) );
+         drawY = displayY + ( smallMapCentered ? ( mapOffsetY + tileWorldY ) : ( tileWorldY - viewportPixels.y ) );
+         Display_DrawBuffer( display, texture, tileSizePixels, tileSizePixels, drawX, drawY );
       }
    }
 }
@@ -271,23 +274,25 @@ internal i32 Display_FloorDiv( i32 value, i32 divisor )
    return -( ( -value + divisor - 1 ) / divisor );
 }
 
-internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, Vector4i32_t viewport, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSize )
+internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSizePixels )
 {
    i32 tileX, tileY, viewportR, viewportB, tileMapSizeX, tileMapSizeY;
    i32 tileWorldX, tileWorldY, drawX, drawY;
    i32 repeatX, repeatY, repeatStartX, repeatEndX, repeatStartY, repeatEndY;
    u32 tileIndex, tileTextureIndex;
+   Vector4i32_t viewportPixels;
    Tile_t* tile;
    u32* texture;
 
-   viewportR = viewport.x + viewport.w;
-   viewportB = viewport.y + viewport.h;
-   tileMapSizeX = (i32)( tilesX * tileSize );
-   tileMapSizeY = (i32)( tilesY * tileSize );
+   viewportPixels = TileMap_GetViewportPixels( tileMap );
+   viewportR = viewportPixels.x + viewportPixels.w;
+   viewportB = viewportPixels.y + viewportPixels.h;
+   tileMapSizeX = (i32)( tilesX * tileSizePixels );
+   tileMapSizeY = (i32)( tilesY * tileSizePixels );
 
-   repeatStartX = Display_FloorDiv( viewport.x, tileMapSizeX );
+   repeatStartX = Display_FloorDiv( viewportPixels.x, tileMapSizeX );
    repeatEndX = Display_FloorDiv( viewportR - 1, tileMapSizeX );
-   repeatStartY = Display_FloorDiv( viewport.y, tileMapSizeY );
+   repeatStartY = Display_FloorDiv( viewportPixels.y, tileMapSizeY );
    repeatEndY = Display_FloorDiv( viewportB - 1, tileMapSizeY );
 
    for ( repeatY = repeatStartY; repeatY <= repeatEndY; repeatY++ )
@@ -299,16 +304,16 @@ internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t*
 
          for ( tileY = 0; tileY < (i32)tilesY; tileY++ )
          {
-            tileWorldY = blockWorldY + ( tileY * (i32)tileSize );
-            if ( tileWorldY + (i32)tileSize <= viewport.y || tileWorldY >= viewportB )
+            tileWorldY = blockWorldY + ( tileY * (i32)tileSizePixels );
+            if ( tileWorldY + (i32)tileSizePixels <= viewportPixels.y || tileWorldY >= viewportB )
             {
                continue;
             }
 
             for ( tileX = 0; tileX < (i32)tilesX; tileX++ )
             {
-               tileWorldX = blockWorldX + ( tileX * (i32)tileSize );
-               if ( tileWorldX + (i32)tileSize <= viewport.x || tileWorldX >= viewportR )
+               tileWorldX = blockWorldX + ( tileX * (i32)tileSizePixels );
+               if ( tileWorldX + (i32)tileSizePixels <= viewportPixels.x || tileWorldX >= viewportR )
                {
                   continue;
                }
@@ -318,9 +323,9 @@ internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t*
                tileTextureIndex = Tile_GetTextureIndex( tile );
 
                texture = TileTextureSet_GetTexture( tileTextureSet, tileTextureIndex );
-               drawX = displayX + ( tileWorldX - viewport.x );
-               drawY = displayY + ( tileWorldY - viewport.y );
-               Display_DrawBuffer( display, texture, tileSize, tileSize, drawX, drawY );
+               drawX = displayX + ( tileWorldX - viewportPixels.x );
+               drawY = displayY + ( tileWorldY - viewportPixels.y );
+               Display_DrawBuffer( display, texture, tileSizePixels, tileSizePixels, drawX, drawY );
             }
          }
       }

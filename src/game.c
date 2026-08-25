@@ -1,5 +1,6 @@
 #include "clock.h"
 #include "display.h"
+#include "entity.h"
 #include "game.h"
 #include "game_data.h"
 #include "input.h"
@@ -20,10 +21,9 @@ struct Game_t
    TileTextureSet_t* tileTextureSet;
 
    TileMap_t *tileMap;
-   Vector4i32_t tileMapViewport;
 
    // TODO: this is the player, temporarily
-   Vector4i32_t playerRect;
+   Entity_t* playerEntity;
 
    b32 shutdown;
 };
@@ -50,19 +50,17 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->tileTextureSet = TileTextureSet_CreateFromGameData( game->memArena, game->gameData );
 
    game->tileMap = 0;
-   
-   // TODO: should this come from the game data file? or is it too integral to the game engine?
-   game->tileMapViewport.x = 0;
-   game->tileMapViewport.y = 0;
-   game->tileMapViewport.w = DISPLAY_WIDTH;
-   game->tileMapViewport.h = DISPLAY_HEIGHT;
-   game->playerRect.x = 10;
-   game->playerRect.y = 10;
-   game->playerRect.w = 12;
-   game->playerRect.h = 14;
+
+   game->playerEntity = Entity_Create( game->memArena );
+   Entity_SetSize( game->playerEntity, 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL );
+   Entity_SetPosition( game->playerEntity, 100 * WORLD_UNITS_PER_PIXEL, 100 * WORLD_UNITS_PER_PIXEL );
+   Entity_SetVelocity( game->playerEntity, 0, 0 );
 
    // TODO: temporary, this will eventually be part of the game data file
-   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1 );
+   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 2 );
+
+   // TODO: should this come from the game data file? or is it too integral to the game engine?
+   TileMap_SetViewportUnits( game->tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
 
    return game;
 }
@@ -83,6 +81,8 @@ void Game_Free( Game_t* game, MemArena_t* memArena )
    {
       TileTextureSet_Free( game->tileTextureSet, memArena );
    }
+
+   Entity_Free( game->playerEntity, memArena );
 
    MemArena_FreeMem( memArena, game );
 }
@@ -117,19 +117,15 @@ TileMap_t* Game_GetTileMap( Game_t* game )
    return game->tileMap;
 }
 
-Vector4i32_t Game_GetTileMapViewport( Game_t* game )
+Entity_t* Game_GetPlayerEntity( Game_t* game )
 {
-   return game->tileMapViewport;
-}
-
-Vector4i32_t Game_GetPlayerRect( Game_t* game )
-{
-   return game->playerRect;
+   return game->playerEntity;
 }
 
 void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect )
 {
-   game->playerRect = playerRect;
+   Entity_SetPosition( game->playerEntity, playerRect.x, playerRect.y );
+   Entity_SetSize( game->playerEntity, playerRect.w, playerRect.h );
 }
 
 void Game_Run( Game_t* game )
@@ -156,8 +152,12 @@ void Game_Stop( Game_t* game )
 internal void Game_Tic( Game_t* game )
 {
    i32 centerX, centerY;
+   Vector4i32_t playerRect;
 
-   centerX = game->playerRect.x + ( game->playerRect.w / 2 );
-   centerY = game->playerRect.y + ( game->playerRect.h / 2 );
-   TileMap_AnchorViewportToPoint( game->tileMap, &game->tileMapViewport, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   Game_TicPhysics( game );
+
+   playerRect = Entity_GetRect( game->playerEntity );
+   centerX = playerRect.x + ( playerRect.w / 2 );
+   centerY = playerRect.y + ( playerRect.h / 2 );
+   TileMap_AnchorViewportToPointUnits( game->tileMap, centerX, centerY, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 }
