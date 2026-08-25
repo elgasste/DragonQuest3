@@ -197,3 +197,15 @@ void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity, u32 t
    entityRect = Entity_GetRect( entity );
    TileMap_AnchorViewportToPointUnits( tileMap, entityRect.x + ( entityRect.w / 2 ), entityRect.y + ( entityRect.h / 2 ), tileSizePixels );
 }
+
+u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSizePixels )
+{
+   Vector4i32_t entityRect;
+   u32 tileX, tileY;
+
+   entityRect = Entity_GetRect( entity );
+   tileX = ( entityRect.x + ( entityRect.w / 2 ) ) / ( tileSizePixels * WORLD_UNITS_PER_PIXEL );
+   tileY = ( entityRect.y + ( entityRect.h / 2 ) ) / ( tileSizePixels * WORLD_UNITS_PER_PIXEL );
+
+   return tileY * tileMap->data.tilesX + tileX;
+}

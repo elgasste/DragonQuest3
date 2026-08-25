@@ -293,6 +293,22 @@ void test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight( void )
    TEST_ASSERT_EQUAL_INT( 120, map.viewportPixels.y );
 }
 
+void test_TileMap_GetTileIndexForEntity_UsesEntityCenter( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, { 0 }, { 0 } };
+   Entity_t entity = { { 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+
+   TEST_ASSERT_EQUAL_UINT( 5, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity, 16 ) );
+}
+
+void test_TileMap_GetTileIndexForEntity_AdvancesAtTileBoundary( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, { 0 }, { 0 } };
+   Entity_t entity = { { 32 * WORLD_UNITS_PER_PIXEL, 0, 1, 1 }, { 0 } };
+
+   TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity, 16 ) );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -309,11 +325,18 @@ int main( void )
    RUN_TEST( test_TileMap_AnchorViewport_AllowsWrappingMapToMoveBeyondEdges );
 
    RUN_TEST( test_TileMap_GetViewportPixels_ReturnsStoredValue );
+   
    RUN_TEST( test_TileMap_SetViewportUnits_DerivesViewportPixels );
+   
    RUN_TEST( test_TileMap_SetViewportPixels_DerivesViewportUnits );
+   
    RUN_TEST( test_TileMap_AnchorViewport_UpdatesViewportPixels );
+   
    RUN_TEST( test_TileMap_AnchorViewportToEntity_UsesEntityCenter );
    RUN_TEST( test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight );
+   
+   RUN_TEST( test_TileMap_GetTileIndexForEntity_UsesEntityCenter );
+   RUN_TEST( test_TileMap_GetTileIndexForEntity_AdvancesAtTileBoundary );
 
    return UNITY_END();
 }

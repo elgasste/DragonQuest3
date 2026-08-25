@@ -143,6 +143,11 @@ void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
    entity->velocity.y = vy;
 }
 
+void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
+{
+   entity->tileIndex = tileIndex;
+}
+
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
 {
    UNUSED_PARAM( filePath );
@@ -219,6 +224,14 @@ void TileMap_AnchorViewportToEntity( TileMap_t* tileMap, Entity_t* entity, u32 t
    UNUSED_PARAM( entity );
    g_tileMapAnchorCount++;
    g_anchorTileSize = tileSize;
+}
+
+u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity, u32 tileSize )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( entity );
+   UNUSED_PARAM( tileSize );
+   return 7;
 }
 
 void Platform_HandleMessages( Game_t* game )
@@ -299,6 +312,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_INT( 100 * WORLD_UNITS_PER_PIXEL, playerRect.y );
    TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.w );
    TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.h );
+   TEST_ASSERT_EQUAL_UINT( 7, Game_GetPlayerEntity( game )->tileIndex );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
 
    Game_Free( game, (MemArena_t*)1 );
