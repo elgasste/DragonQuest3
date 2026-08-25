@@ -97,6 +97,29 @@ void test_Entity_GetVelocity_ReturnsLatestVelocity( void )
    Entity_Free( entity, (MemArena_t*)1 );
 }
 
+void test_Entity_SetTileIndex_UpdatesTileIndex( void )
+{
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   Entity_SetTileIndex( entity, 7 );
+
+   TEST_ASSERT_EQUAL_UINT( 7, Entity_GetTileIndex( entity ) );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
+void test_Entity_GetTileIndex_ReturnsLatestTileIndex( void )
+{
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   Entity_SetTileIndex( entity, 3 );
+   Entity_SetTileIndex( entity, 12 );
+
+   TEST_ASSERT_EQUAL_UINT( 12, Entity_GetTileIndex( entity ) );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
 void test_Entity_Free_ReleasesAllocatedEntity( void )
 {
    Entity_t* entity = Entity_Create( (MemArena_t*)1 );
@@ -120,6 +143,9 @@ int main( void )
    RUN_TEST( test_Entity_SetVelocity_UpdatesVelocity );
 
    RUN_TEST( test_Entity_GetVelocity_ReturnsLatestVelocity );
+
+   RUN_TEST( test_Entity_SetTileIndex_UpdatesTileIndex );
+   RUN_TEST( test_Entity_GetTileIndex_ReturnsLatestTileIndex );
    
    RUN_TEST( test_Entity_Free_ReleasesAllocatedEntity );
 

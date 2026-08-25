@@ -13,9 +13,11 @@ void Entity_Free( Entity_t* entity, MemArena_t* memArena );
 
 Vector4i32_t Entity_GetRect( Entity_t* entity );
 Vector2i32_t Entity_GetVelocity( Entity_t* entity );
+u32 Entity_GetTileIndex( Entity_t* entity );
 
 void Entity_SetPosition( Entity_t* entity, i32 x, i32 y );
 void Entity_SetSize( Entity_t* entity, i32 w, i32 h );
 void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy );
+void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex );
 
 #endif // ENTITY_H
