@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "game.h"
+#include "sprite.h"
 #include "unity.h"
 
 global u32 g_allocCount;
@@ -34,6 +35,8 @@ global Display_t* g_display;
 global GameData_t* g_gameData;
 global TileTextureSet_t* g_tileTextureSet;
 global ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
+global ActiveSprite_t* g_playerSprite;
+global ActiveSpriteTextureSet_t* g_playerSpriteTextureSet;
 global TileMap_t* g_tileMap;
 global Entity_t* g_playerEntity;
 global Vector4i32_t g_tileMapViewportInUnits;
@@ -151,6 +154,27 @@ void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
    entity->tileIndex = tileIndex;
 }
 
+ActiveSprite_t* Entity_GetSprite( Entity_t* entity )
+{
+   return entity->sprite;
+}
+
+Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity )
+{
+   return entity->spriteOffset;
+}
+
+void Entity_SetSprite( Entity_t* entity, ActiveSprite_t* sprite )
+{
+   entity->sprite = sprite;
+}
+
+void Entity_SetSpriteOffset( Entity_t* entity, i32 offsetX, i32 offsetY )
+{
+   entity->spriteOffset.x = offsetX;
+   entity->spriteOffset.y = offsetY;
+}
+
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
 {
    UNUSED_PARAM( filePath );
@@ -189,6 +213,24 @@ void ActiveSpriteTextureSet_Free( ActiveSpriteTextureSet_t* textureSet, MemArena
 {
    MemArena_FreeMem( memArena, textureSet );
    g_activeSpriteTextureSetFreeCount++;
+}
+
+ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet )
+{
+   g_playerSprite = (ActiveSprite_t*)MemArena_AllocMem( memArena, 1 );
+   g_playerSpriteTextureSet = textureSet;
+   return g_playerSprite;
+}
+
+void ActiveSprite_Free( ActiveSprite_t* activeSprite, MemArena_t* memArena )
+{
+   MemArena_FreeMem( memArena, activeSprite );
+}
+
+ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* activeSprite )
+{
+   UNUSED_PARAM( activeSprite );
+   return g_playerSpriteTextureSet;
 }
 
 u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
@@ -302,6 +344,8 @@ void setUp( void )
    g_tileMapFreeCount = 0;
    g_tileTextureSetFreeCount = 0;
    g_activeSpriteTextureSetFreeCount = 0;
+   g_playerSprite = 0;
+   g_playerSpriteTextureSet = 0;
    g_gameDataFreeCount = 0;
    g_displayFreeCount = 0;
    g_entityFreeCount = 0;
@@ -341,6 +385,10 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.w );
    TEST_ASSERT_EQUAL_INT( 12 * WORLD_UNITS_PER_PIXEL, playerRect.h );
    TEST_ASSERT_EQUAL_UINT( 40, Game_GetPlayerEntity( game )->tileIndex );
+   TEST_ASSERT_EQUAL_PTR( g_playerSprite, Entity_GetSprite( Game_GetPlayerEntity( game ) ) );
+   TEST_ASSERT_EQUAL_PTR( g_activeSpriteTextureSet, ActiveSprite_GetTextureSet( g_playerSprite ) );
+   TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game ) ).x );
+   TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game ) ).y );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
 
    Game_Free( game, (MemArena_t*)1 );
@@ -391,7 +439,7 @@ void test_Game_Free_ReleasesAllDependencies( void )
    TEST_ASSERT_EQUAL_UINT( 1, g_tileTextureSetFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_activeSpriteTextureSetFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_entityFreeCount );
-   TEST_ASSERT_EQUAL_UINT( 9, g_freeCount );
+   TEST_ASSERT_EQUAL_UINT( 10, g_freeCount );
 }
 
 int main( void )
