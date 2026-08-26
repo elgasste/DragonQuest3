@@ -43,6 +43,11 @@ Direction_t ActiveSprite_GetDirection( ActiveSprite_t* activeSprite )
    return activeSprite->dir;
 }
 
+ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* activeSprite )
+{
+    return activeSprite->textureSet;
+}
+
 u32 ActiveSprite_GetFrameIndex( ActiveSprite_t* activeSprite )
 {
     return activeSprite->frameIndex;

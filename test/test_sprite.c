@@ -58,6 +58,16 @@ void test_ActiveSprite_Create_InitializesDefaultState( void )
 	ActiveSprite_Free( sprite, (MemArena_t*)1 );
 }
 
+void test_ActiveSprite_GetTextureSet_ReturnsTextureSetProvidedAtCreation( void )
+{
+	ActiveSpriteTextureSet_t* expectedTextureSet = (ActiveSpriteTextureSet_t*)1;
+	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, expectedTextureSet );
+
+	TEST_ASSERT_EQUAL_PTR( expectedTextureSet, ActiveSprite_GetTextureSet( sprite ) );
+
+	ActiveSprite_Free( sprite, (MemArena_t*)1 );
+}
+
 void test_ActiveSprite_SetFrameDurationSec_UpdatesFrameDuration( void )
 {
 	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0 );
@@ -171,6 +181,8 @@ int main( void )
 	RUN_TEST( test_ActiveSprite_GetStructSize_ReturnsNonZeroSize );
 
 	RUN_TEST( test_ActiveSprite_Create_InitializesDefaultState );
+
+	RUN_TEST( test_ActiveSprite_GetTextureSet_ReturnsTextureSetProvidedAtCreation );
 
 	RUN_TEST( test_ActiveSprite_SetDirection_UpdatesDirection );
 
