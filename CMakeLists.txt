@@ -20,6 +20,7 @@ add_executable(DragonQuest3
    src/tile.c
    src/tile_map.c
    src/tile_texture_set.c
+   src/utility.c
 )
 
 set_property(TARGET DragonQuest3 PROPERTY COMPILE_WARNING_AS_ERROR ON)
