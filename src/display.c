@@ -4,13 +4,13 @@
 #include "tile.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
+#include "utility.h"
 
 struct Display_t
 {
    PixelBuffer_t* buffer;
 };
 
-internal i32 Display_FloorDiv( i32 value, i32 divisor );
 internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSizePixels );
 
 size_t Display_GetStructSize( void )
@@ -259,21 +259,6 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
    }
 }
 
-internal i32 Display_FloorDiv( i32 value, i32 divisor )
-{
-   if ( divisor == 0 )
-   {
-      return 0;
-   }
-
-   if ( value >= 0 )
-   {
-      return value / divisor;
-   }
-
-   return -( ( -value + divisor - 1 ) / divisor );
-}
-
 internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSizePixels )
 {
    i32 tileX, tileY, viewportR, viewportB, tileMapSizeX, tileMapSizeY;
@@ -290,10 +275,10 @@ internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t*
    tileMapSizeX = (i32)( tilesX * tileSizePixels );
    tileMapSizeY = (i32)( tilesY * tileSizePixels );
 
-   repeatStartX = Display_FloorDiv( viewportInPixels.x, tileMapSizeX );
-   repeatEndX = Display_FloorDiv( viewportR - 1, tileMapSizeX );
-   repeatStartY = Display_FloorDiv( viewportInPixels.y, tileMapSizeY );
-   repeatEndY = Display_FloorDiv( viewportB - 1, tileMapSizeY );
+   repeatStartX = Utility_FloorDiv32i( viewportInPixels.x, tileMapSizeX );
+   repeatEndX = Utility_FloorDiv32i( viewportR - 1, tileMapSizeX );
+   repeatStartY = Utility_FloorDiv32i( viewportInPixels.y, tileMapSizeY );
+   repeatEndY = Utility_FloorDiv32i( viewportB - 1, tileMapSizeY );
 
    for ( repeatY = repeatStartY; repeatY <= repeatEndY; repeatY++ )
    {

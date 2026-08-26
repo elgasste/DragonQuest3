@@ -8,6 +8,7 @@ add_executable(Test_Clock
 
 add_executable(Test_Display
    ../src/display.c
+   ../src/utility.c
    vendor/unity.c
    test_display.c
 )
@@ -62,6 +63,7 @@ add_executable(Test_PixelBuffer
 
 add_executable(Test_TileMap
    ../src/tile_map.c
+   ../src/utility.c
    vendor/unity.c
    test_tile_map.c
 )

@@ -7,16 +7,7 @@
 #include "tile.h"
 #include "tile_map.h"
 #include "platform.h"
-
-internal i32 TileMap_FloorDiv( i32 value, i32 divisor )
-{
-   if ( value >= 0 )
-   {
-      return value / divisor;
-   }
-
-   return -( ( -value + divisor - 1 ) / divisor );
-}
+#include "utility.h"
 
 struct TileMap_t
 {
@@ -244,8 +235,8 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
    i32 tileX, tileY, tilesX, tilesY;
 
    entityRect = Entity_GetRect( entity );
-   tileX = TileMap_FloorDiv( entityRect.x + ( entityRect.w / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
-   tileY = TileMap_FloorDiv( entityRect.y + ( entityRect.h / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
+   tileX = Utility_FloorDiv32i( entityRect.x + ( entityRect.w / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
+   tileY = Utility_FloorDiv32i( entityRect.y + ( entityRect.h / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
 
    tilesX = (i32)tileMap->data.tilesX;
    tilesY = (i32)tileMap->data.tilesY;
