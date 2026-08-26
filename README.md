@@ -1,6 +1,6 @@
 # DragonQuest3
 
-A recreation of Dragon Quest 3 written in C
+A recreation of Dragon Quest 3 written in C99
 
 ## Building in VSCode
 
