@@ -2,6 +2,7 @@
 #define SPRITE_H
 
 #include "common.h"
+#include "direction.h"
 
 #define ACTIVE_SPRITE_FRAME_DURATION_SEC_DEFAULT      0.5f
 

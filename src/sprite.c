@@ -1,4 +1,3 @@
-#include "direction.h"
 #include "mem_arena.h"
 #include "sprite.h"
 #include "sprite_texture_set.h"
