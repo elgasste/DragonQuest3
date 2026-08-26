@@ -66,6 +66,12 @@ add_executable(Test_TileMap
    test_tile_map.c
 )
 
+add_executable(Test_Utility
+   ../src/utility.c
+   vendor/unity.c
+   test_utility.c
+)
+
 set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Display PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Entity PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -77,6 +83,7 @@ set_property(TARGET Test_Input PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_MemArena PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_PixelBuffer PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_TileMap PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Utility PROPERTY COMPILE_WARNING_AS_ERROR ON)
 
 if(MSVC)
    add_compile_options(/wd4201)
@@ -91,6 +98,7 @@ if(MSVC)
    target_compile_options(Test_MemArena PRIVATE /W4)
    target_compile_options(Test_PixelBuffer PRIVATE /W4)
    target_compile_options(Test_TileMap PRIVATE /W4)
+   target_compile_options(Test_Utility PRIVATE /W4)
 endif()
 
 target_include_directories(Test_Clock PRIVATE vendor)
@@ -142,6 +150,10 @@ target_include_directories(Test_TileMap PRIVATE mocks)
 target_include_directories(Test_TileMap PRIVATE ../include)
 target_include_directories(Test_TileMap PRIVATE ../src)
 
+target_include_directories(Test_Utility PRIVATE vendor)
+target_include_directories(Test_Utility PRIVATE ../include)
+target_include_directories(Test_Utility PRIVATE ../src)
+
 add_test( NAME Unity_Clock_Tests COMMAND Test_Clock)
 add_test( NAME Unity_Display_Tests COMMAND Test_Display)
 add_test( NAME Unity_Entity_Tests COMMAND Test_Entity)
@@ -153,3 +165,4 @@ add_test( NAME Unity_Input_Tests COMMAND Test_Input)
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)
 add_test( NAME Unity_PixelBuffer_Tests COMMAND Test_PixelBuffer)
 add_test( NAME Unity_TileMap_Tests COMMAND Test_TileMap)
+add_test( NAME Unity_Utility_Tests COMMAND Test_Utility)
