@@ -23,6 +23,7 @@ PACKED_STRUCT
 typedef struct GameDataFileOffsets_t
 {
    i32 tileTextureSet;
+   i32 activeSpriteTextureSet;
    i32 tileMaps;
 }
 GameDataFileOffsets_t;

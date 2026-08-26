@@ -68,7 +68,7 @@ void Platform_FatalError( const char* msg )
 internal void WriteValidGameData( b32 invalidTileMapOffset )
 {
    GameDataVersion_t version = { GAME_VERSION_MAJOR, GAME_VERSION_MINOR, GAME_VERSION_MAINT };
-   GameDataFileOffsets_t offsets = { 32, 64 };
+   GameDataFileOffsets_t offsets = { 32, 64, 96 };
    GameDataObjectOffset_t mapOffsets[2] = { { 7, 16 }, { 9, 32 } };
    u32 tileMapCount = 2;
 
@@ -82,7 +82,7 @@ internal void WriteValidGameData( b32 invalidTileMapOffset )
       mapOffsets[1].offset = 300;
    }
    memcpy( g_fileData + offsets.tileMaps + sizeof( tileMapCount ), mapOffsets, sizeof( mapOffsets ) );
-   g_file.size = 128;
+   g_file.size = 160;
 }
 
 internal GameData_t* CreateGameData( void )
@@ -112,7 +112,7 @@ void test_GameData_GetStructSize_ReturnsNonZeroSize( void )
 
 void test_GameData_Create_LoadsMetadataAndTileMapOffsets( void )
 {
-   GameDataFileOffsets_t expectedFileOffsets = { 32, 64 };
+   GameDataFileOffsets_t expectedFileOffsets = { 32, 64, 96 };
    GameData_t* gameData;
    GameDataObjectOffset_t offset;
 
@@ -127,6 +127,7 @@ void test_GameData_Create_LoadsMetadataAndTileMapOffsets( void )
    TEST_ASSERT_EQUAL_UINT8( GAME_VERSION_MINOR, GameData_GetVersion( gameData ).minor );
    TEST_ASSERT_EQUAL_UINT8( GAME_VERSION_MAINT, GameData_GetVersion( gameData ).maint );
    TEST_ASSERT_EQUAL_INT( expectedFileOffsets.tileTextureSet, GameData_GetFileOffsets( gameData ).tileTextureSet );
+   TEST_ASSERT_EQUAL_INT( expectedFileOffsets.activeSpriteTextureSet, GameData_GetFileOffsets( gameData ).activeSpriteTextureSet );
    TEST_ASSERT_EQUAL_INT( expectedFileOffsets.tileMaps, GameData_GetFileOffsets( gameData ).tileMaps );
 
    offset = GameData_GetTileMapOffset( gameData, 9 );
