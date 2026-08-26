@@ -6,6 +6,7 @@
 #include "input.h"
 #include "mem_arena.h"
 #include "platform.h"
+#include "sprite_texture_set.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
 
@@ -19,6 +20,7 @@ struct Game_t
    GameData_t* gameData;
 
    TileTextureSet_t* tileTextureSet;
+   ActiveSpriteTextureSet_t* activeSpriteTextureSet;
 
    TileMap_t *tileMap;
 
@@ -47,6 +49,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->display = Display_Create( game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
    game->gameData = GameData_Create( game->memArena, gameDataFilePath );
    game->tileTextureSet = TileTextureSet_CreateFromGameData( game->memArena, game->gameData );
+   game->activeSpriteTextureSet = ActiveSpriteTextureSet_CreateFromGameData( game->memArena, game->gameData );
 
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
@@ -75,10 +78,8 @@ void Game_Free( Game_t* game, MemArena_t* memArena )
       TileMap_Free( game->tileMap, memArena );
    }
 
-   if ( game->tileTextureSet )
-   {
-      TileTextureSet_Free( game->tileTextureSet, memArena );
-   }
+   TileTextureSet_Free( game->tileTextureSet, memArena );
+   ActiveSpriteTextureSet_Free( game->activeSpriteTextureSet, memArena );
 
    Entity_Free( game->playerEntity, memArena );
 
@@ -108,6 +109,11 @@ GameData_t* Game_GetGameData( Game_t* game )
 TileTextureSet_t* Game_GetTileTextureSet( Game_t* game )
 {
    return game->tileTextureSet;
+}
+
+ActiveSpriteTextureSet_t* Game_GetActiveSpriteTextureSet( Game_t* game )
+{
+   return game->activeSpriteTextureSet;
 }
 
 TileMap_t* Game_GetTileMap( Game_t* game )

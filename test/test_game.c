@@ -4,6 +4,7 @@
 #include "mocks/mock_game_data.h"
 #include "mocks/mock_input.h"
 #include "mocks/mock_mem_arena.h"
+#include "mocks/mock_sprite_texture_set.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
 
@@ -23,6 +24,7 @@ global u32 g_gameRenderCount;
 global u32 g_tileMapAnchorCount;
 global u32 g_tileMapFreeCount;
 global u32 g_tileTextureSetFreeCount;
+global u32 g_activeSpriteTextureSetFreeCount;
 global u32 g_gameDataFreeCount;
 global u32 g_displayFreeCount;
 global u32 g_entityFreeCount;
@@ -31,6 +33,7 @@ global Input_t* g_input;
 global Display_t* g_display;
 global GameData_t* g_gameData;
 global TileTextureSet_t* g_tileTextureSet;
+global ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
 global TileMap_t* g_tileMap;
 global Entity_t* g_playerEntity;
 global Vector4i32_t g_tileMapViewportInUnits;
@@ -175,6 +178,19 @@ void TileTextureSet_Free( TileTextureSet_t* tileTextureSet, MemArena_t* memArena
    g_tileTextureSetFreeCount++;
 }
 
+ActiveSpriteTextureSet_t* ActiveSpriteTextureSet_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData )
+{
+   UNUSED_PARAM( gameData );
+   g_activeSpriteTextureSet = (ActiveSpriteTextureSet_t*)MemArena_AllocMem( memArena, sizeof( ActiveSpriteTextureSet_t ) );
+   return g_activeSpriteTextureSet;
+}
+
+void ActiveSpriteTextureSet_Free( ActiveSpriteTextureSet_t* textureSet, MemArena_t* memArena )
+{
+   MemArena_FreeMem( memArena, textureSet );
+   g_activeSpriteTextureSetFreeCount++;
+}
+
 u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
 {
    return tileTextureSet->tileSize;
@@ -285,6 +301,7 @@ void setUp( void )
    g_tileMapAnchorCount = 0;
    g_tileMapFreeCount = 0;
    g_tileTextureSetFreeCount = 0;
+   g_activeSpriteTextureSetFreeCount = 0;
    g_gameDataFreeCount = 0;
    g_displayFreeCount = 0;
    g_entityFreeCount = 0;
@@ -309,6 +326,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_PTR( g_display, Game_GetDisplay( game ) );
    TEST_ASSERT_EQUAL_PTR( g_gameData, Game_GetGameData( game ) );
    TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, Game_GetTileTextureSet( game ) );
+   TEST_ASSERT_EQUAL_PTR( g_activeSpriteTextureSet, Game_GetActiveSpriteTextureSet( game ) );
    TEST_ASSERT_EQUAL_PTR( g_tileMap, Game_GetTileMap( game ) );
 
    viewportInUnits = TileMap_GetViewportInUnits( Game_GetTileMap( game ) );
@@ -371,8 +389,9 @@ void test_Game_Free_ReleasesAllDependencies( void )
    TEST_ASSERT_EQUAL_UINT( 1, g_gameDataFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_tileMapFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_tileTextureSetFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_activeSpriteTextureSetFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_entityFreeCount );
-   TEST_ASSERT_EQUAL_UINT( 8, g_freeCount );
+   TEST_ASSERT_EQUAL_UINT( 9, g_freeCount );
 }
 
 int main( void )
