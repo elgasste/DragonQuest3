@@ -2,7 +2,8 @@
 #include "game.h"
 #include "input.h"
 
-// TODO : figure out the frickin' jitterbug issue
+#define DIAGONAL_VELOCITY_MULTIPLIER   0.707f
+
 void Game_HandleInput( Game_t* game )
 {
    b32 leftIsDown, upIsDown, rightIsDown, downIsDown;
@@ -12,6 +13,7 @@ void Game_HandleInput( Game_t* game )
    i32 newVelocity;
 
    playerEntity = Game_GetPlayerEntity( game );
+   // TODO: this should come from the specific tile the player is standing on
    newVelocity = 60 * WORLD_UNITS_PER_PIXEL;
 
    input = Game_GetInput( game );
@@ -23,7 +25,6 @@ void Game_HandleInput( Game_t* game )
    if ( leftIsDown && !rightIsDown )
    {
       playerVelocity = Entity_GetVelocity( playerEntity );
-      // this should be units per second
       playerVelocity.x = -newVelocity;
 
       // TODO
@@ -96,6 +97,14 @@ void Game_HandleInput( Game_t* game )
       //    entity->velocity.y = ( entity->velocity.y < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
       // }
 
+      Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
+   }
+
+   if ( ( leftIsDown || rightIsDown ) && ( upIsDown || downIsDown ) )
+   {
+      playerVelocity = Entity_GetVelocity( playerEntity );
+      playerVelocity.x = (i32)( playerVelocity.x * DIAGONAL_VELOCITY_MULTIPLIER );
+      playerVelocity.y = (i32)( playerVelocity.y * DIAGONAL_VELOCITY_MULTIPLIER );
       Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
    }
 }
