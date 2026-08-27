@@ -2,9 +2,20 @@
 #define SPRITE_TEXTURE_SET
 
 #include "common.h"
+#include "platform.h"
 
 typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
+
+PACKED_STRUCT
+typedef struct ActiveSpriteTextureSetInfo_t
+{
+   u32 count;
+   u32 frameSize;
+   u32 frameCount;
+}
+ActiveSpriteTextureSetInfo_t;
+END_PACKED_STRUCT
 
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
 size_t ActiveSpriteTextureSet_GetStructSize( void );

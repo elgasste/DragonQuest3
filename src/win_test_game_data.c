@@ -23,11 +23,19 @@ typedef struct TileTextureSetMock_t
 }
 TileTextureSetMock_t;
 
-typedef struct ActiveSpriteTextureSetMock_t
+PACKED_STRUCT
+typedef struct ActiveSpriteTextureSetInfoMock_t
 {
    u32 count;
    u32 frameSize;
    u32 frameCount;
+}
+ActiveSpriteTextureSetInfoMock_t;
+END_PACKED_STRUCT
+
+typedef struct ActiveSpriteTextureSetMock_t
+{
+   ActiveSpriteTextureSetInfoMock_t info;
    u32* textures;
 }
 ActiveSpriteTextureSetMock_t;
@@ -296,14 +304,14 @@ internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void )
    ActiveSpriteTextureSetMock_t* textureSet;
 
    textureSet = (ActiveSpriteTextureSetMock_t*)malloc( sizeof( ActiveSpriteTextureSetMock_t ) );
-   textureSet->count = 2;
-   textureSet->frameSize = 16;
-   textureSet->frameCount = 2;
-   textureSet->textures = (u32*)malloc( textureSet->count * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount * Direction_Count * sizeof( u32 ) );
+   textureSet->info.count = 2;
+   textureSet->info.frameSize = 16;
+   textureSet->info.frameCount = 2;
+   textureSet->textures = (u32*)malloc( textureSet->info.count * textureSet->info.frameSize * textureSet->info.frameSize * textureSet->info.frameCount * Direction_Count * sizeof( u32 ) );
 
-   for ( spriteIndex = 0; spriteIndex < textureSet->count; spriteIndex++ )
+   for ( spriteIndex = 0; spriteIndex < textureSet->info.count; spriteIndex++ )
    {
-      spriteTexture = &textureSet->textures[spriteIndex * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount * Direction_Count];
+      spriteTexture = &textureSet->textures[spriteIndex * textureSet->info.frameSize * textureSet->info.frameSize * textureSet->info.frameCount * Direction_Count];
 
       switch( spriteIndex )
       {
@@ -314,11 +322,11 @@ internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void )
 
       for ( dir = 0; dir < Direction_Count; dir++ )
       {
-         arrowTexture1 = CreateArrowTileTexture( textureSet->frameSize, color1, dir );
-         arrowTexture2 = CreateArrowTileTexture( textureSet->frameSize, color2, dir );
+         arrowTexture1 = CreateArrowTileTexture( textureSet->info.frameSize, color1, dir );
+         arrowTexture2 = CreateArrowTileTexture( textureSet->info.frameSize, color2, dir );
 
-         memcpy( &spriteTexture[dir * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount], arrowTexture1, textureSet->frameSize * textureSet->frameSize * sizeof( u32 ) );
-         memcpy( &spriteTexture[dir * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount + ( textureSet->frameSize * textureSet->frameSize )], arrowTexture2, textureSet->frameSize * textureSet->frameSize * sizeof( u32 ) );
+         memcpy( &spriteTexture[dir * textureSet->info.frameSize * textureSet->info.frameSize * textureSet->info.frameCount], arrowTexture1, textureSet->info.frameSize * textureSet->info.frameSize * sizeof( u32 ) );
+         memcpy( &spriteTexture[dir * textureSet->info.frameSize * textureSet->info.frameSize * textureSet->info.frameCount + ( textureSet->info.frameSize * textureSet->info.frameSize )], arrowTexture2, textureSet->info.frameSize * textureSet->info.frameSize * sizeof( u32 ) );
 
          free( arrowTexture1 );
          free( arrowTexture2 );
@@ -493,7 +501,7 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureS
 
    offsets.tileTextureSet = 4 + sizeof( GameDataVersion_t ) + sizeof( GameDataFileOffsets_t );
    offsets.activeSpriteTextureSet = offsets.tileTextureSet + sizeof( TileTextureSetInfoMock_t ) + ( tileTextureSet->info.count * tileTextureSet->info.tileSize * tileTextureSet->info.tileSize * sizeof( u32 ) );
-   offsets.tileMaps = offsets.activeSpriteTextureSet + sizeof( ActiveSpriteTextureSetMock_t ) + ( activeSpriteTextureSet->count * activeSpriteTextureSet->frameSize * activeSpriteTextureSet->frameSize * activeSpriteTextureSet->frameCount * Direction_Count * sizeof( u32 ) );
+   offsets.tileMaps = offsets.activeSpriteTextureSet + sizeof( ActiveSpriteTextureSetInfoMock_t ) + ( activeSpriteTextureSet->info.count * activeSpriteTextureSet->info.frameSize * activeSpriteTextureSet->info.frameSize * activeSpriteTextureSet->info.frameCount * Direction_Count * sizeof( u32 ) );
    result = WriteFile( hFile, &offsets, sizeof( GameDataFileOffsets_t ), &bytesWritten, NULL );
    *filePos += bytesWritten;
 
@@ -574,25 +582,25 @@ internal b32 WriteTestGameDataActiveSpriteTextureSet( HANDLE hFile, DWORD* fileP
    char msg[STRING_SIZE_DEFAULT];
 
    bytesWritten = 0;
-   result = WriteFile( hFile, textureSet, sizeof( ActiveSpriteTextureSetMock_t ), &bytesWritten, NULL );
+   result = WriteFile( hFile, &textureSet->info, sizeof( ActiveSpriteTextureSetInfoMock_t ), &bytesWritten, NULL );
    *filePos += bytesWritten;
 
    if ( !result )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file active sprite texture set header: %lu", GetLastError() );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file active sprite texture set info: %lu", GetLastError() );
       Platform_FatalError( msg );
       return False;
    }
-   else if ( bytesWritten != sizeof( ActiveSpriteTextureSetMock_t ) )
+   else if ( bytesWritten != sizeof( ActiveSpriteTextureSetInfoMock_t ) )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file active sprite texture set header: wrote %lu of %lu bytes", bytesWritten, sizeof( ActiveSpriteTextureSetMock_t ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file active sprite texture set info: wrote %lu of %lu bytes", bytesWritten, sizeof( ActiveSpriteTextureSetInfoMock_t ) );
       Platform_FatalError( msg );
       return False;
    }
 
-   texturePixels = textureSet->frameSize * textureSet->frameSize * textureSet->frameCount * Direction_Count;
+   texturePixels = textureSet->info.frameSize * textureSet->info.frameSize * textureSet->info.frameCount * Direction_Count;
    
-   for ( spriteIndex = 0; spriteIndex < textureSet->count; spriteIndex++ )
+   for ( spriteIndex = 0; spriteIndex < textureSet->info.count; spriteIndex++ )
    {
       for ( pixelIndex = 0; pixelIndex < texturePixels; pixelIndex++ )
       {

@@ -6,9 +6,7 @@
 
 struct ActiveSpriteTextureSet_t
 {
-   u32 count;
-   u32 frameSize;
-   u32 frameCount;
+   ActiveSpriteTextureSetInfo_t info;
    u32* textures;
 };
 
@@ -27,21 +25,21 @@ ActiveSpriteTextureSet_t* ActiveSpriteTextureSet_CreateFromGameData( MemArena_t*
    file = GameData_GetFile( gameData );
    fileOffsets = GameData_GetFileOffsets( gameData );
    fileOffset = fileOffsets.activeSpriteTextureSet;
-   if ( (i32)( fileOffset + sizeof( ActiveSpriteTextureSet_t ) ) > file->size )
+   if ( (i32)( fileOffset + sizeof( ActiveSpriteTextureSetInfo_t ) ) > file->size )
    {
-      Platform_FatalError( "game data file is too small to contain a valid active sprite texture set." );
+      Platform_FatalError( "game data file is too small to contain sprite texture set info." );
       return 0;
    }
 
    textureSet = (ActiveSpriteTextureSet_t*)MemArena_AllocMem( memArena, sizeof( ActiveSpriteTextureSet_t ) );
    Platform_FileSeek( file, fileOffset, 0 );
-   Platform_ReadFileBytes( file, (u8*)( textureSet ), sizeof( ActiveSpriteTextureSet_t ) );
+   Platform_ReadFileBytes( file, (u8*)&textureSet->info, sizeof( ActiveSpriteTextureSetInfo_t ) );
    textureSet->textures = 0;
-   textureDataOffset = fileOffset + sizeof( ActiveSpriteTextureSet_t );
+   textureDataOffset = fileOffset + sizeof( ActiveSpriteTextureSetInfo_t );
 
-   if ( textureSet->count > 0 )
+   if ( textureSet->info.count > 0 )
    {
-      textureDataSize = textureSet->count * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount * Direction_Count * sizeof( u32 );
+      textureDataSize = textureSet->info.count * textureSet->info.frameSize * textureSet->info.frameSize * textureSet->info.frameCount * Direction_Count * sizeof( u32 );
       if ( ( textureDataOffset + textureDataSize ) > file->size )
       {
          Platform_FatalError( "game data file is too small to contain all active sprite textures." );
@@ -65,20 +63,20 @@ void ActiveSpriteTextureSet_Free( ActiveSpriteTextureSet_t* textureSet, MemArena
 
 u32 ActiveSpriteTextureSet_GetCount( ActiveSpriteTextureSet_t* textureSet )
 {
-   return textureSet->count;
+   return textureSet->info.count;
 }
 
 u32 ActiveSpriteTextureSet_GetFrameSize( ActiveSpriteTextureSet_t* textureSet )
 {
-   return textureSet->frameSize;
+   return textureSet->info.frameSize;
 }
 
 u32 ActiveSpriteTextureSet_GetFrameCount( ActiveSpriteTextureSet_t* textureSet )
 {
-   return textureSet->frameCount;
+   return textureSet->info.frameCount;
 }
 
 u32* ActiveSpriteTextureSet_GetTexture( ActiveSpriteTextureSet_t* textureSet, u32 index )
 {
-   return textureSet->textures + ( index * textureSet->frameSize * textureSet->frameSize );
+   return textureSet->textures + ( index * textureSet->info.frameSize * textureSet->info.frameSize );
 }

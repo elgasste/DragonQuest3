@@ -17,15 +17,6 @@ global u32 g_allocCount;
 global u32 g_freeCount;
 global u32 g_fatalErrorCount;
 
-typedef struct ActiveSpriteTextureSetFile_t
-{
-	u32 count;
-	u32 frameSize;
-	u32 frameCount;
-	u32* textures;
-}
-ActiveSpriteTextureSetFile_t;
-
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
 	UNUSED_PARAM( arena );
@@ -79,13 +70,12 @@ internal ActiveSpriteTextureSet_t* LoadTextureSet( void )
 
 internal void WriteTextureSet( u32 count, u32 frameSize, u32 frameCount, const u32* textures )
 {
-	ActiveSpriteTextureSetFile_t fileTextureSet;
+	ActiveSpriteTextureSetInfo_t fileTextureSet;
 	size_t textureCount;
 
 	fileTextureSet.count = count;
 	fileTextureSet.frameSize = frameSize;
 	fileTextureSet.frameCount = frameCount;
-	fileTextureSet.textures = (u32*)textures;
 	memcpy( g_fileData + g_fileOffsets.activeSpriteTextureSet, &fileTextureSet, sizeof( fileTextureSet ) );
 
 	textureCount = count * frameSize * frameSize * frameCount * Direction_Count;
@@ -115,7 +105,7 @@ void test_ActiveSpriteTextureSet_Create_LoadsHeaderAndTextures( void )
 	u32 expectedTextures[8] = { 10, 20, 30, 40, 50, 60, 70, 80 };
 	ActiveSpriteTextureSet_t* textureSet;
 
-	g_file.size = sizeof( ActiveSpriteTextureSetFile_t ) + sizeof( expectedTextures );
+	g_file.size = sizeof( ActiveSpriteTextureSetInfo_t ) + sizeof( expectedTextures );
 	WriteTextureSet( 1, 1, 2, expectedTextures );
 	textureSet = LoadTextureSet();
 
@@ -134,7 +124,7 @@ void test_ActiveSpriteTextureSet_Create_ZeroCountDoesNotAllocateTextures( void )
 {
 	ActiveSpriteTextureSet_t* textureSet;
 
-	g_file.size = sizeof( ActiveSpriteTextureSetFile_t );
+	g_file.size = sizeof( ActiveSpriteTextureSetInfo_t );
 	WriteTextureSet( 0, 16, 2, 0 );
 	textureSet = LoadTextureSet();
 
@@ -152,7 +142,7 @@ void test_ActiveSpriteTextureSet_Create_RejectsTruncatedTextures( void )
 	u32 texture = 42;
 	ActiveSpriteTextureSet_t* textureSet;
 
-	g_file.size = sizeof( ActiveSpriteTextureSetFile_t ) + sizeof( texture );
+	g_file.size = sizeof( ActiveSpriteTextureSetInfo_t ) + sizeof( texture );
 	WriteTextureSet( 1, 1, 2, &texture );
 	textureSet = LoadTextureSet();
 
@@ -167,7 +157,7 @@ void test_ActiveSpriteTextureSet_Free_ReleasesTextureSetAndTextures( void )
 	u32 textures[8] = { 0 };
 	ActiveSpriteTextureSet_t* textureSet;
 
-	g_file.size = sizeof( ActiveSpriteTextureSetFile_t ) + sizeof( textures );
+	g_file.size = sizeof( ActiveSpriteTextureSetInfo_t ) + sizeof( textures );
 	WriteTextureSet( 1, 1, 2, textures );
 	textureSet = LoadTextureSet();
 	ActiveSpriteTextureSet_Free( textureSet, (MemArena_t*)1 );

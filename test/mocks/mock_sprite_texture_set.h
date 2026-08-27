@@ -5,9 +5,7 @@
 
 typedef struct ActiveSpriteTextureSet_t
 {
-   u32 count;
-   u32 frameSize;
-   u32 frameCount;
+   ActiveSpriteTextureSetInfo_t info;
    u32* textures;
 }
 ActiveSpriteTextureSet_t;
