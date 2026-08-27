@@ -396,12 +396,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       // random
       index = Platform_Rand_u32Ranged( 0, 9 );
       curTileMap->tiles[i].textureIndex = index;
-
-      curTileMap->tiles[i].isPassable = True;
-      if ( index == 3 || index == 4 || index == 7 || index == 9 )
-      {
-         curTileMap->tiles[i].isPassable = False;
-      }
+      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
    }
 
    // make the edges all the same so we can test wrapping
@@ -434,13 +429,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       // random
       index = Platform_Rand_u32Ranged( 0, 9 );
       curTileMap->tiles[i].textureIndex = index;
-
-      curTileMap->tiles[i].isPassable = True;
-      if ( index == 3 || index == 4 || index == 7 || index == 9 )
-      {
-         curTileMap->tiles[i].isPassable = False;
-      }
-      
+      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
    }
 
    // 3: 3x3, no wrapping
@@ -472,12 +461,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       // random
       index = Platform_Rand_u32Ranged( 0, 9 );
       curTileMap->tiles[i].textureIndex = index;
-      
-      curTileMap->tiles[i].isPassable = True;
-      if ( index == 3 || index == 4 || index == 7 || index == 9 )
-      {
-         curTileMap->tiles[i].isPassable = False;
-      }
+      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
    }
 
    return tileMaps;
