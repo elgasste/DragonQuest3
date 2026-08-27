@@ -4,6 +4,14 @@
 #if defined( _WIN32 )
    #define PACKED_STRUCT __pragma( pack( push, 1 ) )
    #define END_PACKED_STRUCT __pragma( pack( pop ) )
+
+   typedef struct WinDebugFlags_t
+   {
+      b32 showDiagnostics;
+   }
+   WinDebugFlags_t;
+
+   extern WinDebugFlags_t g_winDebugFlags;
 #endif
 
 #include "common.h"

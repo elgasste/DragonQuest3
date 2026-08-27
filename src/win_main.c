@@ -24,6 +24,7 @@ internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COL
 internal void ResizeScreen( b32 increase );
 internal void ChangeGameFps( b32 increase );
 
+WinDebugFlags_t g_winDebugFlags;
 WinGlobalObjects_t g_winGlobals;
 WinCornerPopup_t g_winCornerPopup;
 
@@ -115,7 +116,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - DISPLAY_HEIGHT;
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
-   g_winGlobals.showDiagnostics = False;
+   g_winDebugFlags.showDiagnostics = False;
 
    g_winGlobals.hWndMain = CreateWindowExA( 0,
                                             mainWindowClass.lpszClassName,
@@ -301,7 +302,7 @@ internal void RenderScreen( void )
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
 
-   if ( g_winGlobals.showDiagnostics )
+   if ( g_winDebugFlags.showDiagnostics )
    {
       DrawDiagnostics( &dcMem );
    }
@@ -405,7 +406,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          switch ( keyCode )
          {
             case VK_F8:
-               TOGGLE_BOOL( g_winGlobals.showDiagnostics );
+               TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
                break;
          }
       }

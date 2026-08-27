@@ -40,7 +40,6 @@ typedef struct WinGlobalObjects_t
    BITMAPINFO bmpInfo;
    u32* buttonMap;
    r32 graphicsScale;
-   b32 showDiagnostics;
    char exeDir[MAX_PATH];
    char logFilePath[MAX_PATH];
 
