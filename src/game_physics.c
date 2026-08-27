@@ -125,6 +125,13 @@ internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Ve
    i32 tileX, tileY, tilesX, tilesY;
    u32 tileIndex;
 
+#if defined( _WIN32 )
+   if ( g_winDebugFlags.noClip )
+   {
+      return False;
+   }
+#endif
+
    tilesX = (i32)TileMap_GetTilesX( tileMap );
    tilesY = (i32)TileMap_GetTilesY( tileMap );
    firstTileX = rect.x / tileSize;

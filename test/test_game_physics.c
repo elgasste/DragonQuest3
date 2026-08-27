@@ -23,6 +23,9 @@ global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
 global Tile_t g_tiles[80];
 global u32 g_clockFrameCount;
+#if defined( _WIN32 )
+WinDebugFlags_t g_winDebugFlags;
+#endif
 
 r32 Clock_GetFrameSec( Clock_t* clock )
 {
@@ -143,6 +146,11 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 
 void setUp( void )
 {
+#if defined( _WIN32 )
+   g_winDebugFlags.showDiagnostics = False;
+   g_winDebugFlags.noClip = False;
+   g_winDebugFlags.showHitBoxes = False;
+#endif
    g_clockFrameCount = 0;
    g_entity.rect.x = 20 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 30 * WORLD_UNITS_PER_PIXEL;
