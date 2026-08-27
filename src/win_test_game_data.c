@@ -220,16 +220,55 @@ internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
 
 internal u32* CreateArrowTileTexture( u32 tileSize, u32 color, Direction_t dir )
 {
+   i32 center, forward, side, shaftHalfWidth;
    u32* texture;
 
-   UNUSED_PARAM( dir );
-
    texture = (u32*)malloc( tileSize * tileSize * sizeof( u32 ) );
-
-   // TODO: draw an actual arrow in the indicated direction
-   for ( u32 i = 0; i < tileSize * tileSize; i++ )
+   center = (i32)( tileSize / 2 );
+   shaftHalfWidth = (i32)( tileSize / 8 );
+   if ( shaftHalfWidth < 1 )
    {
-      texture[i] = color;
+      shaftHalfWidth = 1;
+   }
+
+   for ( u32 y = 0; y < tileSize; y++ )
+   {
+      for ( u32 x = 0; x < tileSize; x++ )
+      {
+         switch ( dir )
+         {
+            case Direction_Left:
+               forward = center - (i32)x;
+               side = (i32)y - center;
+               break;
+            case Direction_Up:
+               forward = center - (i32)y;
+               side = (i32)x - center;
+               break;
+            case Direction_Right:
+               forward = (i32)x - center;
+               side = (i32)y - center;
+               break;
+            case Direction_Down:
+               forward = (i32)y - center;
+               side = (i32)x - center;
+               break;
+            default:
+               forward = -1;
+               side = 0;
+               break;
+         }
+
+             if ( ( forward >= -(i32)( tileSize / 2 ) && abs( side ) <= shaftHalfWidth ) ||
+                ( forward >= 0 && abs( side ) <= ( (i32)( tileSize / 2 ) - forward ) ) )
+         {
+            texture[y * tileSize + x] = color;
+         }
+         else
+         {
+            texture[y * tileSize + x] = 0;
+         }
+      }
    }
 
    return texture;
@@ -440,7 +479,6 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureS
       return False;
    }
 
-   // MUFFINS: I think something is wrong in here
    offsets.tileTextureSet = 4 + sizeof( GameDataVersion_t ) + sizeof( GameDataFileOffsets_t );
    offsets.activeSpriteTextureSet = offsets.tileTextureSet + sizeof( TileTextureSetMock_t ) + ( tileTextureSet->count * tileTextureSet->tileSize * tileTextureSet->tileSize * sizeof( u32 ) );
    offsets.tileMaps = offsets.activeSpriteTextureSet + sizeof( ActiveSpriteTextureSetMock_t ) + ( activeSpriteTextureSet->count * activeSpriteTextureSet->frameSize * activeSpriteTextureSet->frameSize * activeSpriteTextureSet->frameCount * Direction_Count * sizeof( u32 ) );
