@@ -47,7 +47,7 @@ void test_ActiveSprite_GetStructSize_ReturnsNonZeroSize( void )
 void test_ActiveSprite_Create_InitializesDefaultState( void )
 {
 	ActiveSpriteTextureSet_t* textureSet = (ActiveSpriteTextureSet_t*)1;
-	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, textureSet );
+	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, textureSet, 0 );
 
 	TEST_ASSERT_NOT_NULL( sprite );
 	TEST_ASSERT_EQUAL_INT( Direction_Left, ActiveSprite_GetDirection( sprite ) );
@@ -61,16 +61,17 @@ void test_ActiveSprite_Create_InitializesDefaultState( void )
 void test_ActiveSprite_GetTextureSet_ReturnsTextureSetProvidedAtCreation( void )
 {
 	ActiveSpriteTextureSet_t* expectedTextureSet = (ActiveSpriteTextureSet_t*)1;
-	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, expectedTextureSet );
+	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, expectedTextureSet, 7 );
 
 	TEST_ASSERT_EQUAL_PTR( expectedTextureSet, ActiveSprite_GetTextureSet( sprite ) );
+	TEST_ASSERT_EQUAL_UINT( 7, ActiveSprite_GetTextureIndex( sprite ) );
 
 	ActiveSprite_Free( sprite, (MemArena_t*)1 );
 }
 
 void test_ActiveSprite_SetFrameDurationSec_UpdatesFrameDuration( void )
 {
-	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0 );
+	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0, 0 );
 
 	ActiveSprite_SetFrameDurationSec( sprite, 0.25f );
 
@@ -84,7 +85,7 @@ void test_ActiveSprite_Tic_AdvancesFrameAfterDuration( void )
 	ActiveSprite_t* sprite;
 
 	g_frameCount = 3;
-	sprite = ActiveSprite_Create( (MemArena_t*)1, (ActiveSpriteTextureSet_t*)1 );
+	sprite = ActiveSprite_Create( (MemArena_t*)1, (ActiveSpriteTextureSet_t*)1, 0 );
 	ActiveSprite_SetFrameDurationSec( sprite, 0.5f );
 
 	ActiveSprite_Tic( sprite, 0.49f );
@@ -100,7 +101,7 @@ void test_ActiveSprite_Tic_WrapsFrameIndexAtFrameCount( void )
 	ActiveSprite_t* sprite;
 
 	g_frameCount = 3;
-	sprite = ActiveSprite_Create( (MemArena_t*)1, (ActiveSpriteTextureSet_t*)1 );
+	sprite = ActiveSprite_Create( (MemArena_t*)1, (ActiveSpriteTextureSet_t*)1, 0 );
 	ActiveSprite_SetFrameIndex( sprite, 2 );
 	ActiveSprite_SetFrameDurationSec( sprite, 0.5f );
 
@@ -116,7 +117,7 @@ void test_ActiveSprite_Tic_AdvancesMultipleFramesAndRetainsRemainder( void )
 	ActiveSprite_t* sprite;
 
 	g_frameCount = 4;
-	sprite = ActiveSprite_Create( (MemArena_t*)1, (ActiveSpriteTextureSet_t*)1 );
+	sprite = ActiveSprite_Create( (MemArena_t*)1, (ActiveSpriteTextureSet_t*)1, 0 );
 	ActiveSprite_SetFrameDurationSec( sprite, 0.5f );
 
 	ActiveSprite_Tic( sprite, 1.25f );
@@ -129,7 +130,7 @@ void test_ActiveSprite_Tic_AdvancesMultipleFramesAndRetainsRemainder( void )
 
 void test_ActiveSprite_SetDirection_UpdatesDirection( void )
 {
-	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0 );
+	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0, 0 );
 
 	ActiveSprite_SetDirection( sprite, Direction_Down );
 
@@ -140,7 +141,7 @@ void test_ActiveSprite_SetDirection_UpdatesDirection( void )
 
 void test_ActiveSprite_SetFrameIndex_UpdatesFrameIndex( void )
 {
-	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0 );
+	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0, 0 );
 
 	ActiveSprite_SetFrameIndex( sprite, 7 );
 
@@ -151,7 +152,7 @@ void test_ActiveSprite_SetFrameIndex_UpdatesFrameIndex( void )
 
 void test_ActiveSprite_Setters_ReplacePreviousValues( void )
 {
-	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0 );
+	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, 0, 0 );
 
 	ActiveSprite_SetDirection( sprite, Direction_Up );
 	ActiveSprite_SetFrameIndex( sprite, 3 );
@@ -166,7 +167,7 @@ void test_ActiveSprite_Setters_ReplacePreviousValues( void )
 
 void test_ActiveSprite_Free_ReleasesAllocatedSpriteOnly( void )
 {
-	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, (ActiveSpriteTextureSet_t*)1 );
+	ActiveSprite_t* sprite = ActiveSprite_Create( (MemArena_t*)1, (ActiveSpriteTextureSet_t*)1, 0 );
 
 	ActiveSprite_Free( sprite, (MemArena_t*)1 );
 

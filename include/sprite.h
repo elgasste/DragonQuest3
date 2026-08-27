@@ -11,10 +11,11 @@ typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
 
 typedef struct ActiveSprite_t ActiveSprite_t;
 size_t ActiveSprite_GetStructSize( void );
-ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet );
+ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet, u32 textureIndex );
 void ActiveSprite_Free( ActiveSprite_t* activeSprite, MemArena_t* memArena );
 
 ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* activeSprite );
+u32 ActiveSprite_GetTextureIndex( ActiveSprite_t* activeSprite );
 Direction_t ActiveSprite_GetDirection( ActiveSprite_t* activeSprite );
 u32 ActiveSprite_GetFrameIndex( ActiveSprite_t* activeSprite );
 r32 ActiveSprite_GetFrameDurationSec( ActiveSprite_t* activeSprite );

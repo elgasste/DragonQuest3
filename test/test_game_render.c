@@ -11,6 +11,7 @@ struct ActiveSprite_t
    ActiveSpriteTextureSet_t* textureSet;
    Direction_t dir;
    u32 frameIndex;
+   u32 textureIndex;
 };
 
 typedef struct DisplayFillCall_t
@@ -87,6 +88,7 @@ void setUp( void )
    g_playerSprite.textureSet = g_activeSpriteTextureSet;
    g_playerSprite.dir = Direction_Right;
    g_playerSprite.frameIndex = 1;
+   g_playerSprite.textureIndex = 1;
    g_playerTexture[0] = 0x12345678;
    g_viewportInPixels.x = 10;
    g_viewportInPixels.y = 20;
@@ -209,6 +211,11 @@ u32 ActiveSprite_GetFrameIndex( ActiveSprite_t* activeSprite )
    return activeSprite->frameIndex;
 }
 
+u32 ActiveSprite_GetTextureIndex( ActiveSprite_t* activeSprite )
+{
+   return activeSprite->textureIndex;
+}
+
 u32 ActiveSpriteTextureSet_GetFrameCount( ActiveSpriteTextureSet_t* textureSet )
 {
    UNUSED_PARAM( textureSet );
@@ -224,7 +231,7 @@ u32 ActiveSpriteTextureSet_GetFrameSize( ActiveSpriteTextureSet_t* textureSet )
 u32* ActiveSpriteTextureSet_GetTexture( ActiveSpriteTextureSet_t* textureSet, u32 index )
 {
    UNUSED_PARAM( textureSet );
-   TEST_ASSERT_EQUAL_UINT( 7, index );
+   TEST_ASSERT_EQUAL_UINT( 19, index );
    return g_playerTexture;
 }
 

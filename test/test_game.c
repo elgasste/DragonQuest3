@@ -41,6 +41,7 @@ global TileTextureSet_t* g_tileTextureSet;
 global ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
 global ActiveSprite_t* g_playerSprite;
 global ActiveSpriteTextureSet_t* g_playerSpriteTextureSet;
+global u32 g_playerSpriteTextureIndex;
 global TileMap_t* g_tileMap;
 global Entity_t* g_playerEntity;
 global Vector4i32_t g_tileMapViewportInUnits;
@@ -225,10 +226,11 @@ void ActiveSpriteTextureSet_Free( ActiveSpriteTextureSet_t* textureSet, MemArena
    g_activeSpriteTextureSetFreeCount++;
 }
 
-ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet )
+ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet, u32 textureIndex )
 {
    g_playerSprite = (ActiveSprite_t*)MemArena_AllocMem( memArena, 1 );
    g_playerSpriteTextureSet = textureSet;
+   g_playerSpriteTextureIndex = textureIndex;
    return g_playerSprite;
 }
 
@@ -367,6 +369,7 @@ void setUp( void )
    g_activeSpriteTextureSetFreeCount = 0;
    g_playerSprite = 0;
    g_playerSpriteTextureSet = 0;
+   g_playerSpriteTextureIndex = 0;
    g_gameDataFreeCount = 0;
    g_displayFreeCount = 0;
    g_entityFreeCount = 0;
@@ -408,6 +411,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_UINT( 40, Game_GetPlayerEntity( game )->tileIndex );
    TEST_ASSERT_EQUAL_PTR( g_playerSprite, Entity_GetSprite( Game_GetPlayerEntity( game ) ) );
    TEST_ASSERT_EQUAL_PTR( g_activeSpriteTextureSet, ActiveSprite_GetTextureSet( g_playerSprite ) );
+   TEST_ASSERT_EQUAL_UINT( 0, g_playerSpriteTextureIndex );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game ) ).x );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game ) ).y );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );

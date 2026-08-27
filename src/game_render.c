@@ -53,7 +53,9 @@ internal void GameRender_DrawPlayer( Game_t* game )
    spriteOffset = Entity_GetSpriteOffset( playerEntity );
    frameCount = ActiveSpriteTextureSet_GetFrameCount( textureSet );
    frameSize = ActiveSpriteTextureSet_GetFrameSize( textureSet );
-   textureIndex = ( ActiveSprite_GetDirection( sprite ) * frameCount ) + ActiveSprite_GetFrameIndex( sprite );
+   textureIndex = ( ActiveSprite_GetTextureIndex( sprite ) * Direction_Count * frameCount )
+      + ( ActiveSprite_GetDirection( sprite ) * frameCount )
+      + ActiveSprite_GetFrameIndex( sprite );
    texture = ActiveSpriteTextureSet_GetTexture( textureSet, textureIndex );
 
    playerRect.x = ( playerRect.x / WORLD_UNITS_PER_PIXEL ) + spriteOffset.x - viewportInPixels.x;
