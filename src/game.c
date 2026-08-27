@@ -56,7 +56,8 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    // TODO: temporary, this will eventually be part of the game data file
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 
-   game->playerSprite = ActiveSprite_Create( game->memArena, game->activeSpriteTextureSet, 1 );
+   game->playerSprite = ActiveSprite_Create( game->memArena, game->activeSpriteTextureSet );
+   ActiveSprite_SetTextureIndex( game->playerSprite, 1 );
    game->playerEntity = Entity_Create( game->memArena );
    Entity_SetSize( game->playerEntity, 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL );
    Entity_SetVelocity( game->playerEntity, 0, 0 );

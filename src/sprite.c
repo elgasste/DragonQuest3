@@ -19,13 +19,12 @@ size_t ActiveSprite_GetStructSize( void )
     return sizeof( ActiveSprite_t );
 }
 
-ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet, u32 textureIndex )
+ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet )
 {
    ActiveSprite_t* sprite;
 
    sprite = (ActiveSprite_t*)MemArena_AllocMem( memArena, sizeof( ActiveSprite_t ) );
    sprite->textureSet = textureSet;
-   sprite->textureIndex = textureIndex;
    sprite->dir = 0;
    sprite->frameIndex = 0;
 
@@ -63,6 +62,11 @@ u32 ActiveSprite_GetFrameIndex( ActiveSprite_t* activeSprite )
 r32 ActiveSprite_GetFrameDurationSec( ActiveSprite_t* activeSprite )
 {
     return activeSprite->frameDurationSec;
+}
+
+void ActiveSprite_SetTextureIndex( ActiveSprite_t* activeSprite, u32 textureIndex )
+{
+    activeSprite->textureIndex = textureIndex;
 }
 
 void ActiveSprite_SetDirection( ActiveSprite_t* activeSprite, Direction_t dir )

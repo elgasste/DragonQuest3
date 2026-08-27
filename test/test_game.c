@@ -226,11 +226,10 @@ void ActiveSpriteTextureSet_Free( ActiveSpriteTextureSet_t* textureSet, MemArena
    g_activeSpriteTextureSetFreeCount++;
 }
 
-ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet, u32 textureIndex )
+ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet )
 {
    g_playerSprite = (ActiveSprite_t*)MemArena_AllocMem( memArena, 1 );
    g_playerSpriteTextureSet = textureSet;
-   g_playerSpriteTextureIndex = textureIndex;
    return g_playerSprite;
 }
 
@@ -244,6 +243,12 @@ void ActiveSprite_Tic( ActiveSprite_t* activeSprite, r32 deltaSec )
    g_spriteTicSprite = activeSprite;
    g_spriteTicDeltaSec = deltaSec;
    g_spriteTicCount++;
+}
+
+void ActiveSprite_SetTextureIndex( ActiveSprite_t* activeSprite, u32 textureIndex )
+{
+   UNUSED_PARAM( activeSprite );
+   g_playerSpriteTextureIndex = textureIndex;
 }
 
 ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* activeSprite )
@@ -411,7 +416,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_UINT( 40, Game_GetPlayerEntity( game )->tileIndex );
    TEST_ASSERT_EQUAL_PTR( g_playerSprite, Entity_GetSprite( Game_GetPlayerEntity( game ) ) );
    TEST_ASSERT_EQUAL_PTR( g_activeSpriteTextureSet, ActiveSprite_GetTextureSet( g_playerSprite ) );
-   TEST_ASSERT_EQUAL_UINT( 0, g_playerSpriteTextureIndex );
+   TEST_ASSERT_EQUAL_UINT( 1, g_playerSpriteTextureIndex );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game ) ).x );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game ) ).y );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
