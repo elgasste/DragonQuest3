@@ -161,6 +161,11 @@ void Game_Stop( Game_t* game )
 
 internal void Game_Tic( Game_t* game )
 {
+   r32 deltaSec;
+
+   deltaSec = Clock_GetFrameSec( game->clock );
+   
    Game_TicPhysics( game );
+   ActiveSprite_Tic( game->playerSprite, deltaSec );
    TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity );
 }

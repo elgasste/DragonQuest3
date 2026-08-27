@@ -18,6 +18,10 @@ global u32 g_allocCount;
 global u32 g_freeCount;
 global u32 g_clockStartCount;
 global u32 g_clockEndCount;
+global r32 g_frameSec;
+global r32 g_spriteTicDeltaSec;
+global u32 g_spriteTicCount;
+global ActiveSprite_t* g_spriteTicSprite;
 global u32 g_inputResetCount;
 global u32 g_platformHandleMessagesCount;
 global u32 g_gameHandleInputCount;
@@ -81,6 +85,12 @@ void Clock_EndFrame( Clock_t* clock )
 {
    UNUSED_PARAM( clock );
    g_clockEndCount++;
+}
+
+r32 Clock_GetFrameSec( Clock_t* clock )
+{
+   UNUSED_PARAM( clock );
+   return g_frameSec;
 }
 
 Input_t* Input_Create( MemArena_t* memArena )
@@ -227,6 +237,13 @@ void ActiveSprite_Free( ActiveSprite_t* activeSprite, MemArena_t* memArena )
    MemArena_FreeMem( memArena, activeSprite );
 }
 
+void ActiveSprite_Tic( ActiveSprite_t* activeSprite, r32 deltaSec )
+{
+   g_spriteTicSprite = activeSprite;
+   g_spriteTicDeltaSec = deltaSec;
+   g_spriteTicCount++;
+}
+
 ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* activeSprite )
 {
    UNUSED_PARAM( activeSprite );
@@ -336,6 +353,10 @@ void setUp( void )
    g_freeCount = 0;
    g_clockStartCount = 0;
    g_clockEndCount = 0;
+   g_frameSec = 1.0f / GAME_DEFAULT_FPS;
+   g_spriteTicDeltaSec = 0.0f;
+   g_spriteTicCount = 0;
+   g_spriteTicSprite = 0;
    g_inputResetCount = 0;
    g_platformHandleMessagesCount = 0;
    g_gameHandleInputCount = 0;
@@ -427,6 +448,20 @@ void test_Game_Run_ExecutesOneFrameAndUpdatesViewport( void )
    Game_Free( game, (MemArena_t*)1 );
 }
 
+void test_Game_Run_TicsPlayerSpriteWithClockFrameDuration( void )
+{
+   Game_t* game = CreateGame();
+
+   g_frameSec = 0.25f;
+   Game_Run( game );
+
+   TEST_ASSERT_EQUAL_UINT( 1, g_spriteTicCount );
+   TEST_ASSERT_EQUAL_PTR( g_playerSprite, g_spriteTicSprite );
+   TEST_ASSERT_EQUAL_FLOAT( 0.25f, g_spriteTicDeltaSec );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
 void test_Game_Free_ReleasesAllDependencies( void )
 {
    Game_t* game = CreateGame();
@@ -453,6 +488,7 @@ int main( void )
    RUN_TEST( test_Game_SetPlayerRect_UpdatesPlayerRectangle );
 
    RUN_TEST( test_Game_Run_ExecutesOneFrameAndUpdatesViewport );
+   RUN_TEST( test_Game_Run_TicsPlayerSpriteWithClockFrameDuration );
    
    RUN_TEST( test_Game_Free_ReleasesAllDependencies );
 
