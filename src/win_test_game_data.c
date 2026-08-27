@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "direction.h"
 #include "game_data.h"
 #include "platform.h"
 #include "version.h"
@@ -13,6 +14,15 @@ typedef struct TileTextureSetMock_t
    u32* textures;
 }
 TileTextureSetMock_t;
+
+typedef struct ActiveSpriteTextureSetMock_t
+{
+   u32 count;
+   u32 frameSize;
+   u32 frameCount;
+   u32* textures;
+}
+ActiveSpriteTextureSetMock_t;
 
 typedef struct TileMock_t
 {
@@ -31,16 +41,19 @@ typedef struct TileMapMock_t
 TileMapMock_t;
 
 internal TileTextureSetMock_t* CreateTestTileTextureSet( void );
+internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void );
 internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount );
-internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* textureSet );
+internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* textureSet, ActiveSpriteTextureSetMock_t* activeSpriteTextureSet );
 internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* textureSet );
+internal b32 WriteTestGameDataActiveSpriteTextureSet( HANDLE hFile, DWORD* filePos, ActiveSpriteTextureSetMock_t* textureSet );
 internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMock_t* tileMaps, u32 tileMapCount );
 
 void WriteTestGameDataFile( const char* filePath )
 {
    HANDLE hFile;
    DWORD filePos;
-   TileTextureSetMock_t* textureSet;
+   TileTextureSetMock_t* tileTextureSet;
+   ActiveSpriteTextureSetMock_t* activeSpriteTextureSet;
    TileMapMock_t* tileMaps;
    u32 tileMapCount, i;
    char msg[STRING_SIZE_DEFAULT];
@@ -54,25 +67,32 @@ void WriteTestGameDataFile( const char* filePath )
       Platform_FatalError( msg );
    }
 
-   textureSet = CreateTestTileTextureSet();
+   tileTextureSet = CreateTestTileTextureSet();
+   activeSpriteTextureSet = CreateTestActiveSpriteTextureSet();
    tileMapCount = 0;
    tileMaps = CreateTestTileMaps( &tileMapCount );
 
-   if ( !WriteTestGameDataHeader( hFile, &filePos, textureSet ) )
+   if ( !WriteTestGameDataHeader( hFile, &filePos, tileTextureSet, activeSpriteTextureSet ) )
    {
       Platform_FatalError( "failed to write test game data file header." );
    }
-   if ( !WriteTestGameDataTileTextureSet( hFile, &filePos, textureSet ) )
+   if ( !WriteTestGameDataTileTextureSet( hFile, &filePos, tileTextureSet ) )
    {
       Platform_FatalError( "failed to write test game data file tile texture set." );
+   }
+   if ( !WriteTestGameDataActiveSpriteTextureSet( hFile, &filePos, activeSpriteTextureSet ) )
+   {
+      Platform_FatalError( "failed to write test game data file active sprite texture set." );
    }
    if ( !WriteTestGameDataTileMaps( hFile, &filePos, tileMaps, tileMapCount ) )
    {
       Platform_FatalError( "failed to write test game data file tile maps." );
    }
 
-   free( textureSet->textures );
-   free( textureSet );
+   free( tileTextureSet->textures );
+   free( tileTextureSet );
+   free( activeSpriteTextureSet->textures );
+   free( activeSpriteTextureSet );
    for ( i = 0; i < tileMapCount; i++ )
    {
       free( tileMaps[i].tiles );
@@ -198,6 +218,102 @@ internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
    return textureSet;
 }
 
+internal u32* CreateArrowTileTexture( u32 tileSize, u32 color, Direction_t dir )
+{
+   i32 center, forward, side, shaftHalfWidth;
+   u32* texture;
+
+   texture = (u32*)malloc( tileSize * tileSize * sizeof( u32 ) );
+   center = (i32)( tileSize / 2 );
+   shaftHalfWidth = (i32)( tileSize / 8 );
+   if ( shaftHalfWidth < 1 )
+   {
+      shaftHalfWidth = 1;
+   }
+
+   for ( u32 y = 0; y < tileSize; y++ )
+   {
+      for ( u32 x = 0; x < tileSize; x++ )
+      {
+         switch ( dir )
+         {
+            case Direction_Left:
+               forward = center - (i32)x;
+               side = (i32)y - center;
+               break;
+            case Direction_Up:
+               forward = center - (i32)y;
+               side = (i32)x - center;
+               break;
+            case Direction_Right:
+               forward = (i32)x - center;
+               side = (i32)y - center;
+               break;
+            case Direction_Down:
+               forward = (i32)y - center;
+               side = (i32)x - center;
+               break;
+            default:
+               forward = -1;
+               side = 0;
+               break;
+         }
+
+         if ( ( forward >= -(i32)( tileSize / 2 ) && abs( side ) <= shaftHalfWidth ) ||
+              ( forward >= 0 && abs( side ) <= ( (i32)( tileSize / 2 ) - forward ) ) )
+         {
+            texture[y * tileSize + x] = color;
+         }
+         else
+         {
+            texture[y * tileSize + x] = 0;
+         }
+      }
+   }
+
+   return texture;
+}
+
+internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void )
+{
+   u32 spriteIndex, color1, color2;
+   u32 *spriteTexture, *arrowTexture1, *arrowTexture2;
+   Direction_t dir;
+   ActiveSpriteTextureSetMock_t* textureSet;
+
+   textureSet = (ActiveSpriteTextureSetMock_t*)malloc( sizeof( ActiveSpriteTextureSetMock_t ) );
+   textureSet->count = 2;
+   textureSet->frameSize = 16;
+   textureSet->frameCount = 2;
+   textureSet->textures = (u32*)malloc( textureSet->count * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount * Direction_Count * sizeof( u32 ) );
+
+   for ( spriteIndex = 0; spriteIndex < textureSet->count; spriteIndex++ )
+   {
+      spriteTexture = &textureSet->textures[spriteIndex * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount * Direction_Count];
+
+      switch( spriteIndex )
+      {
+         case 0: color1 = RGB( 255, 0, 0 ); color2 = RGB( 200, 0, 0 ); break;
+         case 1: color1 = RGB( 0, 255, 0 ); color2 = RGB( 0, 200, 0 ); break;
+         default: color1 = RGB( 255, 255, 255 ); color2 = RGB( 200, 200, 200 ); break;
+      }
+
+      for ( dir = 0; dir < Direction_Count; dir++ )
+      {
+         arrowTexture1 = CreateArrowTileTexture( textureSet->frameSize, color1, dir );
+         arrowTexture2 = CreateArrowTileTexture( textureSet->frameSize, color2, dir );
+
+         memcpy( &spriteTexture[dir * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount], arrowTexture1, textureSet->frameSize * textureSet->frameSize * sizeof( u32 ) );
+         memcpy( &spriteTexture[dir * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount + ( textureSet->frameSize * textureSet->frameSize )], arrowTexture2, textureSet->frameSize * textureSet->frameSize * sizeof( u32 ) );
+
+         free( arrowTexture1 );
+         free( arrowTexture2 );
+      }
+   }
+
+   return textureSet;
+}
+
 internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
 {
    u32 i;
@@ -315,7 +431,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    return tileMaps;
 }
 
-internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* textureSet )
+internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureSetMock_t* tileTextureSet, ActiveSpriteTextureSetMock_t* activeSpriteTextureSet )
 {
    DWORD bytesWritten;
    BOOL result;
@@ -362,7 +478,8 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureS
    }
 
    offsets.tileTextureSet = 4 + sizeof( GameDataVersion_t ) + sizeof( GameDataFileOffsets_t );
-   offsets.tileMaps = offsets.tileTextureSet + sizeof( TileTextureSetMock_t ) + ( textureSet->count * textureSet->tileSize * textureSet->tileSize * sizeof( u32 ) );
+   offsets.activeSpriteTextureSet = offsets.tileTextureSet + sizeof( TileTextureSetMock_t ) + ( tileTextureSet->count * tileTextureSet->tileSize * tileTextureSet->tileSize * sizeof( u32 ) );
+   offsets.tileMaps = offsets.activeSpriteTextureSet + sizeof( ActiveSpriteTextureSetMock_t ) + ( activeSpriteTextureSet->count * activeSpriteTextureSet->frameSize * activeSpriteTextureSet->frameSize * activeSpriteTextureSet->frameCount * Direction_Count * sizeof( u32 ) );
    result = WriteFile( hFile, &offsets, sizeof( GameDataFileOffsets_t ), &bytesWritten, NULL );
    *filePos += bytesWritten;
 
@@ -426,6 +543,59 @@ internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, Tile
          else if ( bytesWritten != sizeof( u32 ) )
          {
             snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile textures: wrote %lu of %lu bytes", bytesWritten, sizeof( u32 ) );
+            Platform_FatalError( msg );
+            return False;
+         }
+      }
+   }
+
+   return True;
+}
+
+internal b32 WriteTestGameDataActiveSpriteTextureSet( HANDLE hFile, DWORD* filePos, ActiveSpriteTextureSetMock_t* textureSet )
+{
+   u32 spriteIndex, pixelIndex, texturePixels, pixel;
+   DWORD bytesWritten;
+   BOOL result;
+   char msg[STRING_SIZE_DEFAULT];
+
+   bytesWritten = 0;
+   result = WriteFile( hFile, textureSet, sizeof( ActiveSpriteTextureSetMock_t ), &bytesWritten, NULL );
+   *filePos += bytesWritten;
+
+   if ( !result )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file active sprite texture set header: %lu", GetLastError() );
+      Platform_FatalError( msg );
+      return False;
+   }
+   else if ( bytesWritten != sizeof( ActiveSpriteTextureSetMock_t ) )
+   {
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file active sprite texture set header: wrote %lu of %lu bytes", bytesWritten, sizeof( ActiveSpriteTextureSetMock_t ) );
+      Platform_FatalError( msg );
+      return False;
+   }
+
+   texturePixels = textureSet->frameSize * textureSet->frameSize * textureSet->frameCount * Direction_Count;
+   
+   for ( spriteIndex = 0; spriteIndex < textureSet->count; spriteIndex++ )
+   {
+      for ( pixelIndex = 0; pixelIndex < texturePixels; pixelIndex++ )
+      {
+         pixel = textureSet->textures[spriteIndex * texturePixels + pixelIndex];
+         bytesWritten = 0;
+         result = WriteFile( hFile, &pixel, sizeof( u32 ), &bytesWritten, NULL );
+         *filePos += bytesWritten;
+
+         if ( !result )
+         {
+            snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file active sprite textures: %lu", GetLastError() );
+            Platform_FatalError( msg );
+            return False;
+         }
+         else if ( bytesWritten != sizeof( u32 ) )
+         {
+            snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file active sprite textures: wrote %lu of %lu bytes", bytesWritten, sizeof( u32 ) );
             Platform_FatalError( msg );
             return False;
          }

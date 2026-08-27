@@ -75,17 +75,3 @@ u32* TileTextureSet_GetTexture( TileTextureSet_t* tileTextureSet, u32 index )
 {
    return tileTextureSet->textures + ( index * tileTextureSet->tileSize * tileTextureSet->tileSize );
 }
-
-void TileTextureSet_SetTexture( TileTextureSet_t* tileTextureSet, u32 index, const u32* textureData )
-{
-   u32 tileSize, i;
-   u32* dest;
-
-   tileSize = tileTextureSet->tileSize;
-   dest = tileTextureSet->textures + ( index * tileSize * tileSize );
-
-   for ( i = 0; i < tileSize * tileSize; i++ )
-   {
-      dest[i] = textureData[i];
-   }
-}

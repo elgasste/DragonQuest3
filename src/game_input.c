@@ -1,6 +1,7 @@
 #include "entity.h"
 #include "game.h"
 #include "input.h"
+#include "sprite.h"
 
 #define DIAGONAL_VELOCITY_MULTIPLIER   0.707f
 
@@ -9,10 +10,12 @@ void Game_HandleInput( Game_t* game )
    b32 leftIsDown, upIsDown, rightIsDown, downIsDown;
    Input_t* input;
    Entity_t* playerEntity;
+   ActiveSprite_t* playerSprite;
    Vector2i32_t playerVelocity;
    i32 newVelocity;
 
    playerEntity = Game_GetPlayerEntity( game );
+   playerSprite = Entity_GetSprite( playerEntity );
    // TODO: this should come from the specific tile the player is standing on
    newVelocity = 60 * WORLD_UNITS_PER_PIXEL;
 
@@ -27,17 +30,11 @@ void Game_HandleInput( Game_t* game )
       playerVelocity = Entity_GetVelocity( playerEntity );
       playerVelocity.x = -newVelocity;
 
-      // TODO
-      // if ( !( upIsDown && sprite->direction == Direction_Up ) &&
-      //      !( downIsDown && sprite->direction == Direction_Down ) )
-      // {
-      //    ActiveSprite_SetDirection( sprite, Direction_Left );
-      // }
-
-      // if ( upIsDown || downIsDown )
-      // {
-      //    entity->velocity.x = ( entity->velocity.x < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
-      // }
+      if ( !( upIsDown && ActiveSprite_GetDirection( playerSprite ) == Direction_Up ) &&
+           !( downIsDown && ActiveSprite_GetDirection( playerSprite ) == Direction_Down ) )
+      {
+         ActiveSprite_SetDirection( playerSprite, Direction_Left );
+      }
 
       Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
    }
@@ -46,17 +43,11 @@ void Game_HandleInput( Game_t* game )
       playerVelocity = Entity_GetVelocity( playerEntity );
       playerVelocity.x = newVelocity;
 
-      // TODO
-      // if ( !( upIsDown && sprite->direction == Direction_Up ) &&
-      //      !( downIsDown && sprite->direction == Direction_Down ) )
-      // {
-      //    ActiveSprite_SetDirection( sprite, Direction_Right );
-      // }
-
-      // if ( upIsDown || downIsDown )
-      // {
-      //    entity->velocity.x = ( entity->velocity.x < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
-      // }
+      if ( !( upIsDown && ActiveSprite_GetDirection( playerSprite ) == Direction_Up ) &&
+           !( downIsDown && ActiveSprite_GetDirection( playerSprite ) == Direction_Down ) )
+      {
+         ActiveSprite_SetDirection( playerSprite, Direction_Right );
+      }
 
       Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
    }
@@ -66,17 +57,11 @@ void Game_HandleInput( Game_t* game )
       playerVelocity = Entity_GetVelocity( playerEntity );
       playerVelocity.y = -newVelocity;
 
-      // TODO
-      // if ( !( leftIsDown && sprite->direction == Direction_Left ) &&
-      //      !( rightIsDown && sprite->direction == Direction_Right ) )
-      // {
-      //    ActiveSprite_SetDirection( sprite, Direction_Up );
-      // }
-
-      // if ( leftIsDown || rightIsDown )
-      // {
-      //    entity->velocity.y = ( entity->velocity.y < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
-      // }
+      if ( !( leftIsDown && ActiveSprite_GetDirection( playerSprite ) == Direction_Left ) &&
+           !( rightIsDown && ActiveSprite_GetDirection( playerSprite ) == Direction_Right ) )
+      {
+         ActiveSprite_SetDirection( playerSprite, Direction_Up );
+      }
 
       Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
    }
@@ -85,17 +70,11 @@ void Game_HandleInput( Game_t* game )
       playerVelocity = Entity_GetVelocity( playerEntity );
       playerVelocity.y = newVelocity;
 
-      // TODO
-      // if ( !( leftIsDown && sprite->direction == Direction_Left ) &&
-      //      !( rightIsDown && sprite->direction == Direction_Right ) )
-      // {
-      //    ActiveSprite_SetDirection( sprite, Direction_Down );
-      // }
-
-      // if ( leftIsDown || rightIsDown )
-      // {
-      //    entity->velocity.y = ( entity->velocity.y < 0 ) ? -( TileMap_GetTileDiagonalVelocity( velocity ) ) : TileMap_GetTileDiagonalVelocity( velocity );
-      // }
+      if ( !( leftIsDown && ActiveSprite_GetDirection( playerSprite ) == Direction_Left ) &&
+           !( rightIsDown && ActiveSprite_GetDirection( playerSprite ) == Direction_Right ) )
+      {
+         ActiveSprite_SetDirection( playerSprite, Direction_Down );
+      }
 
       Entity_SetVelocity( playerEntity, playerVelocity.x, playerVelocity.y );
    }

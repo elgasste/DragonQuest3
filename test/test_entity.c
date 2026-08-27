@@ -34,6 +34,60 @@ void test_Entity_GetStructSize_ReturnsNonZeroSize( void )
    TEST_ASSERT_GREATER_THAN_size_t( 0, Entity_GetStructSize() );
 }
 
+void test_Entity_Create_InitializesSpriteToNull( void )
+{
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   TEST_ASSERT_NULL( Entity_GetSprite( entity ) );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
+void test_Entity_SetSprite_UpdatesSprite( void )
+{
+   ActiveSprite_t* expectedSprite = (ActiveSprite_t*)1;
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   Entity_SetSprite( entity, expectedSprite );
+
+   TEST_ASSERT_EQUAL_PTR( expectedSprite, Entity_GetSprite( entity ) );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
+void test_Entity_SetSpriteOffset_UpdatesOffset( void )
+{
+   Vector2i32_t spriteOffset;
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   Entity_SetSpriteOffset( entity, -12, 18 );
+   spriteOffset = Entity_GetSpriteOffset( entity );
+
+   TEST_ASSERT_EQUAL_INT( -12, spriteOffset.x );
+   TEST_ASSERT_EQUAL_INT( 18, spriteOffset.y );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
+void test_Entity_Setters_ReplaceSpriteAndSpriteOffset( void )
+{
+   Vector2i32_t spriteOffset;
+   ActiveSprite_t* expectedSprite = (ActiveSprite_t*)2;
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   Entity_SetSprite( entity, (ActiveSprite_t*)1 );
+   Entity_SetSpriteOffset( entity, 3, 4 );
+   Entity_SetSprite( entity, expectedSprite );
+   Entity_SetSpriteOffset( entity, 7, -9 );
+   spriteOffset = Entity_GetSpriteOffset( entity );
+
+   TEST_ASSERT_EQUAL_PTR( expectedSprite, Entity_GetSprite( entity ) );
+   TEST_ASSERT_EQUAL_INT( 7, spriteOffset.x );
+   TEST_ASSERT_EQUAL_INT( -9, spriteOffset.y );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
 void test_Entity_SetPosition_UpdatesOnlyPosition( void )
 {
    Vector4i32_t rect;
@@ -135,6 +189,11 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Entity_GetStructSize_ReturnsNonZeroSize );
+
+   RUN_TEST( test_Entity_Create_InitializesSpriteToNull );
+   RUN_TEST( test_Entity_SetSprite_UpdatesSprite );
+   RUN_TEST( test_Entity_SetSpriteOffset_UpdatesOffset );
+   RUN_TEST( test_Entity_Setters_ReplaceSpriteAndSpriteOffset );
 
    RUN_TEST( test_Entity_SetPosition_UpdatesOnlyPosition );
 

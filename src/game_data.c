@@ -135,6 +135,11 @@ internal b32 GameData_LoadMetaData( GameData_t* gameData )
       Platform_FatalError( "game data file has an incompatible version." );
       return False;
    }
+   else if ( metaData.fileOffsets.activeSpriteTextureSet >= file->size )
+   {
+      Platform_FatalError( "game data file has an invalid active sprite texture set offset." );
+      return False;
+   }
    else if ( metaData.fileOffsets.tileTextureSet >= file->size )
    {
       Platform_FatalError( "game data file has an invalid tile texture set offset." );
