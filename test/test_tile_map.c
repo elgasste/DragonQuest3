@@ -116,9 +116,11 @@ void Platform_FatalError( const char* msg )
 
 internal void SetUpMapFixture( TestTileMapData_t map, Tile_t* tiles )
 {
-   memcpy( g_fileData, &map, sizeof( map ) );
-   memcpy( g_fileData + sizeof( map ), tiles, map.tilesX * map.tilesY * sizeof( Tile_t ) );
-   g_file.size = (i32)( sizeof( map ) + map.tilesX * map.tilesY * sizeof( Tile_t ) );
+   TileMapInfo_t mapInfo = { map.id, map.tilesX, map.tilesY, map.wraps };
+
+   memcpy( g_fileData, &mapInfo, sizeof( mapInfo ) );
+   memcpy( g_fileData + sizeof( mapInfo ), tiles, map.tilesX * map.tilesY * sizeof( Tile_t ) );
+   g_file.size = (i32)( sizeof( mapInfo ) + map.tilesX * map.tilesY * sizeof( Tile_t ) );
    g_filePosition = 0;
    g_fatalErrorCount = 0;
    g_fileOffsets.tileMaps = 0;

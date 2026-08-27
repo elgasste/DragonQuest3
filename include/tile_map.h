@@ -11,15 +11,14 @@ typedef struct MemArena_t MemArena_t;
 typedef struct Tile_t Tile_t;
 
 PACKED_STRUCT
-typedef struct TileMapData_t
+typedef struct TileMapInfo_t
 {
    u32 id;
    u32 tilesX;
    u32 tilesY;
    b32 wraps;
-   Tile_t* tiles;
 }
-TileMapData_t;
+TileMapInfo_t;
 END_PACKED_STRUCT
 
 typedef struct TileMap_t TileMap_t;

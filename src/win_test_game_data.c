@@ -38,12 +38,18 @@ typedef struct TileMock_t
 }
 TileMock_t;
 
-typedef struct TileMapMock_t
+typedef struct TileMapInfoMock_t
 {
    u32 id;
    u32 tilesX;
    u32 tilesY;
    b32 wraps;
+}
+TileMapInfoMock_t;
+
+typedef struct TileMapMock_t
+{
+   TileMapInfoMock_t info;
    TileMock_t* tiles;
 }
 TileMapMock_t;
@@ -332,18 +338,18 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
 
    // 0: 10x10 checkerboard, no wrapping
    curTileMap = tileMaps;
-   curTileMap->id = 0;
-   curTileMap->tilesX = 10;
-   curTileMap->tilesY = 10;
-   curTileMap->wraps = False;
+   curTileMap->info.id = 0;
+   curTileMap->info.tilesX = 10;
+   curTileMap->info.tilesY = 10;
+   curTileMap->info.wraps = False;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
-   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
+   for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
-      if ( ( i / curTileMap->tilesX ) % 2 == 0 )
+      if ( ( i / curTileMap->info.tilesX ) % 2 == 0 )
       {
-         if ( ( i % curTileMap->tilesX ) % 2 == 0 )
+         if ( ( i % curTileMap->info.tilesX ) % 2 == 0 )
          {
             curTileMap->tiles[i].textureIndex = 1; // white
          }
@@ -354,7 +360,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       }
       else
       {
-         if ( ( i % curTileMap->tilesX ) % 2 == 0 )
+         if ( ( i % curTileMap->info.tilesX ) % 2 == 0 )
          {
             curTileMap->tiles[i].textureIndex = 0; // black
          }
@@ -367,41 +373,41 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
 
    // 1: 256x256 random, wrapping
    curTileMap++;
-   curTileMap->id = 1;
-   curTileMap->tilesX = 256;
-   curTileMap->tilesY = 256;
-   curTileMap->wraps = True;
+   curTileMap->info.id = 1;
+   curTileMap->info.tilesX = 256;
+   curTileMap->info.tilesY = 256;
+   curTileMap->info.wraps = True;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
-   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
+   for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
       // random
       curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
    }
 
    // make the edges all the same so we can test wrapping
-   for ( i = 0; i < curTileMap->tilesX; i++ )
+   for ( i = 0; i < curTileMap->info.tilesX; i++ )
    {
       curTileMap->tiles[i].textureIndex = 2; // top edge
-      curTileMap->tiles[( curTileMap->tilesY - 1 ) * curTileMap->tilesX + i].textureIndex = 2; // bottom edge
+      curTileMap->tiles[( curTileMap->info.tilesY - 1 ) * curTileMap->info.tilesX + i].textureIndex = 2; // bottom edge
    }
-   for ( i = 0; i < curTileMap->tilesY; i++ )
+   for ( i = 0; i < curTileMap->info.tilesY; i++ )
    {
-      curTileMap->tiles[i * curTileMap->tilesX].textureIndex = 2; // left edge
-      curTileMap->tiles[i * curTileMap->tilesX + ( curTileMap->tilesX - 1 )].textureIndex = 2; // right edge
+      curTileMap->tiles[i * curTileMap->info.tilesX].textureIndex = 2; // left edge
+      curTileMap->tiles[i * curTileMap->info.tilesX + ( curTileMap->info.tilesX - 1 )].textureIndex = 2; // right edge
    }
 
    // 2: 128x128 random, no wrapping
    curTileMap++;
-   curTileMap->id = 2;
-   curTileMap->tilesX = 128;
-   curTileMap->tilesY = 128;
-   curTileMap->wraps = False;
+   curTileMap->info.id = 2;
+   curTileMap->info.tilesX = 128;
+   curTileMap->info.tilesY = 128;
+   curTileMap->info.wraps = False;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
-   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
+   for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
       // random
       curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
@@ -409,28 +415,28 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
 
    // 3: 3x3, no wrapping
    curTileMap++;
-   curTileMap->id = 3;
-   curTileMap->tilesX = 3;
-   curTileMap->tilesY = 3;
-   curTileMap->wraps = False;
+   curTileMap->info.id = 3;
+   curTileMap->info.tilesX = 3;
+   curTileMap->info.tilesY = 3;
+   curTileMap->info.wraps = False;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
-   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
+   for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
       curTileMap->tiles[i].textureIndex = 1;
    }
 
    // 4: 256x256 random, no wrapping
    curTileMap++;
-   curTileMap->id = 4;
-   curTileMap->tilesX = 256;
-   curTileMap->tilesY = 256;
-   curTileMap->wraps = False;
+   curTileMap->info.id = 4;
+   curTileMap->info.tilesX = 256;
+   curTileMap->info.tilesY = 256;
+   curTileMap->info.wraps = False;
    curTileMap->tiles = 0;
-   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->tilesX * curTileMap->tilesY * sizeof( TileMock_t ) );
+   curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
-   for ( i = 0; i < curTileMap->tilesX * curTileMap->tilesY; i++ )
+   for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
       // random
       curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
@@ -640,12 +646,12 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
    tileAccum = 0;
    for ( i = 0; i < tileMapCount; i++ )
    {
-      offsets[i].id = tileMaps[i].id;
+      offsets[i].id = tileMaps[i].info.id;
       offsets[i].offset = sizeof( u32 )
          + ( tileMapCount * sizeof( GameDataObjectOffset_t ) )
-         + ( i * sizeof( TileMapMock_t ) )
+         + ( i * sizeof( TileMapInfoMock_t ) )
          + ( tileAccum * sizeof( TileMock_t ) );
-      tileAccum += tileMaps[i].tilesX * tileMaps[i].tilesY;
+      tileAccum += tileMaps[i].info.tilesX * tileMaps[i].info.tilesY;
    }
 
    result = WriteFile( hFile, offsets, tileMapCount * sizeof( GameDataObjectOffset_t ), &bytesWritten, NULL );
@@ -664,7 +670,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
    for ( i = 0; i < tileMapCount; i++ )
    {
       bytesWritten = 0;
-      result = WriteFile( hFile, &tileMaps[i], sizeof( TileMapMock_t ), &bytesWritten, NULL );
+      result = WriteFile( hFile, &( tileMaps[i].info ), sizeof( TileMapInfoMock_t ), &bytesWritten, NULL );
       *filePos += bytesWritten;
 
       if ( !result )
@@ -672,13 +678,13 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
          Platform_FatalError( "failed to write test game data file tile maps." );
          return False;
       }
-      else if ( bytesWritten != sizeof( TileMapMock_t ) )
+      else if ( bytesWritten != sizeof( TileMapInfoMock_t ) )
       {
          Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
          return False;
       }
 
-      for ( j = 0; j < tileMaps[i].tilesX * tileMaps[i].tilesY; j++ )
+      for ( j = 0; j < tileMaps[i].info.tilesX * tileMaps[i].info.tilesY; j++ )
       {
          tile = &( tileMaps[i].tiles[j] );
          

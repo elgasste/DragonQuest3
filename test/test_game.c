@@ -267,8 +267,8 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameDat
    UNUSED_PARAM( gameData );
    UNUSED_PARAM( tileSizePixels );
    g_tileMap = (TileMap_t*)MemArena_AllocMem( memArena, sizeof( TileMap_t ) );
-   g_tileMap->width = tileMapId;
-   g_tileMap->height = tileMapId;
+   g_tileMap->info.tilesX = tileMapId;
+   g_tileMap->info.tilesY = tileMapId;
    g_tileMap->tiles = 0;
    return g_tileMap;
 }
@@ -316,7 +316,7 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 
 u32 TileMap_GetTilesX( TileMap_t* tileMap )
 {
-   return tileMap->width;
+   return tileMap->info.tilesX;
 }
 
 void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )
