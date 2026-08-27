@@ -17,7 +17,6 @@ typedef struct TestTileMapData_t
    u32 tilesY;
    b32 wraps;
    Tile_t* tiles;
-   TileMapPortal_t* portals;
 }
 TestTileMapData_t;
 
@@ -126,23 +125,6 @@ internal void SetUpMapFixture( TestTileMapData_t map, Tile_t* tiles )
    g_tileMapOffset.offset = 0;
 }
 
-internal void SetUpMapFixtureWithPortals( TestTileMapData_t map, Tile_t* tiles, TileMapPortal_t* portals, u32 portalCount )
-{
-   TileMapInfo_t mapInfo = { map.id, map.tilesX, map.tilesY, map.wraps, portalCount };
-   size_t tilesOffset = sizeof( mapInfo );
-   size_t portalsOffset = tilesOffset + map.tilesX * map.tilesY * sizeof( Tile_t );
-
-   memcpy( g_fileData, &mapInfo, sizeof( mapInfo ) );
-   memcpy( g_fileData + tilesOffset, tiles, map.tilesX * map.tilesY * sizeof( Tile_t ) );
-   memcpy( g_fileData + portalsOffset, portals, portalCount * sizeof( TileMapPortal_t ) );
-   g_file.size = (i32)( portalsOffset + portalCount * sizeof( TileMapPortal_t ) );
-   g_filePosition = 0;
-   g_fatalErrorCount = 0;
-   g_fileOffsets.tileMaps = 0;
-   g_tileMapOffset.id = map.id;
-   g_tileMapOffset.offset = 0;
-}
-
 internal TileMap_t* LoadMap( u32 id )
 {
    return TileMap_CreateFromGameData( (MemArena_t*)1, (GameData_t*)1, id, 16 );
@@ -208,7 +190,7 @@ void test_TileMapPortal_Getters_ReturnPortalProperties( void )
 void test_TileMap_CreateFromGameData_LoadsMapAndTiles( void )
 {
    Tile_t expectedTiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
-   TestTileMapData_t map = { 7, 2, 2, False, 0, 0 };
+   TestTileMapData_t map = { 7, 2, 2, False, 0 };
    TileMap_t* tileMap;
 
    SetUpMapFixture( map, expectedTiles );
@@ -225,31 +207,10 @@ void test_TileMap_CreateFromGameData_LoadsMapAndTiles( void )
    TileMap_Free( tileMap, (MemArena_t*)1 );
 }
 
-void test_TileMap_CreateFromGameData_LoadsPortals( void )
-{
-   Tile_t tiles[1] = { { 1, True } };
-   TileMapPortal_t expectedPortal = { 0, 9, 15 };
-   TestTileMapData_t map = { 7, 1, 1, False, 0, 0 };
-   TileMap_t* tileMap;
-   TileMapPortal_t* portal;
-
-   SetUpMapFixtureWithPortals( map, tiles, &expectedPortal, 1 );
-   tileMap = LoadMap( 7 );
-
-   TEST_ASSERT_NOT_NULL( tileMap );
-   TEST_ASSERT_EQUAL_UINT( 1, TileMap_GetPortalCount( tileMap ) );
-   portal = TileMap_GetPortal( tileMap, 0 );
-   TEST_ASSERT_EQUAL_UINT( 0, TileMapPortal_GetSourceTileIndex( portal ) );
-   TEST_ASSERT_EQUAL_UINT( 9, TileMapPortal_GetDestinationTileMapId( portal ) );
-   TEST_ASSERT_EQUAL_UINT( 15, TileMapPortal_GetDestinationTileIndex( portal ) );
-
-   TileMap_Free( tileMap, (MemArena_t*)1 );
-}
-
 void test_TileMap_GetTile_ReturnsTilesInRowMajorOrder( void )
 {
    Tile_t expectedTiles[6] = { { 10 }, { 20 }, { 30 }, { 40 }, { 50 }, { 60 } };
-   TestTileMapData_t map = { 3, 3, 2, True, 0, 0 };
+   TestTileMapData_t map = { 3, 3, 2, True, 0 };
    TileMap_t* tileMap;
 
    SetUpMapFixture( map, expectedTiles );
@@ -443,7 +404,6 @@ int main( void )
    RUN_TEST( test_TileMap_GetStructSize_ReturnsNonZeroSize );
 
    RUN_TEST( test_TileMap_CreateFromGameData_LoadsMapAndTiles );
-   RUN_TEST( test_TileMap_CreateFromGameData_LoadsPortals );
 
    RUN_TEST( test_TileMap_GetTile_ReturnsTilesInRowMajorOrder );
    
