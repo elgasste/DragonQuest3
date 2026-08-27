@@ -65,6 +65,9 @@ typedef struct PlatformRenderDisplayBufferCall_t
 PlatformRenderDisplayBufferCall_t;
 
 static Display_t* g_display;
+#if defined( _WIN32 )
+WinDebugFlags_t g_winDebugFlags;
+#endif
 static TileMap_t* g_tileMap;
 static TileTextureSet_t* g_tileTextureSet;
 static ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
@@ -81,6 +84,10 @@ static PlatformRenderDisplayBufferCall_t g_platformRenderDisplayBufferCall;
 
 void setUp( void )
 {
+#if defined( _WIN32 )
+   g_winDebugFlags.showDiagnostics = False;
+   g_winDebugFlags.showHitBoxes = False;
+#endif
    g_display = (Display_t*)1;
    g_tileMap = (TileMap_t*)2;
    g_tileTextureSet = (TileTextureSet_t*)3;

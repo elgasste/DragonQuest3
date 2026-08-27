@@ -43,6 +43,7 @@ ActiveSpriteTextureSetMock_t;
 typedef struct TileMock_t
 {
    u32 textureIndex;
+   b32 isPassable;
 }
 TileMock_t;
 
@@ -338,7 +339,7 @@ internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void )
 
 internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
 {
-   u32 i;
+   u32 i, index;
    TileMapMock_t *tileMaps, *curTileMap;
 
    *tileMapCount = 5;
@@ -377,6 +378,8 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
             curTileMap->tiles[i].textureIndex = 1; // white
          }
       }
+
+      curTileMap->tiles[i].isPassable = True;
    }
 
    // 1: 256x256 random, wrapping
@@ -391,19 +394,25 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
       // random
-      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
+      index = Platform_Rand_u32Ranged( 0, 9 );
+      curTileMap->tiles[i].textureIndex = index;
+      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
    }
 
    // make the edges all the same so we can test wrapping
    for ( i = 0; i < curTileMap->info.tilesX; i++ )
    {
       curTileMap->tiles[i].textureIndex = 2; // top edge
+      curTileMap->tiles[i].isPassable = True;
       curTileMap->tiles[( curTileMap->info.tilesY - 1 ) * curTileMap->info.tilesX + i].textureIndex = 2; // bottom edge
+      curTileMap->tiles[( curTileMap->info.tilesY - 1 ) * curTileMap->info.tilesX + i].isPassable = True;
    }
    for ( i = 0; i < curTileMap->info.tilesY; i++ )
    {
       curTileMap->tiles[i * curTileMap->info.tilesX].textureIndex = 2; // left edge
+      curTileMap->tiles[i * curTileMap->info.tilesX].isPassable = True;
       curTileMap->tiles[i * curTileMap->info.tilesX + ( curTileMap->info.tilesX - 1 )].textureIndex = 2; // right edge
+      curTileMap->tiles[i * curTileMap->info.tilesX + ( curTileMap->info.tilesX - 1 )].isPassable = True;
    }
 
    // 2: 128x128 random, no wrapping
@@ -418,7 +427,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
       // random
-      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
+      index = Platform_Rand_u32Ranged( 0, 9 );
+      curTileMap->tiles[i].textureIndex = index;
+      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
    }
 
    // 3: 3x3, no wrapping
@@ -433,6 +444,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
       curTileMap->tiles[i].textureIndex = 1;
+      curTileMap->tiles[i].isPassable = True;
    }
 
    // 4: 256x256 random, no wrapping
@@ -447,7 +459,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
       // random
-      curTileMap->tiles[i].textureIndex = Platform_Rand_u32Ranged( 0, 9 );
+      index = Platform_Rand_u32Ranged( 0, 9 );
+      curTileMap->tiles[i].textureIndex = index;
+      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
    }
 
    return tileMaps;

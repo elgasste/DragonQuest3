@@ -13,6 +13,10 @@ typedef struct Tile_t Tile_t;
 size_t Tile_GetStructSize( void );
 
 u32 Tile_GetTextureIndex( Tile_t* tile );
+b32 Tile_GetIsPassable( Tile_t* tile );
+
+void Tile_SetTextureIndex( Tile_t* tile, u32 textureIndex );
+void Tile_SetIsPassable( Tile_t* tile, b32 isPassable );
 
 PACKED_STRUCT
 typedef struct TileMapInfo_t
@@ -34,7 +38,7 @@ u32 TileMap_GetId( TileMap_t* tileMap );
 u32 TileMap_GetTilesX( TileMap_t* tileMap );
 u32 TileMap_GetTilesY( TileMap_t* tileMap );
 b32 TileMap_GetWraps( TileMap_t* tileMap );
-Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y );
+Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex );
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap );
 Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap );
 

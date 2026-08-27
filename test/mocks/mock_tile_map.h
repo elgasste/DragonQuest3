@@ -3,6 +3,13 @@
 
 #include "../../include/tile_map.h"
 
+typedef struct Tile_t
+{
+   u32 textureIndex;
+   b32 isPassable;
+}
+Tile_t;
+
 typedef struct TileMap_t
 {
    TileMapInfo_t info;

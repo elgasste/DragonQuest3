@@ -21,11 +21,22 @@ global Game_t g_game;
 global Entity_t g_entity;
 global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
+global Tile_t g_tiles[80];
+global u32 g_clockFrameCount;
+#if defined( _WIN32 )
+WinDebugFlags_t g_winDebugFlags;
+#endif
 
 r32 Clock_GetFrameSec( Clock_t* clock )
 {
    UNUSED_PARAM( clock );
    return 1.0f / 60.0f;
+}
+
+u32 Clock_GetFrameCount( Clock_t* clock )
+{
+   UNUSED_PARAM( clock );
+   return g_clockFrameCount;
 }
 
 Clock_t* Game_GetClock( Game_t* game )
@@ -86,6 +97,17 @@ u32 TileMap_GetTilesY( TileMap_t* tileMap )
    return tileMap->info.tilesY;
 }
 
+Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
+{
+   UNUSED_PARAM( tileMap );
+   return &g_tiles[tileIndex];
+}
+
+b32 Tile_GetIsPassable( Tile_t* tile )
+{
+   return tile->isPassable;
+}
+
 b32 TileMap_GetWraps( TileMap_t* tileMap )
 {
    return tileMap->info.wraps;
@@ -124,6 +146,12 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 
 void setUp( void )
 {
+#if defined( _WIN32 )
+   g_winDebugFlags.showDiagnostics = False;
+   g_winDebugFlags.noClip = False;
+   g_winDebugFlags.showHitBoxes = False;
+#endif
+   g_clockFrameCount = 0;
    g_entity.rect.x = 20 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 30 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.w = 10 * WORLD_UNITS_PER_PIXEL;
@@ -133,6 +161,11 @@ void setUp( void )
    g_tileMap.info.tilesX = 10;
    g_tileMap.info.tilesY = 8;
    g_tileMap.info.wraps = False;
+   g_tileMap.tiles = g_tiles;
+   for ( u32 i = 0; i < 80; i++ )
+   {
+      g_tiles[i].isPassable = True;
+   }
    g_textureSet.info.tileSize = 16;
    g_game.playerEntity = &g_entity;
    g_game.tileMap = &g_tileMap;
@@ -150,6 +183,76 @@ void test_Game_TicPhysics_MovesPlayerByVelocity( void )
    TEST_ASSERT_EQUAL_INT( 34 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
    TEST_ASSERT_EQUAL_INT( 0, g_entity.velocity.x );
    TEST_ASSERT_EQUAL_INT( 0, g_entity.velocity.y );
+}
+
+void test_Game_TicPhysics_StopsBeforeNonPassableTile( void )
+{
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 35 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 0;
+   g_tiles[2].isPassable = False;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 31 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+}
+
+void test_Game_TicPhysics_DoesNotEnterNonPassableTile( void )
+{
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 0;
+   g_tiles[1].isPassable = False;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 15 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+}
+
+void test_Game_TicPhysics_MovesDiagonally( void )
+{
+   i32 i;
+
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 60 * WORLD_UNITS_PER_PIXEL;
+
+   for ( i = 0; i < 10; i++ )
+   {
+      g_clockFrameCount = (u32)i;
+      g_entity.velocity.x = (i32)( 60 * WORLD_UNITS_PER_PIXEL * 0.707f );
+      g_entity.velocity.y = (i32)( 60 * WORLD_UNITS_PER_PIXEL * 0.707f );
+      Game_TicPhysics( &g_game );
+   }
+
+   TEST_ASSERT_EQUAL_INT( 7 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 7 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
+}
+
+void test_Game_TicPhysics_AllowsOtherAxisAfterCollision( void )
+{
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 20 * WORLD_UNITS_PER_PIXEL * 60;
+   g_tiles[1].isPassable = False;
+   g_tiles[11].isPassable = False;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 15 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
 }
 
 void test_Game_TicPhysics_ClampsPlayerAtLowerBounds( void )
@@ -233,6 +336,10 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_TicPhysics_MovesPlayerByVelocity );
+   RUN_TEST( test_Game_TicPhysics_StopsBeforeNonPassableTile );
+   RUN_TEST( test_Game_TicPhysics_DoesNotEnterNonPassableTile );
+   RUN_TEST( test_Game_TicPhysics_MovesDiagonally );
+   RUN_TEST( test_Game_TicPhysics_AllowsOtherAxisAfterCollision );
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtLowerBounds );
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtUpperBounds );
    RUN_TEST( test_Game_TicPhysics_DoesNotClampWrappingMap );

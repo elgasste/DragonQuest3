@@ -24,6 +24,7 @@ internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COL
 internal void ResizeScreen( b32 increase );
 internal void ChangeGameFps( b32 increase );
 
+WinDebugFlags_t g_winDebugFlags;
 WinGlobalObjects_t g_winGlobals;
 WinCornerPopup_t g_winCornerPopup;
 
@@ -115,7 +116,9 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.clientPaddingTop = ( expectedWindowRect.bottom - expectedWindowRect.top ) - DISPLAY_HEIGHT;
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
-   g_winGlobals.showDiagnostics = False;
+   g_winDebugFlags.showDiagnostics = False;
+   g_winDebugFlags.noClip = False;
+   g_winDebugFlags.showHitBoxes = False;
 
    g_winGlobals.hWndMain = CreateWindowExA( 0,
                                             mainWindowClass.lpszClassName,
@@ -301,7 +304,7 @@ internal void RenderScreen( void )
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
 
-   if ( g_winGlobals.showDiagnostics )
+   if ( g_winDebugFlags.showDiagnostics )
    {
       DrawDiagnostics( &dcMem );
    }
@@ -405,7 +408,21 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          switch ( keyCode )
          {
             case VK_F8:
-               TOGGLE_BOOL( g_winGlobals.showDiagnostics );
+               TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
+               break;
+            case VK_NOCLIP:
+               TOGGLE_BOOL( g_winDebugFlags.noClip );
+               if ( g_winDebugFlags.noClip )
+                  StartCornerPopup( "No-clip mode enabled" );
+               else
+                  StartCornerPopup( "No-clip mode disabled" );
+               break;
+            case VK_SHOWHITBOXES:
+               TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
+               if ( g_winDebugFlags.showHitBoxes )
+                  StartCornerPopup( "Showing hit boxes" );
+               else
+                  StartCornerPopup( "Hiding hit boxes" );
                break;
          }
       }
@@ -447,7 +464,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.bottom = 0;
 
    // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 314, 240, RGB( 0, 0, 128 ), 200 );
+   DrawTranslucentRectangle( *dcMem, 0, 0, 314, 276, RGB( 0, 0, 128 ), 200 );
 
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
 
@@ -529,6 +546,18 @@ internal void DrawDiagnostics( HDC* dcMem )
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
    SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Down )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "1 - No-Clip Mode" );
+   SetTextColor( *dcMem, g_winDebugFlags.noClip  ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "2 - Show Hit Boxes" );
+   SetTextColor( *dcMem, g_winDebugFlags.showHitBoxes ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 

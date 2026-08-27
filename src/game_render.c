@@ -30,22 +30,17 @@ void Game_Render( Game_t* game )
 
 internal void GameRender_DrawPlayer( Game_t* game )
 {
-   Display_t* display;
-   TileMap_t* tileMap;
+   i32 displayX, displayY;
+   u32 frameCount, frameSize, textureIndex;
+   u32* texture;
    ActiveSpriteTextureSet_t* textureSet;
    ActiveSprite_t* sprite;
    Vector4i32_t viewportInPixels;
    Vector4i32_t playerRect;
    Vector2i32_t spriteOffset;
    Entity_t* playerEntity;
-   u32 frameCount;
-   u32 frameSize;
-   u32 textureIndex;
-   u32* texture;
 
-   display = Game_GetDisplay( game );
-   tileMap = Game_GetTileMap( game );
-   viewportInPixels = TileMap_GetViewportInPixels( tileMap );
+   viewportInPixels = TileMap_GetViewportInPixels( Game_GetTileMap( game ) );
    playerEntity = Game_GetPlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
    sprite = Entity_GetSprite( playerEntity );
@@ -58,8 +53,16 @@ internal void GameRender_DrawPlayer( Game_t* game )
       + ActiveSprite_GetFrameIndex( sprite );
    texture = ActiveSpriteTextureSet_GetTexture( textureSet, textureIndex );
 
-   playerRect.x = ( playerRect.x / WORLD_UNITS_PER_PIXEL ) + spriteOffset.x - viewportInPixels.x;
-   playerRect.y = ( playerRect.y / WORLD_UNITS_PER_PIXEL ) + spriteOffset.y - viewportInPixels.y;
+   displayX = ( playerRect.x / WORLD_UNITS_PER_PIXEL ) + spriteOffset.x - viewportInPixels.x;
+   displayY = ( playerRect.y / WORLD_UNITS_PER_PIXEL ) + spriteOffset.y - viewportInPixels.y;
+   Display_DrawBuffer( Game_GetDisplay( game ), texture, frameSize, frameSize, displayX, displayY );
 
-   Display_DrawBuffer( display, texture, frameSize, frameSize, playerRect.x, playerRect.y );
+#if defined( _WIN32 )
+   if ( g_winDebugFlags.showHitBoxes )
+   {
+      displayX = ( playerRect.x / WORLD_UNITS_PER_PIXEL ) - viewportInPixels.x;
+      displayY = ( playerRect.y / WORLD_UNITS_PER_PIXEL ) - viewportInPixels.y;
+      Display_DrawRect( Game_GetDisplay( game ), displayX, displayY, playerRect.w / WORLD_UNITS_PER_PIXEL, playerRect.h / WORLD_UNITS_PER_PIXEL, 0x99FF0000 );
+   }
+#endif
 }

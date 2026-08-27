@@ -11,6 +11,7 @@ PACKED_STRUCT
 struct Tile_t
 {
    u32 textureIndex;
+   b32 isPassable;
 };
 END_PACKED_STRUCT
 
@@ -22,6 +23,21 @@ size_t Tile_GetStructSize( void )
 u32 Tile_GetTextureIndex( Tile_t* tile )
 {
    return tile->textureIndex;
+}
+
+b32 Tile_GetIsPassable( Tile_t* tile )
+{
+   return tile->isPassable;
+}
+
+void Tile_SetTextureIndex( Tile_t* tile, u32 textureIndex )
+{
+   tile->textureIndex = textureIndex;
+}
+
+void Tile_SetIsPassable( Tile_t* tile, b32 isPassable )
+{
+   tile->isPassable = isPassable;
 }
 
 struct TileMap_t
@@ -122,9 +138,9 @@ b32 TileMap_GetWraps( TileMap_t* tileMap )
    return tileMap->info.wraps;
 }
 
-Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
+Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
 {
-   return (Tile_t*)( (u8*)tileMap->tiles + ( y * tileMap->info.tilesX + x ) * sizeof( Tile_t ) );
+   return (Tile_t*)( (u8*)tileMap->tiles + tileIndex * sizeof( Tile_t ) );
 }
 
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )
