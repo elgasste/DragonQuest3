@@ -231,13 +231,13 @@ internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
    TileTextureSetMock_t* textureSet;
 
    textureSet = (TileTextureSetMock_t*)malloc( sizeof( TileTextureSetMock_t ) );
-   textureSet->info.count = 10;
+   textureSet->info.count = 11;
    textureSet->info.tileSize = 16;
    textureSet->textures = (u32*)malloc( textureSet->info.count * textureSet->info.tileSize * textureSet->info.tileSize * sizeof( u32 ) );
 
    tilePixels = textureSet->info.tileSize * textureSet->info.tileSize;
 
-   for ( tileIndex = 0; tileIndex < textureSet->info.count; tileIndex++ )
+   for ( tileIndex = 0; tileIndex < textureSet->info.count - 1; tileIndex++ )
    {
       for ( pixelIndex = 0; pixelIndex < tilePixels; pixelIndex++ )
       {
@@ -246,6 +246,15 @@ internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
          pixel = LandscapeTilePixel( tileIndex, x, y );
          textureSet->textures[tileIndex * tilePixels + pixelIndex] = pixel;
       }
+   }
+
+   // this is for portals
+   for ( pixelIndex = 0; pixelIndex < tilePixels; pixelIndex++ )
+   {
+      x = pixelIndex % textureSet->info.tileSize;
+      y = pixelIndex / textureSet->info.tileSize;
+      pixel = 0xFFFF0000u;
+      textureSet->textures[( textureSet->info.count - 1 ) * tilePixels + pixelIndex] = pixel;
    }
 
    return textureSet;
@@ -400,9 +409,13 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 256;
    curTileMap->info.tilesY = 256;
    curTileMap->info.wraps = True;
-   curTileMap->info.portalCount = 0;
 
-   curTileMap->portals = 0;
+   curTileMap->info.portalCount = 1;
+   curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
+   curTileMap->portals[0].sourceTileIndex = 5130;
+   curTileMap->portals[0].destinationTileMapId = 0;
+   curTileMap->portals[0].destinationTileIndex = 38;
+
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
@@ -411,6 +424,12 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       index = Platform_Rand_u32Ranged( 0, 9 );
       curTileMap->tiles[i].textureIndex = index;
       curTileMap->tiles[i].isPassable = index == 7 ? False : True;
+
+      if ( i == 5130 )
+      {
+         curTileMap->tiles[i].textureIndex = 10;
+         curTileMap->tiles[i].isPassable = True;
+      }
    }
 
    // make the edges all the same so we can test wrapping
