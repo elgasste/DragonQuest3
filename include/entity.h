@@ -18,6 +18,7 @@ u32 Entity_GetTileIndex( Entity_t* entity );
 ActiveSprite_t* Entity_GetSprite( Entity_t* entity );
 Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity );
 
+void Entity_SetOnTileIndexChanged( Entity_t* entity, void (*onTileIndexChanged)( Entity_t* entity, u32 oldTileIndex, u32 newTileIndex ) );
 void Entity_SetPosition( Entity_t* entity, i32 x, i32 y );
 void Entity_SetSize( Entity_t* entity, i32 w, i32 h );
 void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy );
