@@ -11,6 +11,7 @@ PACKED_STRUCT
 struct Tile_t
 {
    u32 textureIndex;
+   b32 isPassable;
 };
 END_PACKED_STRUCT
 
@@ -22,6 +23,21 @@ size_t Tile_GetStructSize( void )
 u32 Tile_GetTextureIndex( Tile_t* tile )
 {
    return tile->textureIndex;
+}
+
+b32 Tile_GetIsPassable( Tile_t* tile )
+{
+   return tile->isPassable;
+}
+
+void Tile_SetTextureIndex( Tile_t* tile, u32 textureIndex )
+{
+   tile->textureIndex = textureIndex;
+}
+
+void Tile_SetIsPassable( Tile_t* tile, b32 isPassable )
+{
+   tile->isPassable = isPassable;
 }
 
 struct TileMap_t

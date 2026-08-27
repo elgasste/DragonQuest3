@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include "mocks/mock_pixel_buffer.h"
-#include "mocks/mock_tile.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
 

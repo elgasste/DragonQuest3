@@ -1,4 +1,4 @@
-#include "mocks/mock_tile.h"
+#include "mocks/mock_tile_map.h"
 #include "mocks/mock_entity.h"
 
 #include <stdlib.h>

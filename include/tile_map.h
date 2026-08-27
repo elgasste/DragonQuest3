@@ -13,6 +13,10 @@ typedef struct Tile_t Tile_t;
 size_t Tile_GetStructSize( void );
 
 u32 Tile_GetTextureIndex( Tile_t* tile );
+b32 Tile_GetIsPassable( Tile_t* tile );
+
+void Tile_SetTextureIndex( Tile_t* tile, u32 textureIndex );
+void Tile_SetIsPassable( Tile_t* tile, b32 isPassable );
 
 PACKED_STRUCT
 typedef struct TileMapInfo_t
