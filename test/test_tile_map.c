@@ -146,6 +146,31 @@ void test_TileMap_GetStructSize_ReturnsNonZeroSize( void )
    TEST_ASSERT_GREATER_THAN_UINT( 0, TileMap_GetStructSize() );
 }
 
+void test_Tile_Getters_ReturnTileProperties( void )
+{
+   Tile_t tile = { 7, True };
+
+   TEST_ASSERT_EQUAL_UINT( 7, Tile_GetTextureIndex( &tile ) );
+   TEST_ASSERT_TRUE( Tile_GetIsPassable( &tile ) );
+}
+
+void test_Tile_Setters_UpdateTileProperties( void )
+{
+   Tile_t tile = { 0, False };
+
+   Tile_SetTextureIndex( &tile, 12 );
+   Tile_SetIsPassable( &tile, True );
+
+   TEST_ASSERT_EQUAL_UINT( 12, Tile_GetTextureIndex( &tile ) );
+   TEST_ASSERT_TRUE( Tile_GetIsPassable( &tile ) );
+
+   Tile_SetTextureIndex( &tile, 3 );
+   Tile_SetIsPassable( &tile, False );
+
+   TEST_ASSERT_EQUAL_UINT( 3, Tile_GetTextureIndex( &tile ) );
+   TEST_ASSERT_FALSE( Tile_GetIsPassable( &tile ) );
+}
+
 void test_TileMap_CreateFromGameData_LoadsMapAndTiles( void )
 {
    Tile_t expectedTiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
@@ -160,8 +185,8 @@ void test_TileMap_CreateFromGameData_LoadsMapAndTiles( void )
    TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetTilesX( tileMap ) );
    TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetTilesY( tileMap ) );
    TEST_ASSERT_FALSE( TileMap_GetWraps( tileMap ) );
-   TEST_ASSERT_EQUAL_UINT( 1, TileMap_GetTile( tileMap, 0, 0 )->textureIndex );
-   TEST_ASSERT_EQUAL_UINT( 4, TileMap_GetTile( tileMap, 1, 1 )->textureIndex );
+   TEST_ASSERT_EQUAL_UINT( 1, TileMap_GetTile( tileMap, 0 )->textureIndex );
+   TEST_ASSERT_EQUAL_UINT( 4, TileMap_GetTile( tileMap, 3 )->textureIndex );
 
    TileMap_Free( tileMap, (MemArena_t*)1 );
 }
@@ -175,10 +200,10 @@ void test_TileMap_GetTile_ReturnsTilesInRowMajorOrder( void )
    SetUpMapFixture( map, expectedTiles );
    tileMap = LoadMap( 3 );
 
-   TEST_ASSERT_EQUAL_UINT( 10, TileMap_GetTile( tileMap, 0, 0 )->textureIndex );
-   TEST_ASSERT_EQUAL_UINT( 30, TileMap_GetTile( tileMap, 2, 0 )->textureIndex );
-   TEST_ASSERT_EQUAL_UINT( 40, TileMap_GetTile( tileMap, 0, 1 )->textureIndex );
-   TEST_ASSERT_EQUAL_UINT( 60, TileMap_GetTile( tileMap, 2, 1 )->textureIndex );
+   TEST_ASSERT_EQUAL_UINT( 10, TileMap_GetTile( tileMap, 0 )->textureIndex );
+   TEST_ASSERT_EQUAL_UINT( 30, TileMap_GetTile( tileMap, 2 )->textureIndex );
+   TEST_ASSERT_EQUAL_UINT( 40, TileMap_GetTile( tileMap, 3 )->textureIndex );
+   TEST_ASSERT_EQUAL_UINT( 60, TileMap_GetTile( tileMap, 5 )->textureIndex );
 
    TileMap_Free( tileMap, (MemArena_t*)1 );
 }
@@ -353,6 +378,9 @@ void test_TileMap_WrapEntityPosition_WrapsBothDirections( void )
 int main( void )
 {
    UNITY_BEGIN();
+
+   RUN_TEST( test_Tile_Getters_ReturnTileProperties );
+   RUN_TEST( test_Tile_Setters_UpdateTileProperties );
 
    RUN_TEST( test_TileMap_GetStructSize_ReturnsNonZeroSize );
 

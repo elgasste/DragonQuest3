@@ -138,9 +138,9 @@ b32 TileMap_GetWraps( TileMap_t* tileMap )
    return tileMap->info.wraps;
 }
 
-Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
+Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
 {
-   return (Tile_t*)( (u8*)tileMap->tiles + ( y * tileMap->info.tilesX + x ) * sizeof( Tile_t ) );
+   return (Tile_t*)( (u8*)tileMap->tiles + tileIndex * sizeof( Tile_t ) );
 }
 
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )

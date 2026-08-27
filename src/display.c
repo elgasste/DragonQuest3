@@ -249,7 +249,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
          }
 
          tileIndex = (u32)tileY * tilesX + (u32)tileX;
-         tile = TileMap_GetTile( tileMap, (u32)tileX, (u32)tileY );
+         tile = TileMap_GetTile( tileMap, tileIndex );
          tileTextureIndex = Tile_GetTextureIndex( tile );
          texture = TileTextureSet_GetTexture( tileTextureSet, tileTextureIndex );
          drawX = displayX + ( smallMapCentered ? ( mapOffsetX + tileWorldX ) : ( tileWorldX - viewportInPixels.x ) );
@@ -327,7 +327,7 @@ internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t*
                }
 
                tileIndex = (u32)tileY * tilesX + (u32)tileX;
-               tile = TileMap_GetTile( tileMap, (u32)tileX, (u32)tileY );
+               tile = TileMap_GetTile( tileMap, tileIndex );
                tileTextureIndex = Tile_GetTextureIndex( tile );
 
                texture = TileTextureSet_GetTexture( tileTextureSet, tileTextureIndex );
