@@ -100,12 +100,12 @@ Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap )
 
 u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
 {
-   return tileTextureSet->tileSize;
+   return tileTextureSet->info.tileSize;
 }
 
 u32* TileTextureSet_GetTexture( TileTextureSet_t* tileTextureSet, u32 index )
 {
-   return &tileTextureSet->textures[index * tileTextureSet->tileSize * tileTextureSet->tileSize];
+   return &tileTextureSet->textures[index * tileTextureSet->info.tileSize * tileTextureSet->info.tileSize];
 }
 
 internal Display_t* CreateDisplay( u32 width, u32 height )
@@ -297,7 +297,7 @@ void test_Display_DrawTileMapViewport_DrawsVisibleNonWrappingTiles( void )
    Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
    u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
    TileMap_t tileMap = { 2, 2, False, tiles };
-   TileTextureSet_t textureSet = { 4, 1, textures };
+   TileTextureSet_t textureSet = { { 4, 1 }, textures };
    Display_t* display = CreateDisplay( 2, 2 );
 
    g_viewportInPixels = (Vector4i32_t){ 0, 0, 2, 2 };
@@ -316,7 +316,7 @@ void test_Display_DrawTileMapViewport_DrawsWrappingTilesAcrossViewport( void )
    Tile_t tiles[] = { { 0 } };
    u32 textures[] = { 0xFF000077u };
    TileMap_t tileMap = { 1, 1, True, tiles };
-   TileTextureSet_t textureSet = { 1, 1, textures };
+   TileTextureSet_t textureSet = { { 1, 1 }, textures };
    Display_t* display = CreateDisplay( 3, 2 );
 
    g_viewportInPixels = (Vector4i32_t){ 0, 0, 3, 2 };
@@ -331,7 +331,7 @@ void test_Display_DrawTileMapViewport_RepeatsMultiTileMapInBothAxes( void )
    Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
    u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
    TileMap_t tileMap = { 2, 2, True, tiles };
-   TileTextureSet_t textureSet = { 4, 1, textures };
+   TileTextureSet_t textureSet = { { 4, 1 }, textures };
    Display_t* display = CreateDisplay( 4, 4 );
 
    g_viewportInPixels = (Vector4i32_t){ 0, 0, 4, 4 };
@@ -358,7 +358,7 @@ void test_Display_DrawTileMapViewport_HandlesNegativeWrappingViewport( void )
    Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
    u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
    TileMap_t tileMap = { 2, 2, True, tiles };
-   TileTextureSet_t textureSet = { 4, 1, textures };
+   TileTextureSet_t textureSet = { { 4, 1 }, textures };
    Display_t* display = CreateDisplay( 3, 3 );
 
    g_viewportInPixels = (Vector4i32_t){ -1, -1, 3, 3 };
@@ -382,7 +382,7 @@ void test_Display_DrawTileMapViewport_AppliesDisplayOffsetForWrappingMap( void )
    Tile_t tiles[] = { { 0 } };
    u32 textures[] = { 0xFF000099u };
    TileMap_t tileMap = { 1, 1, True, tiles };
-   TileTextureSet_t textureSet = { 1, 1, textures };
+   TileTextureSet_t textureSet = { { 1, 1 }, textures };
    Display_t* display = CreateDisplay( 4, 4 );
 
    g_viewportInPixels = (Vector4i32_t){ 0, 0, 2, 2 };

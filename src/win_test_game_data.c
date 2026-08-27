@@ -7,10 +7,18 @@
 #include "version.h"
 #include "win_common.h"
 
-typedef struct TileTextureSetMock_t
+PACKED_STRUCT
+typedef struct TileTextureSetInfoMock_t
 {
    u32 count;
    u32 tileSize;
+}
+TileTextureSetInfoMock_t;
+END_PACKED_STRUCT
+
+typedef struct TileTextureSetMock_t
+{
+   TileTextureSetInfoMock_t info;
    u32* textures;
 }
 TileTextureSetMock_t;
@@ -198,18 +206,18 @@ internal TileTextureSetMock_t* CreateTestTileTextureSet( void )
    TileTextureSetMock_t* textureSet;
 
    textureSet = (TileTextureSetMock_t*)malloc( sizeof( TileTextureSetMock_t ) );
-   textureSet->count = 10;
-   textureSet->tileSize = 16;
-   textureSet->textures = (u32*)malloc( textureSet->count * textureSet->tileSize * textureSet->tileSize * sizeof( u32 ) );
+   textureSet->info.count = 10;
+   textureSet->info.tileSize = 16;
+   textureSet->textures = (u32*)malloc( textureSet->info.count * textureSet->info.tileSize * textureSet->info.tileSize * sizeof( u32 ) );
 
-   tilePixels = textureSet->tileSize * textureSet->tileSize;
+   tilePixels = textureSet->info.tileSize * textureSet->info.tileSize;
 
-   for ( tileIndex = 0; tileIndex < textureSet->count; tileIndex++ )
+   for ( tileIndex = 0; tileIndex < textureSet->info.count; tileIndex++ )
    {
       for ( pixelIndex = 0; pixelIndex < tilePixels; pixelIndex++ )
       {
-         x = pixelIndex % textureSet->tileSize;
-         y = pixelIndex / textureSet->tileSize;
+         x = pixelIndex % textureSet->info.tileSize;
+         y = pixelIndex / textureSet->info.tileSize;
          pixel = LandscapeTilePixel( tileIndex, x, y );
          textureSet->textures[tileIndex * tilePixels + pixelIndex] = pixel;
       }
@@ -478,7 +486,7 @@ internal b32 WriteTestGameDataHeader( HANDLE hFile, DWORD* filePos, TileTextureS
    }
 
    offsets.tileTextureSet = 4 + sizeof( GameDataVersion_t ) + sizeof( GameDataFileOffsets_t );
-   offsets.activeSpriteTextureSet = offsets.tileTextureSet + sizeof( TileTextureSetMock_t ) + ( tileTextureSet->count * tileTextureSet->tileSize * tileTextureSet->tileSize * sizeof( u32 ) );
+   offsets.activeSpriteTextureSet = offsets.tileTextureSet + sizeof( TileTextureSetInfoMock_t ) + ( tileTextureSet->info.count * tileTextureSet->info.tileSize * tileTextureSet->info.tileSize * sizeof( u32 ) );
    offsets.tileMaps = offsets.activeSpriteTextureSet + sizeof( ActiveSpriteTextureSetMock_t ) + ( activeSpriteTextureSet->count * activeSpriteTextureSet->frameSize * activeSpriteTextureSet->frameSize * activeSpriteTextureSet->frameCount * Direction_Count * sizeof( u32 ) );
    result = WriteFile( hFile, &offsets, sizeof( GameDataFileOffsets_t ), &bytesWritten, NULL );
    *filePos += bytesWritten;
@@ -507,25 +515,25 @@ internal b32 WriteTestGameDataTileTextureSet( HANDLE hFile, DWORD* filePos, Tile
    char msg[STRING_SIZE_DEFAULT];
 
    bytesWritten = 0;
-   result = WriteFile( hFile, textureSet, sizeof( TileTextureSetMock_t ), &bytesWritten, NULL );
+   result = WriteFile( hFile, &( textureSet->info ), sizeof( TileTextureSetInfoMock_t ), &bytesWritten, NULL );
    *filePos += bytesWritten;
 
    if ( !result )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile texture set header: %lu", GetLastError() );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile texture set info: %lu", GetLastError() );
       Platform_FatalError( msg );
       return False;
    }
-   else if ( bytesWritten != sizeof( TileTextureSetMock_t ) )
+   else if ( bytesWritten != sizeof( TileTextureSetInfoMock_t ) )
    {
-      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile texture set header: wrote %lu of %lu bytes", bytesWritten, sizeof( TileTextureSetMock_t ) );
+      snprintf( msg, STRING_SIZE_DEFAULT, "failed to write test game data file tile texture set info: wrote %lu of %lu bytes", bytesWritten, sizeof( TileTextureSetInfoMock_t ) );
       Platform_FatalError( msg );
       return False;
    }
 
-   tilePixels = textureSet->tileSize * textureSet->tileSize;
+   tilePixels = textureSet->info.tileSize * textureSet->info.tileSize;
    
-   for ( tileIndex = 0; tileIndex < textureSet->count; tileIndex++ )
+   for ( tileIndex = 0; tileIndex < textureSet->info.count; tileIndex++ )
    {
       for ( pixelIndex = 0; pixelIndex < tilePixels; pixelIndex++ )
       {

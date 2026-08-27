@@ -112,7 +112,7 @@ void TileMap_WrapEntityPosition( TileMap_t* tileMap, Entity_t* entity )
 
 u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
 {
-   return tileTextureSet->tileSize;
+   return tileTextureSet->info.tileSize;
 }
 
 u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
@@ -133,7 +133,7 @@ void setUp( void )
    g_tileMap.width = 10;
    g_tileMap.height = 8;
    g_tileMap.wraps = False;
-   g_textureSet.tileSize = 16;
+   g_textureSet.info.tileSize = 16;
    g_game.playerEntity = &g_entity;
    g_game.tileMap = &g_tileMap;
    g_game.tileTextureSet = &g_textureSet;

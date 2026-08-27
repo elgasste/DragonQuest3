@@ -203,7 +203,7 @@ TileTextureSet_t* TileTextureSet_CreateFromGameData( MemArena_t* memArena, GameD
 {
    UNUSED_PARAM( gameData );
    g_tileTextureSet = (TileTextureSet_t*)MemArena_AllocMem( memArena, sizeof( TileTextureSet_t ) );
-   g_tileTextureSet->tileSize = 16;
+   g_tileTextureSet->info.tileSize = 16;
    return g_tileTextureSet;
 }
 
@@ -259,7 +259,7 @@ ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* activeSpri
 
 u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
 {
-   return tileTextureSet->tileSize;
+   return tileTextureSet->info.tileSize;
 }
 
 TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, u32 tileMapId, u32 tileSizePixels )
