@@ -5,6 +5,7 @@
 
 #define DIAGONAL_VELOCITY_MULTIPLIER   0.707f
 
+// MUFFINS: this should go in a really specific handler, like an overworld movement handler
 void Game_HandleInput( Game_t* game )
 {
    b32 leftIsDown, upIsDown, rightIsDown, downIsDown;

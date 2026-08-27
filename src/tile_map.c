@@ -6,7 +6,6 @@
 #include "mem_arena.h"
 #include "tile.h"
 #include "tile_map.h"
-#include "platform.h"
 #include "utility.h"
 
 struct TileMap_t

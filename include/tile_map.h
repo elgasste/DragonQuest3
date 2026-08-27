@@ -2,6 +2,7 @@
 #define TILE_MAP_H
 
 #include "common.h"
+#include "platform.h"
 #include "vector.h"
 
 typedef struct Entity_t Entity_t;
@@ -9,6 +10,7 @@ typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
 typedef struct Tile_t Tile_t;
 
+PACKED_STRUCT
 typedef struct TileMapData_t
 {
    u32 id;
@@ -18,6 +20,7 @@ typedef struct TileMapData_t
    Tile_t* tiles;
 }
 TileMapData_t;
+END_PACKED_STRUCT
 
 typedef struct TileMap_t TileMap_t;
 size_t TileMap_GetStructSize( void );

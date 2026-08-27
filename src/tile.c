@@ -1,10 +1,13 @@
 #include "mem_arena.h"
+#include "platform.h"
 #include "tile.h"
 
+PACKED_STRUCT
 struct Tile_t
 {
    u32 textureIndex;
 };
+END_PACKED_STRUCT
 
 size_t Tile_GetStructSize( void )
 {
