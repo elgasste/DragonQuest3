@@ -170,7 +170,7 @@ void test_Display_DrawRect_DrawsRectangleAtRequestedPosition( void )
 {
    Display_t* display = CreateDisplay( 4, 3 );
 
-   Display_DrawRect( display, 1, 1, 2, 2, 0x00ABCDEFu );
+   Display_DrawRect( display, 1, 1, 2, 2, 0xFFABCDEFu );
 
    AssertPixel( display, 0, 0, 0 );
    AssertPixel( display, 1, 1, 0x00ABCDEFu );
@@ -182,11 +182,74 @@ void test_Display_DrawRect_DrawsRectangleAtRequestedPosition( void )
    Display_Free( display, (MemArena_t*)1 );
 }
 
+void test_Display_DrawRect_UsesAlphaChannelToBlendColor( void )
+{
+   Display_t* display = CreateDisplay( 1, 1 );
+
+   Display_Fill( display, 0x00102030u );
+   Display_DrawRect( display, 0, 0, 1, 1, 0x8080A0C0u );
+
+   AssertPixel( display, 0, 0, 0x00486078u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawRect_NearlyTransparentColorMostlyPreservesPixel( void )
+{
+   Display_t* display = CreateDisplay( 1, 1 );
+
+   Display_Fill( display, 0x00102030u );
+   Display_DrawRect( display, 0, 0, 1, 1, 0x0000FFFFu );
+
+   AssertPixel( display, 0, 0, 0x00102030u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawBuffer_UsesAlphaChannelToBlendColor( void )
+{
+   u32 source[] = { 0x8080A0C0u };
+   Display_t* display = CreateDisplay( 1, 1 );
+
+   Display_Fill( display, 0x00102030u );
+   Display_DrawBuffer( display, source, 1, 1, 0, 0 );
+
+   AssertPixel( display, 0, 0, 0x00486078u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawBuffer_TransparentColorLeavesPixelUnchanged( void )
+{
+   u32 source[] = { 0x0000FFFFu };
+   Display_t* display = CreateDisplay( 1, 1 );
+
+   Display_Fill( display, 0x00102030u );
+   Display_DrawBuffer( display, source, 1, 1, 0, 0 );
+
+   AssertPixel( display, 0, 0, 0x00102030u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawBuffer_OpaqueColorReplacesPixel( void )
+{
+   u32 source[] = { 0xFFABCDEFu };
+   Display_t* display = CreateDisplay( 1, 1 );
+
+   Display_Fill( display, 0x00102030u );
+   Display_DrawBuffer( display, source, 1, 1, 0, 0 );
+
+   AssertPixel( display, 0, 0, 0x00ABCDEFu );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
 void test_Display_DrawRect_ClipsRectangleToDisplayBounds( void )
 {
    Display_t* display = CreateDisplay( 4, 3 );
 
-   Display_DrawRect( display, -1, -1, 3, 3, 0x00010203u );
+   Display_DrawRect( display, -1, -1, 3, 3, 0xFF010203u );
 
    AssertPixel( display, 0, 0, 0x00010203u );
    AssertPixel( display, 1, 0, 0x00010203u );
@@ -202,7 +265,7 @@ void test_Display_DrawVector4i_UsesVectorAsRectangle( void )
    Vector4i32_t rect = { 1, 0, 2, 1 };
    Display_t* display = CreateDisplay( 4, 2 );
 
-   Display_DrawVector4i( display, rect, 0x00FEDCBAu );
+   Display_DrawVector4i( display, rect, 0xFFFEDCBAu );
 
    AssertPixel( display, 0, 0, 0 );
    AssertPixel( display, 1, 0, 0x00FEDCBAu );
@@ -214,7 +277,7 @@ void test_Display_DrawVector4i_UsesVectorAsRectangle( void )
 
 void test_Display_DrawBuffer_ClipsSourceAndDestination( void )
 {
-   u32 source[] = { 1, 2, 3, 4, 5, 6 };
+   u32 source[] = { 0xFF000001u, 0xFF000002u, 0xFF000003u, 0xFF000004u, 0xFF000005u, 0xFF000006u };
    Display_t* display = CreateDisplay( 3, 2 );
 
    Display_DrawBuffer( display, source, 3, 2, -1, 0 );
@@ -232,7 +295,7 @@ void test_Display_DrawBuffer_ClipsSourceAndDestination( void )
 void test_Display_DrawTileMapViewport_DrawsVisibleNonWrappingTiles( void )
 {
    Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
-   u32 textures[] = { 0x00000011u, 0x00000022u, 0x00000033u, 0x00000044u };
+   u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
    TileMap_t tileMap = { 2, 2, False, tiles };
    TileTextureSet_t textureSet = { 4, 1, textures };
    Display_t* display = CreateDisplay( 2, 2 );
@@ -251,7 +314,7 @@ void test_Display_DrawTileMapViewport_DrawsVisibleNonWrappingTiles( void )
 void test_Display_DrawTileMapViewport_DrawsWrappingTilesAcrossViewport( void )
 {
    Tile_t tiles[] = { { 0 } };
-   u32 textures[] = { 0x00000077u };
+   u32 textures[] = { 0xFF000077u };
    TileMap_t tileMap = { 1, 1, True, tiles };
    TileTextureSet_t textureSet = { 1, 1, textures };
    Display_t* display = CreateDisplay( 3, 2 );
@@ -266,7 +329,7 @@ void test_Display_DrawTileMapViewport_DrawsWrappingTilesAcrossViewport( void )
 void test_Display_DrawTileMapViewport_RepeatsMultiTileMapInBothAxes( void )
 {
    Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
-   u32 textures[] = { 0x00000011u, 0x00000022u, 0x00000033u, 0x00000044u };
+   u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
    TileMap_t tileMap = { 2, 2, True, tiles };
    TileTextureSet_t textureSet = { 4, 1, textures };
    Display_t* display = CreateDisplay( 4, 4 );
@@ -293,7 +356,7 @@ void test_Display_DrawTileMapViewport_RepeatsMultiTileMapInBothAxes( void )
 void test_Display_DrawTileMapViewport_HandlesNegativeWrappingViewport( void )
 {
    Tile_t tiles[] = { { 0 }, { 1 }, { 2 }, { 3 } };
-   u32 textures[] = { 0x00000011u, 0x00000022u, 0x00000033u, 0x00000044u };
+   u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
    TileMap_t tileMap = { 2, 2, True, tiles };
    TileTextureSet_t textureSet = { 4, 1, textures };
    Display_t* display = CreateDisplay( 3, 3 );
@@ -317,7 +380,7 @@ void test_Display_DrawTileMapViewport_HandlesNegativeWrappingViewport( void )
 void test_Display_DrawTileMapViewport_AppliesDisplayOffsetForWrappingMap( void )
 {
    Tile_t tiles[] = { { 0 } };
-   u32 textures[] = { 0x00000099u };
+   u32 textures[] = { 0xFF000099u };
    TileMap_t tileMap = { 1, 1, True, tiles };
    TileTextureSet_t textureSet = { 1, 1, textures };
    Display_t* display = CreateDisplay( 4, 4 );
@@ -346,11 +409,16 @@ int main( void )
    RUN_TEST( test_Display_Fill_FillsTheWholeDisplay );
 
    RUN_TEST( test_Display_DrawRect_DrawsRectangleAtRequestedPosition );
+   RUN_TEST( test_Display_DrawRect_UsesAlphaChannelToBlendColor );
+   RUN_TEST( test_Display_DrawRect_NearlyTransparentColorMostlyPreservesPixel );
    RUN_TEST( test_Display_DrawRect_ClipsRectangleToDisplayBounds );
 
    RUN_TEST( test_Display_DrawVector4i_UsesVectorAsRectangle );
 
    RUN_TEST( test_Display_DrawBuffer_ClipsSourceAndDestination );
+   RUN_TEST( test_Display_DrawBuffer_UsesAlphaChannelToBlendColor );
+   RUN_TEST( test_Display_DrawBuffer_TransparentColorLeavesPixelUnchanged );
+   RUN_TEST( test_Display_DrawBuffer_OpaqueColorReplacesPixel );
 
    RUN_TEST( test_Display_DrawTileMapViewport_DrawsVisibleNonWrappingTiles );
    RUN_TEST( test_Display_DrawTileMapViewport_DrawsWrappingTilesAcrossViewport );

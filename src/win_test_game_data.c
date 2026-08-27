@@ -110,85 +110,85 @@ internal u32 LandscapeTilePixel( u32 tileIndex, u32 x, u32 y )
    {
       if ( speckle )
       {
-         return RGB( 60, 140, 50 );
+         return 0xFF000000u | RGB( 60, 140, 50 );
       }
-      return RGB( 80, 170, 70 );
+      return 0xFF000000u | RGB( 80, 170, 70 );
    }
    else if ( tileIndex == 1 ) // dirt
    {
       if ( speckle )
       {
-         return RGB( 110, 80, 50 );
+         return 0xFF000000u | RGB( 110, 80, 50 );
       }
-      return RGB( 140, 100, 65 );
+      return 0xFF000000u | RGB( 140, 100, 65 );
    }
    else if ( tileIndex == 2 ) // sand
    {
       if ( speckle )
       {
-         return RGB( 220, 195, 130 );
+         return 0xFF000000u | RGB( 220, 195, 130 );
       }
-      return RGB( 235, 210, 150 );
+      return 0xFF000000u | RGB( 235, 210, 150 );
    }
    else if ( tileIndex == 3 ) // water
    {
       if ( ( x + ( y % 4 ) ) % 6 < 2 )
       {
-         return RGB( 60, 110, 200 );
+         return 0xFF000000u | RGB( 60, 110, 200 );
       }
-      return RGB( 80, 140, 220 );
+      return 0xFF000000u | RGB( 80, 140, 220 );
    }
    else if ( tileIndex == 4 ) // stone
    {
       if ( speckle )
       {
-         return RGB( 110, 110, 115 );
+         return 0xFF000000u | RGB( 110, 110, 115 );
       }
-      return RGB( 140, 140, 145 );
+      return 0xFF000000u | RGB( 140, 140, 145 );
    }
    else if ( tileIndex == 5 ) // path
    {
       if ( speckle )
       {
-         return RGB( 190, 160, 110 );
+         return 0xFF000000u | RGB( 190, 160, 110 );
       }
-      return RGB( 205, 175, 125 );
+      return 0xFF000000u | RGB( 205, 175, 125 );
    }
    else if ( tileIndex == 6 ) // snow
    {
       if ( speckle )
       {
-         return RGB( 225, 230, 235 );
+         return 0xFF000000u | RGB( 225, 230, 235 );
       }
-      return RGB( 245, 248, 250 );
+      return 0xFF000000u | RGB( 245, 248, 250 );
    }
    else if ( tileIndex == 7 ) // tree
    {
       if ( y < 6 )
       {
-         return ( speckle ) ? RGB( 40, 110, 45 ) : RGB( 55, 130, 55 );
+         return ( speckle ) ? ( 0xFF000000u | RGB( 40, 110, 45 ) ) : ( 0xFF000000u | RGB( 55, 130, 55 ) );
       }
       if ( x >= 6 && x <= 9 )
       {
-         return RGB( 90, 60, 35 );
+         return 0xFF000000u | RGB( 90, 60, 35 );
       }
-      return RGB( 80, 170, 70 );
+      return 0xFF000000u | RGB( 80, 170, 70 );
    }
    else if ( tileIndex == 8 ) // bush
    {
       if ( x >= 3 && x <= 12 && y >= 4 && y <= 11 )
       {
-         return ( speckle ) ? RGB( 50, 120, 55 ) : RGB( 65, 140, 60 );
+         return ( speckle ) ? ( 0xFF000000u | RGB( 50, 120, 55 ) ) : ( 0xFF000000u | RGB( 65, 140, 60 ) );
       }
-      return RGB( 80, 170, 70 );
+      return 0xFF000000u | RGB( 80, 170, 70 );
    }
    else // mountain
    {
       if ( y + ( x / 2 ) < 10 )
       {
-         return RGB( 130, 130, 135 );
+         return 0xFF000000u | RGB( 130, 130, 135 );
       }
-      return RGB( 100, 100, 105 );
+      return 0xFF000000u | RGB( 100, 100, 105 );
    }
 }
 
@@ -293,9 +293,9 @@ internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void )
 
       switch( spriteIndex )
       {
-         case 0: color1 = RGB( 255, 0, 0 ); color2 = RGB( 200, 0, 0 ); break;
-         case 1: color1 = RGB( 0, 255, 0 ); color2 = RGB( 0, 200, 0 ); break;
-         default: color1 = RGB( 255, 255, 255 ); color2 = RGB( 200, 200, 200 ); break;
+         case 0: color1 = 0xFF000000u | RGB( 255, 0, 0 ); color2 = 0xFF000000u | RGB( 200, 0, 0 ); break;
+         case 1: color1 = 0xFF000000u | RGB( 0, 255, 0 ); color2 = 0xFF000000u | RGB( 0, 200, 0 ); break;
+         default: color1 = 0xFF000000u | RGB( 255, 255, 255 ); color2 = 0xFF000000u | RGB( 200, 200, 200 ); break;
       }
 
       for ( dir = 0; dir < Direction_Count; dir++ )

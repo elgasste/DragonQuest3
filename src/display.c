@@ -11,6 +11,7 @@ struct Display_t
    PixelBuffer_t* buffer;
 };
 
+internal u32 Display_AlphaBlendColor( u32 destination, u32 source );
 internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSizePixels );
 
 size_t Display_GetStructSize( void )
@@ -101,7 +102,7 @@ void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color
    {
       for ( col = 0; col < w; col++ )
       {
-         *mem = color;
+         *mem = Display_AlphaBlendColor( *mem, color );
          mem++;
       }
 
@@ -166,7 +167,7 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
    {
       for ( col = bufferOffsetL; col < (i32)( bufferW - bufferOffsetR ); col++ )
       {
-         *displayMem = buffer[( row * bufferW ) + col];
+         *displayMem = Display_AlphaBlendColor( *displayMem, buffer[( row * bufferW ) + col] );
          displayMem++;
       }
 
@@ -257,6 +258,29 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
          Display_DrawBuffer( display, texture, tileSizePixels, tileSizePixels, drawX, drawY );
       }
    }
+}
+
+internal u32 Display_AlphaBlendColor( u32 destination, u32 source )
+{
+   u32 alpha, inverseAlpha;
+   u32 red, green, blue;
+
+   alpha = ( source >> 24 ) & 0xFF;
+   if ( alpha == 0 )
+   {
+      return destination;
+   }
+   if ( alpha == 0xFF )
+   {
+      return source & 0x00FFFFFF;
+   }
+
+   inverseAlpha = 0xFF - alpha;
+   red = ( ( ( destination >> 16 ) & 0xFF ) * inverseAlpha + ( ( source >> 16 ) & 0xFF ) * alpha ) / 0xFF;
+   green = ( ( ( destination >> 8 ) & 0xFF ) * inverseAlpha + ( ( source >> 8 ) & 0xFF ) * alpha ) / 0xFF;
+   blue = ( ( destination & 0xFF ) * inverseAlpha + ( source & 0xFF ) * alpha ) / 0xFF;
+
+   return ( red << 16 ) | ( green << 8 ) | blue;
 }
 
 internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSizePixels )
