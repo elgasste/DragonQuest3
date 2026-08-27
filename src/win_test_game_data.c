@@ -259,8 +259,8 @@ internal u32* CreateArrowTileTexture( u32 tileSize, u32 color, Direction_t dir )
                break;
          }
 
-             if ( ( forward >= -(i32)( tileSize / 2 ) && abs( side ) <= shaftHalfWidth ) ||
-                ( forward >= 0 && abs( side ) <= ( (i32)( tileSize / 2 ) - forward ) ) )
+         if ( ( forward >= -(i32)( tileSize / 2 ) && abs( side ) <= shaftHalfWidth ) ||
+              ( forward >= 0 && abs( side ) <= ( (i32)( tileSize / 2 ) - forward ) ) )
          {
             texture[y * tileSize + x] = color;
          }
@@ -291,17 +291,15 @@ internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void )
    {
       spriteTexture = &textureSet->textures[spriteIndex * textureSet->frameSize * textureSet->frameSize * textureSet->frameCount * Direction_Count];
 
+      switch( spriteIndex )
+      {
+         case 0: color1 = RGB( 255, 0, 0 ); color2 = RGB( 200, 0, 0 ); break;
+         case 1: color1 = RGB( 0, 255, 0 ); color2 = RGB( 0, 200, 0 ); break;
+         default: color1 = RGB( 255, 255, 255 ); color2 = RGB( 200, 200, 200 ); break;
+      }
+
       for ( dir = 0; dir < Direction_Count; dir++ )
       {
-         switch( dir )
-         {
-            case Direction_Left: color1 = RGB( 255, 0, 0 ); color2 = RGB( 200, 0, 0 ); break;
-            case Direction_Right: color1 = RGB( 0, 255, 0 ); color2 = RGB( 0, 200, 0 ); break;
-            case Direction_Up: color1 = RGB( 0, 0, 255 ); color2 = RGB( 0, 0, 200 ); break;
-            case Direction_Down: color1 = RGB( 255, 255, 0 ); color2 = RGB( 200, 200, 0 ); break;
-            default: color1 = RGB( 255, 255, 255 ); color2 = RGB( 200, 200, 200 ); break;
-         }
-
          arrowTexture1 = CreateArrowTileTexture( textureSet->frameSize, color1, dir );
          arrowTexture2 = CreateArrowTileTexture( textureSet->frameSize, color2, dir );
 
