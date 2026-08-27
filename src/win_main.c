@@ -117,6 +117,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
    g_winDebugFlags.showDiagnostics = False;
+   g_winDebugFlags.showHitBoxes = False;
 
    g_winGlobals.hWndMain = CreateWindowExA( 0,
                                             mainWindowClass.lpszClassName,
@@ -408,6 +409,17 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             case VK_F8:
                TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
                break;
+            case VK_SHOWHITBOXES:
+               TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
+               if ( g_winDebugFlags.showHitBoxes )
+               {
+                  StartCornerPopup( "Showing hit boxes" );
+               }
+               else
+               {
+                  StartCornerPopup( "Hiding hit boxes" );
+               }
+               break;
          }
       }
       else
@@ -448,7 +460,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.bottom = 0;
 
    // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 314, 240, RGB( 0, 0, 128 ), 200 );
+   DrawTranslucentRectangle( *dcMem, 0, 0, 314, 260, RGB( 0, 0, 128 ), 200 );
 
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
 
@@ -530,6 +542,13 @@ internal void DrawDiagnostics( HDC* dcMem )
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
    SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Down )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "1 - Show Hit Boxes" );
+   SetTextColor( *dcMem, g_winDebugFlags.showHitBoxes ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 

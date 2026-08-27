@@ -8,6 +8,7 @@
    typedef struct WinDebugFlags_t
    {
       b32 showDiagnostics;
+      b32 showHitBoxes;
    }
    WinDebugFlags_t;
 
