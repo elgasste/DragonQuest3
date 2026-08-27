@@ -1,6 +1,5 @@
 #include "entity.h"
 #include "mem_arena.h"
-#include "sprite.h"
 
 struct Entity_t
 {

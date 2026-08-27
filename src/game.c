@@ -5,7 +5,6 @@
 #include "game_data.h"
 #include "input.h"
 #include "mem_arena.h"
-#include "platform.h"
 #include "sprite.h"
 #include "sprite_texture_set.h"
 #include "tile_map.h"
