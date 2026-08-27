@@ -35,8 +35,9 @@ void setUp( void )
    g_newTileIndex = 0;
 }
 
-void OnTileIndexChanged( Entity_t* entity, u32 oldTileIndex, u32 newTileIndex )
+void OnTileIndexChanged( Entity_t* entity, void* receiver, u32 oldTileIndex, u32 newTileIndex )
 {
+   UNUSED_PARAM( receiver );
    g_tileIndexChangedCount++;
    g_tileIndexChangedEntity = entity;
    g_oldTileIndex = oldTileIndex;
@@ -194,7 +195,7 @@ void test_Entity_SetOnTileIndexChanged_NotifiesCallbackWithTileIndices( void )
 {
    Entity_t* entity = Entity_Create( (MemArena_t*)1 );
 
-   Entity_SetOnTileIndexChanged( entity, OnTileIndexChanged );
+   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
    Entity_SetTileIndex( entity, 7 );
 
    TEST_ASSERT_EQUAL_UINT( 1, g_tileIndexChangedCount );
@@ -210,13 +211,28 @@ void test_Entity_SetOnTileIndexChanged_NotifiesOnEachTileChange( void )
 {
    Entity_t* entity = Entity_Create( (MemArena_t*)1 );
 
-   Entity_SetOnTileIndexChanged( entity, OnTileIndexChanged );
+   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
    Entity_SetTileIndex( entity, 3 );
    Entity_SetTileIndex( entity, 12 );
 
    TEST_ASSERT_EQUAL_UINT( 2, g_tileIndexChangedCount );
    TEST_ASSERT_EQUAL_UINT( 3, g_oldTileIndex );
    TEST_ASSERT_EQUAL_UINT( 12, g_newTileIndex );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
+void test_Entity_SetTileIndex_DoesNotNotifyWhenIndexIsUnchanged( void )
+{
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
+   Entity_SetTileIndex( entity, 7 );
+   g_tileIndexChangedCount = 0;
+   Entity_SetTileIndex( entity, 7 );
+
+   TEST_ASSERT_EQUAL_UINT( 0, g_tileIndexChangedCount );
+   TEST_ASSERT_EQUAL_UINT( 7, Entity_GetTileIndex( entity ) );
 
    Entity_Free( entity, (MemArena_t*)1 );
 }
@@ -255,6 +271,7 @@ int main( void )
 
    RUN_TEST( test_Entity_SetOnTileIndexChanged_NotifiesCallbackWithTileIndices );
    RUN_TEST( test_Entity_SetOnTileIndexChanged_NotifiesOnEachTileChange );
+   RUN_TEST( test_Entity_SetTileIndex_DoesNotNotifyWhenIndexIsUnchanged );
    
    RUN_TEST( test_Entity_Free_ReleasesAllocatedEntity );
 

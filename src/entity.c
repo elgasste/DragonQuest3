@@ -9,7 +9,8 @@ struct Entity_t
    ActiveSprite_t* sprite;
    Vector2i32_t spriteOffset;
 
-   void (*onTileIndexChanged)( Entity_t* entity, u32 oldTileIndex, u32 newTileIndex );
+   void (*onTileIndexChanged)( Entity_t* entity, void* receiver, u32 oldTileIndex, u32 newTileIndex );
+   void* onTileIndexChangedReceiver;
 };
 
 size_t Entity_GetStructSize( void )
@@ -25,6 +26,7 @@ Entity_t* Entity_Create( MemArena_t* memArena )
    entity->tileIndex = 0;
    entity->sprite = 0;
    entity->onTileIndexChanged = 0;
+   entity->onTileIndexChangedReceiver = 0;
 
    return entity;
 }
@@ -59,9 +61,10 @@ Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity )
    return entity->spriteOffset;
 }
 
-void Entity_SetOnTileIndexChanged( Entity_t* entity, void (*onTileIndexChanged)( Entity_t* entity, u32 oldTileIndex, u32 newTileIndex ) )
+void Entity_SetOnTileIndexChanged( Entity_t* entity, void* receiver, void (*onTileIndexChanged)( Entity_t* entity, void* receiver, u32 oldTileIndex, u32 newTileIndex ) )
 {
    entity->onTileIndexChanged = onTileIndexChanged;
+   entity->onTileIndexChangedReceiver = receiver;
 }
 
 void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
@@ -84,9 +87,9 @@ void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
 
 void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
 {
-   if( entity->onTileIndexChanged )
+   if( entity->tileIndex != tileIndex && entity->onTileIndexChanged )
    {
-       entity->onTileIndexChanged( entity, entity->tileIndex, tileIndex );
+       entity->onTileIndexChanged( entity, entity->onTileIndexChangedReceiver, entity->tileIndex, tileIndex );
    }
 
    entity->tileIndex = tileIndex;
