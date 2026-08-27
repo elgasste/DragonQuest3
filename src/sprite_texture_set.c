@@ -78,7 +78,7 @@ u32 ActiveSpriteTextureSet_GetFrameCount( ActiveSpriteTextureSet_t* textureSet )
    return textureSet->frameCount;
 }
 
-u32 ActiveSpriteTextureSet_GetTexture( ActiveSpriteTextureSet_t* textureSet, u32 index )
+u32* ActiveSpriteTextureSet_GetTexture( ActiveSpriteTextureSet_t* textureSet, u32 index )
 {
-   return textureSet->textures[index];
+   return textureSet->textures + ( index * textureSet->frameSize * textureSet->frameSize );
 }

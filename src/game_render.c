@@ -2,6 +2,8 @@
 #include "entity.h"
 #include "game.h"
 #include "platform.h"
+#include "sprite.h"
+#include "sprite_texture_set.h"
 #include "tile_map.h"
 
 internal void GameRender_DrawPlayer( Game_t* game );
@@ -30,20 +32,32 @@ internal void GameRender_DrawPlayer( Game_t* game )
 {
    Display_t* display;
    TileMap_t* tileMap;
+   ActiveSpriteTextureSet_t* textureSet;
+   ActiveSprite_t* sprite;
    Vector4i32_t viewportInPixels;
    Vector4i32_t playerRect;
+   Vector2i32_t spriteOffset;
    Entity_t* playerEntity;
+   u32 frameCount;
+   u32 frameSize;
+   u32 textureIndex;
+   u32* texture;
 
    display = Game_GetDisplay( game );
    tileMap = Game_GetTileMap( game );
    viewportInPixels = TileMap_GetViewportInPixels( tileMap );
    playerEntity = Game_GetPlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
+   sprite = Entity_GetSprite( playerEntity );
+   textureSet = Game_GetActiveSpriteTextureSet( game );
+   spriteOffset = Entity_GetSpriteOffset( playerEntity );
+   frameCount = ActiveSpriteTextureSet_GetFrameCount( textureSet );
+   frameSize = ActiveSpriteTextureSet_GetFrameSize( textureSet );
+   textureIndex = ( ActiveSprite_GetDirection( sprite ) * frameCount ) + ActiveSprite_GetFrameIndex( sprite );
+   texture = ActiveSpriteTextureSet_GetTexture( textureSet, textureIndex );
 
-   playerRect.x /= WORLD_UNITS_PER_PIXEL;
-   playerRect.y /= WORLD_UNITS_PER_PIXEL;
-   playerRect.w /= WORLD_UNITS_PER_PIXEL;
-   playerRect.h /= WORLD_UNITS_PER_PIXEL;
+   playerRect.x = ( playerRect.x / WORLD_UNITS_PER_PIXEL ) + spriteOffset.x - viewportInPixels.x;
+   playerRect.y = ( playerRect.y / WORLD_UNITS_PER_PIXEL ) + spriteOffset.y - viewportInPixels.y;
 
-   Display_DrawRect( display, playerRect.x - viewportInPixels.x, playerRect.y - viewportInPixels.y, playerRect.w, playerRect.h, 0x00990000u );
+   Display_DrawBuffer( display, texture, frameSize, frameSize, playerRect.x, playerRect.y );
 }

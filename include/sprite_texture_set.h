@@ -14,6 +14,6 @@ void ActiveSpriteTextureSet_Free( ActiveSpriteTextureSet_t* textureSet, MemArena
 u32 ActiveSpriteTextureSet_GetCount( ActiveSpriteTextureSet_t* textureSet );
 u32 ActiveSpriteTextureSet_GetFrameSize( ActiveSpriteTextureSet_t* textureSet );
 u32 ActiveSpriteTextureSet_GetFrameCount( ActiveSpriteTextureSet_t* textureSet );
-u32 ActiveSpriteTextureSet_GetTexture( ActiveSpriteTextureSet_t* textureSet, u32 index );
+u32* ActiveSpriteTextureSet_GetTexture( ActiveSpriteTextureSet_t* textureSet, u32 index );
 
 #endif // SPRITE_TEXTURE_SET

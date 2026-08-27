@@ -123,8 +123,8 @@ void test_ActiveSpriteTextureSet_Create_LoadsHeaderAndTextures( void )
 	TEST_ASSERT_EQUAL_UINT( 1, ActiveSpriteTextureSet_GetCount( textureSet ) );
 	TEST_ASSERT_EQUAL_UINT( 1, ActiveSpriteTextureSet_GetFrameSize( textureSet ) );
 	TEST_ASSERT_EQUAL_UINT( 2, ActiveSpriteTextureSet_GetFrameCount( textureSet ) );
-	TEST_ASSERT_EQUAL_UINT( 10, ActiveSpriteTextureSet_GetTexture( textureSet, 0 ) );
-	TEST_ASSERT_EQUAL_UINT( 80, ActiveSpriteTextureSet_GetTexture( textureSet, 7 ) );
+	TEST_ASSERT_EQUAL_UINT( 10, ActiveSpriteTextureSet_GetTexture( textureSet, 0 )[0] );
+	TEST_ASSERT_EQUAL_UINT( 80, ActiveSpriteTextureSet_GetTexture( textureSet, 7 )[0] );
 	TEST_ASSERT_EQUAL_UINT( 0, g_fatalErrorCount );
 
 	ActiveSpriteTextureSet_Free( textureSet, (MemArena_t*)1 );
