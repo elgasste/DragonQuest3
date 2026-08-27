@@ -40,10 +40,40 @@ void Tile_SetIsPassable( Tile_t* tile, b32 isPassable )
    tile->isPassable = isPassable;
 }
 
+PACKED_STRUCT
+struct TileMapPortal_t
+{
+   u32 sourceTileIndex;
+   u32 destinationTileMapId;
+   u32 destinationTileIndex;
+};
+END_PACKED_STRUCT
+
+size_t TileMapPortal_GetStructSize( void )
+{
+   return sizeof( TileMapPortal_t );
+}
+
+u32 TileMapPortal_GetSourceTileIndex( TileMapPortal_t* portal )
+{
+   return portal->sourceTileIndex;
+}
+
+u32 TileMapPortal_GetDestinationTileMapId( TileMapPortal_t* portal )
+{
+   return portal->destinationTileMapId;
+}
+
+u32 TileMapPortal_GetDestinationTileIndex( TileMapPortal_t* portal )
+{
+   return portal->destinationTileIndex;
+}
+
 struct TileMap_t
 {
    TileMapInfo_t info;
    Tile_t* tiles;
+   TileMapPortal_t* portals;
 
    u32 tileSizePixels;
    Vector4i32_t viewportInUnits;
@@ -138,9 +168,19 @@ b32 TileMap_GetWraps( TileMap_t* tileMap )
    return tileMap->info.wraps;
 }
 
+u32 TileMap_GetPortalCount( TileMap_t* tileMap )
+{
+   return tileMap->info.portalCount;
+}
+
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
 {
    return (Tile_t*)( (u8*)tileMap->tiles + tileIndex * sizeof( Tile_t ) );
+}
+
+TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 portalIndex )
+{
+   return (TileMapPortal_t*)( (u8*)tileMap->portals + portalIndex * sizeof( TileMapPortal_t ) );
 }
 
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )

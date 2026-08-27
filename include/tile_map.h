@@ -18,6 +18,13 @@ b32 Tile_GetIsPassable( Tile_t* tile );
 void Tile_SetTextureIndex( Tile_t* tile, u32 textureIndex );
 void Tile_SetIsPassable( Tile_t* tile, b32 isPassable );
 
+typedef struct TileMapPortal_t TileMapPortal_t;
+size_t TileMapPortal_GetStructSize( void );
+
+u32 TileMapPortal_GetSourceTileIndex( TileMapPortal_t* portal );
+u32 TileMapPortal_GetDestinationTileMapId( TileMapPortal_t* portal );
+u32 TileMapPortal_GetDestinationTileIndex( TileMapPortal_t* portal );
+
 PACKED_STRUCT
 typedef struct TileMapInfo_t
 {
@@ -25,6 +32,7 @@ typedef struct TileMapInfo_t
    u32 tilesX;
    u32 tilesY;
    b32 wraps;
+   u32 portalCount;
 }
 TileMapInfo_t;
 END_PACKED_STRUCT
@@ -38,7 +46,9 @@ u32 TileMap_GetId( TileMap_t* tileMap );
 u32 TileMap_GetTilesX( TileMap_t* tileMap );
 u32 TileMap_GetTilesY( TileMap_t* tileMap );
 b32 TileMap_GetWraps( TileMap_t* tileMap );
+u32 TileMap_GetPortalCount( TileMap_t* tileMap );
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex );
+TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 portalIndex );
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap );
 Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap );
 

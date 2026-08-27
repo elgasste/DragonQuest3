@@ -47,12 +47,21 @@ typedef struct TileMock_t
 }
 TileMock_t;
 
+typedef struct TileMapPortalMock_t
+{
+   u32 sourceTileIndex;
+   u32 destinationTileMapId;
+   u32 destinationTileIndex;
+}
+TileMapPortalMock_t;
+
 typedef struct TileMapInfoMock_t
 {
    u32 id;
    u32 tilesX;
    u32 tilesY;
    b32 wraps;
+   u32 portalCount;
 }
 TileMapInfoMock_t;
 
@@ -60,6 +69,7 @@ typedef struct TileMapMock_t
 {
    TileMapInfoMock_t info;
    TileMock_t* tiles;
+   TileMapPortalMock_t* portals;
 }
 TileMapMock_t;
 
@@ -351,7 +361,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 10;
    curTileMap->info.tilesY = 10;
    curTileMap->info.wraps = False;
-   curTileMap->tiles = 0;
+   curTileMap->info.portalCount = 0;
+
+   curTileMap->portals = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
@@ -388,7 +400,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 256;
    curTileMap->info.tilesY = 256;
    curTileMap->info.wraps = True;
-   curTileMap->tiles = 0;
+   curTileMap->info.portalCount = 0;
+
+   curTileMap->portals = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
@@ -421,7 +435,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 128;
    curTileMap->info.tilesY = 128;
    curTileMap->info.wraps = False;
-   curTileMap->tiles = 0;
+   curTileMap->info.portalCount = 0;
+
+   curTileMap->portals = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
@@ -453,7 +469,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 256;
    curTileMap->info.tilesY = 256;
    curTileMap->info.wraps = False;
-   curTileMap->tiles = 0;
+   curTileMap->info.portalCount = 0;
+
+   curTileMap->portals = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )

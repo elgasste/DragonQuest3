@@ -171,6 +171,20 @@ void test_Tile_Setters_UpdateTileProperties( void )
    TEST_ASSERT_FALSE( Tile_GetIsPassable( &tile ) );
 }
 
+void test_TileMapPortal_GetStructSize_ReturnsNonZeroSize( void )
+{
+   TEST_ASSERT_GREATER_THAN_UINT( 0, TileMapPortal_GetStructSize() );
+}
+
+void test_TileMapPortal_Getters_ReturnPortalProperties( void )
+{
+   TileMapPortal_t portal = { 12, 7, 23 };
+
+   TEST_ASSERT_EQUAL_UINT( 12, TileMapPortal_GetSourceTileIndex( &portal ) );
+   TEST_ASSERT_EQUAL_UINT( 7, TileMapPortal_GetDestinationTileMapId( &portal ) );
+   TEST_ASSERT_EQUAL_UINT( 23, TileMapPortal_GetDestinationTileIndex( &portal ) );
+}
+
 void test_TileMap_CreateFromGameData_LoadsMapAndTiles( void )
 {
    Tile_t expectedTiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
@@ -381,6 +395,9 @@ int main( void )
 
    RUN_TEST( test_Tile_Getters_ReturnTileProperties );
    RUN_TEST( test_Tile_Setters_UpdateTileProperties );
+   
+   RUN_TEST( test_TileMapPortal_GetStructSize_ReturnsNonZeroSize );
+   RUN_TEST( test_TileMapPortal_Getters_ReturnPortalProperties );
 
    RUN_TEST( test_TileMap_GetStructSize_ReturnsNonZeroSize );
 
