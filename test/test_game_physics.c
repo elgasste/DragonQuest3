@@ -78,24 +78,24 @@ void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
 
 u32 TileMap_GetTilesX( TileMap_t* tileMap )
 {
-   return tileMap->width;
+   return tileMap->info.tilesX;
 }
 
 u32 TileMap_GetTilesY( TileMap_t* tileMap )
 {
-   return tileMap->height;
+   return tileMap->info.tilesY;
 }
 
 b32 TileMap_GetWraps( TileMap_t* tileMap )
 {
-   return tileMap->wraps;
+   return tileMap->info.wraps;
 }
 
 void TileMap_WrapEntityPosition( TileMap_t* tileMap, Entity_t* entity )
 {
    Vector4i32_t rect = Entity_GetRect( entity );
-   i32 mapWidth = (i32)tileMap->width * 16 * WORLD_UNITS_PER_PIXEL;
-   i32 mapHeight = (i32)tileMap->height * 16 * WORLD_UNITS_PER_PIXEL;
+   i32 mapWidth = (i32)tileMap->info.tilesX * 16 * WORLD_UNITS_PER_PIXEL;
+   i32 mapHeight = (i32)tileMap->info.tilesY * 16 * WORLD_UNITS_PER_PIXEL;
 
    rect.x %= mapWidth;
    rect.y %= mapHeight;
@@ -112,7 +112,7 @@ void TileMap_WrapEntityPosition( TileMap_t* tileMap, Entity_t* entity )
 
 u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
 {
-   return tileTextureSet->tileSize;
+   return tileTextureSet->info.tileSize;
 }
 
 u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
@@ -130,10 +130,10 @@ void setUp( void )
    g_entity.rect.h = 12 * WORLD_UNITS_PER_PIXEL;
    g_entity.velocity.x = 3 * WORLD_UNITS_PER_PIXEL * 60;
    g_entity.velocity.y = 4 * WORLD_UNITS_PER_PIXEL * 60;
-   g_tileMap.width = 10;
-   g_tileMap.height = 8;
-   g_tileMap.wraps = False;
-   g_textureSet.tileSize = 16;
+   g_tileMap.info.tilesX = 10;
+   g_tileMap.info.tilesY = 8;
+   g_tileMap.info.wraps = False;
+   g_textureSet.info.tileSize = 16;
    g_game.playerEntity = &g_entity;
    g_game.tileMap = &g_tileMap;
    g_game.tileTextureSet = &g_textureSet;
@@ -180,7 +180,7 @@ void test_Game_TicPhysics_ClampsPlayerAtUpperBounds( void )
 
 void test_Game_TicPhysics_DoesNotClampWrappingMap( void )
 {
-   g_tileMap.wraps = True;
+   g_tileMap.info.wraps = True;
    g_entity.rect.x = 150 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 110 * WORLD_UNITS_PER_PIXEL;
    g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL * 60;
@@ -216,7 +216,7 @@ void test_Game_TicPhysics_ClampsOversizedPlayerToOrigin( void )
 
 void test_Game_TicPhysics_WrapsPlayerAtLowerBounds( void )
 {
-   g_tileMap.wraps = True;
+   g_tileMap.info.wraps = True;
    g_entity.rect.x = 5 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 3 * WORLD_UNITS_PER_PIXEL;
    g_entity.velocity.x = -10 * WORLD_UNITS_PER_PIXEL * 60;

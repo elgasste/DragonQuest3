@@ -1,7 +1,6 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
 #include "display.h"
-#include "tile.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
 #include "utility.h"

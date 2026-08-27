@@ -2,9 +2,19 @@
 #define TILE_TEXTURE_SET_H
 
 #include "common.h"
+#include "platform.h"
 
 typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
+
+PACKED_STRUCT
+typedef struct TileTextureSetInfo_t
+{
+   u32 count;
+   u32 tileSize;
+}
+TileTextureSetInfo_t;
+END_PACKED_STRUCT
 
 typedef struct TileTextureSet_t TileTextureSet_t;
 size_t TileTextureSet_GetStructSize( void );

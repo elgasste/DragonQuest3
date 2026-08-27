@@ -19,8 +19,7 @@ END_PACKED_STRUCT
 struct GameData_t
 {
    File_t* file;
-   GameDataVersion_t version;
-   GameDataFileOffsets_t fileOffsets;
+   GameDataMetaData_t metaData;
 
    GameDataObjectOffset_t* tileMapOffsets;
    u32 tileMapCount;
@@ -70,12 +69,12 @@ File_t* GameData_GetFile( GameData_t* gameData )
 
 GameDataVersion_t GameData_GetVersion( GameData_t* gameData )
 {
-   return gameData->version;
+   return gameData->metaData.version;
 }
 
 GameDataFileOffsets_t GameData_GetFileOffsets( GameData_t* gameData )
 {
-   return gameData->fileOffsets;
+   return gameData->metaData.fileOffsets;
 }
 
 GameDataObjectOffset_t GameData_GetTileMapOffset( GameData_t* gameData, u32 tileMapId )
@@ -109,7 +108,6 @@ void GameData_SetTileMapOffsets( GameData_t* gameData, GameDataObjectOffset_t* o
 
 internal b32 GameData_LoadMetaData( GameData_t* gameData )
 {
-   GameDataMetaData_t metaData;
    File_t* file;
 
    file = GameData_GetFile( gameData );
@@ -120,39 +118,36 @@ internal b32 GameData_LoadMetaData( GameData_t* gameData )
    }
 
    Platform_FileSeek( file, 0, 0 );
-   Platform_ReadFileBytes( file, (u8*)&metaData, sizeof( GameDataMetaData_t ) );
+   Platform_ReadFileBytes( file, (u8*)&gameData->metaData, sizeof( GameDataMetaData_t ) );
 
-   if ( strncmp( metaData.magic, GAME_DATA_MAGIC, 4 ) != 0 )
+   if ( strncmp( gameData->metaData.magic, GAME_DATA_MAGIC, 4 ) != 0 )
    {
       Platform_FatalError( "game data file has an invalid magic number." );
       return False;
    }
 
-   if ( metaData.version.major != GAME_VERSION_MAJOR ||
-        metaData.version.minor != GAME_VERSION_MINOR ||
-        metaData.version.maint != GAME_VERSION_MAINT )
+   if ( gameData->metaData.version.major != GAME_VERSION_MAJOR ||
+        gameData->metaData.version.minor != GAME_VERSION_MINOR ||
+        gameData->metaData.version.maint != GAME_VERSION_MAINT )
    {
       Platform_FatalError( "game data file has an incompatible version." );
       return False;
    }
-   else if ( metaData.fileOffsets.activeSpriteTextureSet >= file->size )
+   else if ( gameData->metaData.fileOffsets.activeSpriteTextureSet >= file->size )
    {
       Platform_FatalError( "game data file has an invalid active sprite texture set offset." );
       return False;
    }
-   else if ( metaData.fileOffsets.tileTextureSet >= file->size )
+   else if ( gameData->metaData.fileOffsets.tileTextureSet >= file->size )
    {
       Platform_FatalError( "game data file has an invalid tile texture set offset." );
       return False;
    }
-   else if ( metaData.fileOffsets.tileMaps >= file->size )
+   else if ( gameData->metaData.fileOffsets.tileMaps >= file->size )
    {
       Platform_FatalError( "game data file has an invalid tile maps offset." );
       return False;
    }
-
-   gameData->version = metaData.version;
-   gameData->fileOffsets = metaData.fileOffsets;
 
    return True;
 }
@@ -161,18 +156,18 @@ internal b32 GameData_LoadTileMapOffsets( GameData_t* gameData, MemArena_t* memA
 {
    u32 tileMapOffsetsOffset, tileMapCount, i;
 
-   if ( (i32)( gameData->fileOffsets.tileMaps + sizeof( u32 ) ) > gameData->file->size )
+   if ( (i32)( gameData->metaData.fileOffsets.tileMaps + sizeof( u32 ) ) > gameData->file->size )
    {
       Platform_FatalError( "game data file is too small to contain tile map metadata." );
       return False;
    }
 
    // first 4 bytes are the number of tile maps
-   Platform_FileSeek( gameData->file, gameData->fileOffsets.tileMaps, 0 );
+   Platform_FileSeek( gameData->file, gameData->metaData.fileOffsets.tileMaps, 0 );
    Platform_ReadFileBytes( gameData->file, (u8*)&( tileMapCount ), sizeof( u32 ) );
 
    // next series of bytes are a mapping of tile map IDs to chunk offsets
-   tileMapOffsetsOffset = gameData->fileOffsets.tileMaps + sizeof( u32 );
+   tileMapOffsetsOffset = gameData->metaData.fileOffsets.tileMaps + sizeof( u32 );
    if ( (i32)( tileMapOffsetsOffset + ( tileMapCount * sizeof( GameDataObjectOffset_t ) ) ) > gameData->file->size )
    {
       Platform_FatalError( "game data file is too small to contain tile map chunk offsets." );
@@ -185,7 +180,7 @@ internal b32 GameData_LoadTileMapOffsets( GameData_t* gameData, MemArena_t* memA
    {
       Platform_ReadFileBytes( gameData->file, (u8*)&( gameData->tileMapOffsets[i] ), sizeof( GameDataObjectOffset_t ) );
 
-      if ( gameData->fileOffsets.tileMaps + gameData->tileMapOffsets[i].offset >= gameData->file->size )
+      if ( gameData->metaData.fileOffsets.tileMaps + gameData->tileMapOffsets[i].offset >= gameData->file->size )
       {
          Platform_FatalError( "game data file has an invalid tile map offset." );
          MemArena_FreeMem( memArena, gameData->tileMapOffsets );

@@ -4,13 +4,30 @@
 #include "file.h"
 #include "game_data.h"
 #include "mem_arena.h"
-#include "tile.h"
 #include "tile_map.h"
 #include "utility.h"
 
+PACKED_STRUCT
+struct Tile_t
+{
+   u32 textureIndex;
+};
+END_PACKED_STRUCT
+
+size_t Tile_GetStructSize( void )
+{
+   return sizeof( Tile_t );
+}
+
+u32 Tile_GetTextureIndex( Tile_t* tile )
+{
+   return tile->textureIndex;
+}
+
 struct TileMap_t
 {
-   TileMapData_t data;
+   TileMapInfo_t info;
+   Tile_t* tiles;
 
    u32 tileSizePixels;
    Vector4i32_t viewportInUnits;
@@ -45,7 +62,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
       {
          chunkOffset = fileOffsets.tileMaps;
          tileMapOffset = chunkOffset + tileMapFileOffset.offset;
-         if ( (i32)( tileMapOffset + sizeof( TileMapData_t ) ) > file->size )
+         if ( (i32)( tileMapOffset + sizeof( TileMapInfo_t ) ) > file->size )
          {
             Platform_FatalError( "game data file is too small to contain the requested tile map." );
             return 0;
@@ -54,21 +71,21 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          tileMap = (TileMap_t*)MemArena_AllocMem( memArena, TileMap_GetStructSize() );
          tileMap->tileSizePixels = tileSizePixels;
          Platform_FileSeek( file, tileMapOffset, 0 );
-         Platform_ReadFileBytes( file, (u8*)( &tileMap->data ), sizeof( TileMapData_t ) );
+         Platform_ReadFileBytes( file, (u8*)( &tileMap->info ), sizeof( TileMapInfo_t ) );
 
-         tileCount = (i32)( tileMap->data.tilesX * tileMap->data.tilesY );
-         tilesOffset = tileMapOffset + sizeof( TileMapData_t );
-         if ( tilesOffset + (i32)( tileCount * Tile_GetStructSize() ) > file->size )
+         tileCount = (i32)( tileMap->info.tilesX * tileMap->info.tilesY );
+         tilesOffset = tileMapOffset + sizeof( TileMapInfo_t );
+         if ( tilesOffset + (i32)( tileCount * sizeof( Tile_t ) ) > file->size )
          {
             Platform_FatalError( "game data file is too small to contain all the requested tile map tiles." );
             MemArena_FreeMem( memArena, tileMap );
             return 0;
          }
 
-         tiles = (u8*)MemArena_AllocMem( memArena, tileCount * Tile_GetStructSize() );
+         tiles = (u8*)MemArena_AllocMem( memArena, tileCount * sizeof( Tile_t ) );
          Platform_FileSeek( file, tilesOffset, 0 );
-         Platform_ReadFileBytes( file, tiles, tileCount * Tile_GetStructSize() );
-         tileMap->data.tiles = (Tile_t*)tiles;
+         Platform_ReadFileBytes( file, tiles, tileCount * sizeof( Tile_t ) );
+         tileMap->tiles = (Tile_t*)tiles;
 
          return tileMap;
       }
@@ -81,33 +98,33 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
 void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
 {
-   MemArena_FreeMem( memArena, tileMap->data.tiles );
+   MemArena_FreeMem( memArena, tileMap->tiles );
    MemArena_FreeMem( memArena, tileMap );
 }
 
 u32 TileMap_GetId( TileMap_t* tileMap )
 {
-   return tileMap->data.id;
+   return tileMap->info.id;
 }
 
 u32 TileMap_GetTilesX( TileMap_t* tileMap )
 {
-   return tileMap->data.tilesX;
+   return tileMap->info.tilesX;
 }
 
 u32 TileMap_GetTilesY( TileMap_t* tileMap )
 {
-   return tileMap->data.tilesY;
+   return tileMap->info.tilesY;
 }
 
 b32 TileMap_GetWraps( TileMap_t* tileMap )
 {
-   return tileMap->data.wraps;
+   return tileMap->info.wraps;
 }
 
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
 {
-   return (Tile_t*)( (u8*)tileMap->data.tiles + ( y * tileMap->data.tilesX + x ) * Tile_GetStructSize() );
+   return (Tile_t*)( (u8*)tileMap->tiles + ( y * tileMap->info.tilesX + x ) * sizeof( Tile_t ) );
 }
 
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )
@@ -150,13 +167,13 @@ void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
    halfViewportW = (i32)( viewport.w / 2 );
    halfViewportH = (i32)( viewport.h / 2 );
 
-   tileMapW = (i32)tileMap->data.tilesX * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
-   tileMapH = (i32)tileMap->data.tilesY * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   tileMapW = (i32)tileMap->info.tilesX * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   tileMapH = (i32)tileMap->info.tilesY * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
 
    newViewportX = (i32)x - halfViewportW;
    newViewportY = (i32)y - halfViewportH;
 
-   if ( !tileMap->data.wraps )
+   if ( !tileMap->info.wraps )
    {
       if ( viewport.w >= tileMapW )
       {
@@ -205,8 +222,8 @@ void TileMap_WrapEntityPosition( TileMap_t* tileMap, Entity_t* entity )
    i32 mapWidth, mapHeight;
 
    entityRect = Entity_GetRect( entity );
-   mapWidth = (i32)tileMap->data.tilesX * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
-   mapHeight = (i32)tileMap->data.tilesY * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   mapWidth = (i32)tileMap->info.tilesX * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
+   mapHeight = (i32)tileMap->info.tilesY * (i32)tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL;
 
    if ( mapWidth > 0 )
    {
@@ -237,9 +254,9 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
    tileX = Utility_FloorDiv32i( entityRect.x + ( entityRect.w / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
    tileY = Utility_FloorDiv32i( entityRect.y + ( entityRect.h / 2 ), tileMap->tileSizePixels * WORLD_UNITS_PER_PIXEL );
 
-   tilesX = (i32)tileMap->data.tilesX;
-   tilesY = (i32)tileMap->data.tilesY;
-   if ( tileMap->data.wraps )
+   tilesX = (i32)tileMap->info.tilesX;
+   tilesY = (i32)tileMap->info.tilesY;
+   if ( tileMap->info.wraps )
    {
       tileX %= tilesX;
       tileY %= tilesY;
@@ -253,7 +270,7 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
       }
    }
 
-   return (u32)tileY * tileMap->data.tilesX + (u32)tileX;
+   return (u32)tileY * tileMap->info.tilesX + (u32)tileX;
 }
 
 void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )
@@ -262,8 +279,8 @@ void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileI
    i32 entityCenterOffsetX, entityCenterOffsetY;
    Vector4i32_t entityRect;
 
-   tileX = tileIndex % tileMap->data.tilesX;
-   tileY = tileIndex / tileMap->data.tilesX;
+   tileX = tileIndex % tileMap->info.tilesX;
+   tileY = tileIndex / tileMap->info.tilesX;
 
    entityRect = Entity_GetRect( entity );
    entityCenterOffsetX = (i32)( entityRect.w / 2 );

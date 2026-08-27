@@ -5,8 +5,7 @@
 
 typedef struct TileTextureSet_t
 {
-   u32 count;
-   u32 tileSize;
+   TileTextureSetInfo_t info;
    u32* textures;
 }
 TileTextureSet_t;
