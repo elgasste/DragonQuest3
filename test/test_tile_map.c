@@ -64,11 +64,6 @@ void MemArena_FreeMem( MemArena_t* arena, void* mem )
    free( mem );
 }
 
-u32 Tile_GetStructSize( void )
-{
-   return sizeof( Tile_t );
-}
-
 GameDataFileOffsets_t GameData_GetFileOffsets( GameData_t* gameData )
 {
    UNUSED_PARAM( gameData );

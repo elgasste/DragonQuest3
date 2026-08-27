@@ -8,7 +8,11 @@
 typedef struct Entity_t Entity_t;
 typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
+
 typedef struct Tile_t Tile_t;
+size_t Tile_GetStructSize( void );
+
+u32 Tile_GetTextureIndex( Tile_t* tile );
 
 PACKED_STRUCT
 typedef struct TileMapInfo_t

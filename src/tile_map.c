@@ -4,9 +4,25 @@
 #include "file.h"
 #include "game_data.h"
 #include "mem_arena.h"
-#include "tile.h"
 #include "tile_map.h"
 #include "utility.h"
+
+PACKED_STRUCT
+struct Tile_t
+{
+   u32 textureIndex;
+};
+END_PACKED_STRUCT
+
+size_t Tile_GetStructSize( void )
+{
+   return sizeof( Tile_t );
+}
+
+u32 Tile_GetTextureIndex( Tile_t* tile )
+{
+   return tile->textureIndex;
+}
 
 struct TileMap_t
 {
@@ -59,16 +75,16 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
          tileCount = (i32)( tileMap->info.tilesX * tileMap->info.tilesY );
          tilesOffset = tileMapOffset + sizeof( TileMapInfo_t );
-         if ( tilesOffset + (i32)( tileCount * Tile_GetStructSize() ) > file->size )
+         if ( tilesOffset + (i32)( tileCount * sizeof( Tile_t ) ) > file->size )
          {
             Platform_FatalError( "game data file is too small to contain all the requested tile map tiles." );
             MemArena_FreeMem( memArena, tileMap );
             return 0;
          }
 
-         tiles = (u8*)MemArena_AllocMem( memArena, tileCount * Tile_GetStructSize() );
+         tiles = (u8*)MemArena_AllocMem( memArena, tileCount * sizeof( Tile_t ) );
          Platform_FileSeek( file, tilesOffset, 0 );
-         Platform_ReadFileBytes( file, tiles, tileCount * Tile_GetStructSize() );
+         Platform_ReadFileBytes( file, tiles, tileCount * sizeof( Tile_t ) );
          tileMap->tiles = (Tile_t*)tiles;
 
          return tileMap;
@@ -108,7 +124,7 @@ b32 TileMap_GetWraps( TileMap_t* tileMap )
 
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 x, u32 y )
 {
-   return (Tile_t*)( (u8*)tileMap->tiles + ( y * tileMap->info.tilesX + x ) * Tile_GetStructSize() );
+   return (Tile_t*)( (u8*)tileMap->tiles + ( y * tileMap->info.tilesX + x ) * sizeof( Tile_t ) );
 }
 
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )
