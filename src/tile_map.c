@@ -40,10 +40,40 @@ void Tile_SetIsPassable( Tile_t* tile, b32 isPassable )
    tile->isPassable = isPassable;
 }
 
+PACKED_STRUCT
+struct TileMapPortal_t
+{
+   u32 sourceTileIndex;
+   u32 destinationTileMapId;
+   u32 destinationTileIndex;
+};
+END_PACKED_STRUCT
+
+size_t TileMapPortal_GetStructSize( void )
+{
+   return sizeof( TileMapPortal_t );
+}
+
+u32 TileMapPortal_GetSourceTileIndex( TileMapPortal_t* portal )
+{
+   return portal->sourceTileIndex;
+}
+
+u32 TileMapPortal_GetDestinationTileMapId( TileMapPortal_t* portal )
+{
+   return portal->destinationTileMapId;
+}
+
+u32 TileMapPortal_GetDestinationTileIndex( TileMapPortal_t* portal )
+{
+   return portal->destinationTileIndex;
+}
+
 struct TileMap_t
 {
    TileMapInfo_t info;
    Tile_t* tiles;
+   TileMapPortal_t* portals;
 
    u32 tileSizePixels;
    Vector4i32_t viewportInUnits;
@@ -63,7 +93,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
    GameDataFileOffsets_t fileOffsets;
    GameDataObjectOffset_t tileMapFileOffset;
    File_t* file;
-   u8* tiles;
+   u8 *tiles, *portals;
    char msg[STRING_SIZE_DEFAULT];
 
    fileOffsets = GameData_GetFileOffsets( gameData );
@@ -86,6 +116,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
          tileMap = (TileMap_t*)MemArena_AllocMem( memArena, TileMap_GetStructSize() );
          tileMap->tileSizePixels = tileSizePixels;
+         tileMap->portals = 0;
          Platform_FileSeek( file, tileMapOffset, 0 );
          Platform_ReadFileBytes( file, (u8*)( &tileMap->info ), sizeof( TileMapInfo_t ) );
 
@@ -103,6 +134,14 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          Platform_ReadFileBytes( file, tiles, tileCount * sizeof( Tile_t ) );
          tileMap->tiles = (Tile_t*)tiles;
 
+         if ( tileMap->info.portalCount > 0 )
+         {
+            portals = (u8*)MemArena_AllocMem( memArena, tileMap->info.portalCount * sizeof( TileMapPortal_t ) );
+            Platform_FileSeek( file, tilesOffset + tileCount * sizeof( Tile_t ), 0 );
+            Platform_ReadFileBytes( file, portals, tileMap->info.portalCount * sizeof( TileMapPortal_t ) );
+            tileMap->portals = (TileMapPortal_t*)portals;
+         }
+
          return tileMap;
       }
    }
@@ -114,6 +153,10 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
 void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
 {
+   if ( tileMap->portals )
+   {
+      MemArena_FreeMem( memArena, tileMap->portals );
+   }
    MemArena_FreeMem( memArena, tileMap->tiles );
    MemArena_FreeMem( memArena, tileMap );
 }
@@ -138,9 +181,32 @@ b32 TileMap_GetWraps( TileMap_t* tileMap )
    return tileMap->info.wraps;
 }
 
+u32 TileMap_GetPortalCount( TileMap_t* tileMap )
+{
+   return tileMap->info.portalCount;
+}
+
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
 {
    return (Tile_t*)( (u8*)tileMap->tiles + tileIndex * sizeof( Tile_t ) );
+}
+
+TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 tileIndex )
+{
+   u32 i;
+   TileMapPortal_t* portal;
+   
+   for ( i = 0; i < tileMap->info.portalCount; i++ )
+   {
+      portal = &tileMap->portals[i];
+      
+      if ( portal->sourceTileIndex == tileIndex )
+      {
+         return portal;
+      }
+   }
+
+   return 0;
 }
 
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )

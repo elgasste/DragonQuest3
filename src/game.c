@@ -32,6 +32,8 @@ struct Game_t
 };
 
 internal void Game_Tic( Game_t* game );
+internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex );
+internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal );
 
 size_t Game_GetStructSize( void )
 {
@@ -52,7 +54,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->tileTextureSet = TileTextureSet_CreateFromGameData( game->memArena, game->gameData );
    game->activeSpriteTextureSet = ActiveSpriteTextureSet_CreateFromGameData( game->memArena, game->gameData );
 
-   // TODO: temporary, this will eventually be part of the game data file
+   // TODO: temporary, everything from here down will come from the game data file.
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
 
    game->playerSprite = ActiveSprite_Create( game->memArena, game->activeSpriteTextureSet );
@@ -62,6 +64,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    Entity_SetVelocity( game->playerEntity, 0, 0 );
    Entity_SetSprite( game->playerEntity, game->playerSprite );
    Entity_SetSpriteOffset( game->playerEntity, -2, -2 );
+   Entity_SetOnTileIndexChanged( game->playerEntity, game, Game_OnPlayerTileIndexChanged );
 
    TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
 
@@ -168,4 +171,36 @@ internal void Game_Tic( Game_t* game )
    Game_TicPhysics( game );
    ActiveSprite_Tic( game->playerSprite, deltaSec );
    TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity );
+}
+
+internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex )
+{
+   TileMapPortal_t* portal;
+   Game_t* game = (Game_t*)receiver;
+
+   UNUSED_PARAM( oldTileIndex );
+
+   portal = TileMap_GetPortal( game->tileMap, newTileIndex );
+   if ( portal )
+   {
+      Game_EnterPortal( game, portal );
+   }
+}
+
+internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
+{
+   u32 destinationTileMapId, destinationTileIndex;
+
+   destinationTileMapId = TileMapPortal_GetDestinationTileMapId( portal );
+   destinationTileIndex = TileMapPortal_GetDestinationTileIndex( portal );
+
+   if ( destinationTileMapId != TileMap_GetId( game->tileMap ) )
+   {
+      TileMap_Free( game->tileMap, game->memArena );
+      game->tileMap = TileMap_CreateFromGameData( game->memArena, game->gameData, destinationTileMapId, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+      // TODO: we shouldn't have to do this every time we swap tile maps, maybe it should be stored somewhere else?
+      TileMap_SetViewportInUnits( game->tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
+   }
+
+   TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, destinationTileIndex );
 }

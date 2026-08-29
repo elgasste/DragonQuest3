@@ -10,6 +10,14 @@ typedef struct Tile_t
 }
 Tile_t;
 
+typedef struct TileMapPortal_t
+{
+   u32 sourceTileIndex;
+   u32 destinationTileMapId;
+   u32 destinationTileIndex;
+}
+TileMapPortal_t;
+
 typedef struct TileMap_t
 {
    TileMapInfo_t info;

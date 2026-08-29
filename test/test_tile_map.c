@@ -22,7 +22,9 @@ TestTileMapData_t;
 
 typedef struct TestTileMap_t
 {
-   TestTileMapData_t data;
+   TileMapInfo_t info;
+   Tile_t* tiles;
+   TileMapPortal_t* portals;
    u32 tileSizePixels;
    Vector4i32_t viewportInUnits;
    Vector4i32_t viewportInPixels;
@@ -171,6 +173,20 @@ void test_Tile_Setters_UpdateTileProperties( void )
    TEST_ASSERT_FALSE( Tile_GetIsPassable( &tile ) );
 }
 
+void test_TileMapPortal_GetStructSize_ReturnsNonZeroSize( void )
+{
+   TEST_ASSERT_GREATER_THAN_UINT( 0, TileMapPortal_GetStructSize() );
+}
+
+void test_TileMapPortal_Getters_ReturnPortalProperties( void )
+{
+   TileMapPortal_t portal = { 12, 7, 23 };
+
+   TEST_ASSERT_EQUAL_UINT( 12, TileMapPortal_GetSourceTileIndex( &portal ) );
+   TEST_ASSERT_EQUAL_UINT( 7, TileMapPortal_GetDestinationTileMapId( &portal ) );
+   TEST_ASSERT_EQUAL_UINT( 23, TileMapPortal_GetDestinationTileIndex( &portal ) );
+}
+
 void test_TileMap_CreateFromGameData_LoadsMapAndTiles( void )
 {
    Tile_t expectedTiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
@@ -210,7 +226,7 @@ void test_TileMap_GetTile_ReturnsTilesInRowMajorOrder( void )
 
 void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtTopLeft( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 0, 0, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
    map.tileSizePixels = 16;
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 0, 0 );
@@ -221,7 +237,7 @@ void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtTopLeft( void )
 
 void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtBottomRight( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 0, 0, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
    map.tileSizePixels = 16;
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL );
@@ -232,7 +248,7 @@ void test_TileMap_AnchorViewport_ClampsNonWrappingMapAtBottomRight( void )
 
 void test_TileMap_AnchorViewport_CentersSmallNonWrappingMap( void )
 {
-   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 0, 0, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
    map.tileSizePixels = 16;
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 32 * WORLD_UNITS_PER_PIXEL, 24 * WORLD_UNITS_PER_PIXEL );
@@ -243,7 +259,7 @@ void test_TileMap_AnchorViewport_CentersSmallNonWrappingMap( void )
 
 void test_TileMap_AnchorViewport_AllowsWrappingMapToMoveBeyondEdges( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, True, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   TestTileMap_t map = { { 1, 20, 15, True, 0 }, 0, 0, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
    map.tileSizePixels = 16;
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 0, 0 );
@@ -254,7 +270,7 @@ void test_TileMap_AnchorViewport_AllowsWrappingMapToMoveBeyondEdges( void )
 
 void test_TileMap_GetViewportPixels_ReturnsStoredValue( void )
 {
-   TestTileMap_t map = { { 0 }, 16, { 0 }, { 3, 4, 5, 6 } };
+   TestTileMap_t map = { { 0 }, 0, 0, 16, { 0 }, { 3, 4, 5, 6 } };
    Vector4i32_t viewportInPixels;
 
    viewportInPixels = TileMap_GetViewportInPixels( (TileMap_t*)&map );
@@ -267,7 +283,7 @@ void test_TileMap_GetViewportPixels_ReturnsStoredValue( void )
 
 void test_TileMap_SetViewportUnits_DerivesViewportPixels( void )
 {
-   TestTileMap_t map = { { 0 }, 16, { 0 }, { 0 } };
+   TestTileMap_t map = { { 0 }, 0, 0, 16, { 0 }, { 0 } };
    Vector4i32_t viewportInPixels;
 
    TileMap_SetViewportInUnits( (TileMap_t*)&map, (Vector4i32_t){ 10 * WORLD_UNITS_PER_PIXEL, 20 * WORLD_UNITS_PER_PIXEL, 320 * WORLD_UNITS_PER_PIXEL, 240 * WORLD_UNITS_PER_PIXEL } );
@@ -282,7 +298,7 @@ void test_TileMap_SetViewportUnits_DerivesViewportPixels( void )
 
 void test_TileMap_SetViewportPixels_DerivesViewportUnits( void )
 {
-   TestTileMap_t map = { { 0 }, 16, { 0 }, { 0 } };
+   TestTileMap_t map = { { 0 }, 0, 0, 16, { 0 }, { 0 } };
    Vector4i32_t viewportInUnits;
 
    TileMap_SetViewportInPixels( (TileMap_t*)&map, (Vector4i32_t){ 10, 20, 320, 240 } );
@@ -297,7 +313,7 @@ void test_TileMap_SetViewportPixels_DerivesViewportUnits( void )
 
 void test_TileMap_AnchorViewport_UpdatesViewportPixels( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 0, 0, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
    TileMap_AnchorViewportToPointUnits( (TileMap_t*)&map, 319 * WORLD_UNITS_PER_PIXEL, 239 * WORLD_UNITS_PER_PIXEL );
 
@@ -307,7 +323,7 @@ void test_TileMap_AnchorViewport_UpdatesViewportPixels( void )
 
 void test_TileMap_AnchorViewportToEntity_UsesEntityCenter( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 0, 0, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
    Entity_t entity = { { 95 * WORLD_UNITS_PER_PIXEL, 85 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
    TileMap_AnchorViewportToEntity( (TileMap_t*)&map, &entity );
@@ -320,7 +336,7 @@ void test_TileMap_AnchorViewportToEntity_UsesEntityCenter( void )
 
 void test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight( void )
 {
-   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
+   TestTileMap_t map = { { 1, 20, 15, False, 0 }, 0, 0, 16, { 0, 0, 160 * WORLD_UNITS_PER_PIXEL, 120 * WORLD_UNITS_PER_PIXEL }, { 0 } };
    Entity_t entity = { { 310 * WORLD_UNITS_PER_PIXEL, 230 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL, 10 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
    TileMap_AnchorViewportToEntity( (TileMap_t*)&map, &entity );
@@ -333,7 +349,7 @@ void test_TileMap_AnchorViewportToEntity_ClampsEntityAtBottomRight( void )
 
 void test_TileMap_GetTileIndexForEntity_UsesEntityCenter( void )
 {
-   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 16, { 0 }, { 0 } };
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 0, 0, 16, { 0 }, { 0 } };
    Entity_t entity = { { 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL }, { 0 } };
 
    TEST_ASSERT_EQUAL_UINT( 5, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
@@ -341,7 +357,7 @@ void test_TileMap_GetTileIndexForEntity_UsesEntityCenter( void )
 
 void test_TileMap_GetTileIndexForEntity_AdvancesAtTileBoundary( void )
 {
-   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 16, { 0 }, { 0 } };
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 0, 0, 16, { 0 }, { 0 } };
    Entity_t entity = { { 32 * WORLD_UNITS_PER_PIXEL, 0, 1, 1 }, { 0 } };
 
    TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
@@ -349,7 +365,7 @@ void test_TileMap_GetTileIndexForEntity_AdvancesAtTileBoundary( void )
 
 void test_TileMap_GetTileIndexForEntity_WrapsCoordinates( void )
 {
-   TestTileMap_t map = { { 1, 4, 3, True, 0 }, 16, { 0 }, { 0 } };
+   TestTileMap_t map = { { 1, 4, 3, True, 0 }, 0, 0, 16, { 0 }, { 0 } };
    Entity_t entity = { { 64 * WORLD_UNITS_PER_PIXEL, 48 * WORLD_UNITS_PER_PIXEL, 1, 1 }, { 0 } };
 
    TEST_ASSERT_EQUAL_UINT( 0, TileMap_GetTileIndexForEntity( (TileMap_t*)&map, &entity ) );
@@ -361,7 +377,7 @@ void test_TileMap_GetTileIndexForEntity_WrapsCoordinates( void )
 
 void test_TileMap_WrapEntityPosition_WrapsBothDirections( void )
 {
-   TestTileMap_t map = { { 1, 4, 3, True, 0 }, 16, { 0 }, { 0 } };
+   TestTileMap_t map = { { 1, 4, 3, True, 0 }, 0, 0, 16, { 0 }, { 0 } };
    Entity_t entity = { { 64 * WORLD_UNITS_PER_PIXEL, 48 * WORLD_UNITS_PER_PIXEL, 1, 1 }, { 0 } };
 
    TileMap_WrapEntityPosition( (TileMap_t*)&map, &entity );
@@ -375,12 +391,91 @@ void test_TileMap_WrapEntityPosition_WrapsBothDirections( void )
    TEST_ASSERT_EQUAL_INT( 32 * WORLD_UNITS_PER_PIXEL, entity.rect.y );
 }
 
+void test_TileMap_GetPortal_ReturnsNullWhenNoPortals( void )
+{
+   Tile_t expectedTiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
+   TestTileMapData_t map = { 7, 2, 2, False, 0 };
+   TileMap_t* tileMap;
+
+   SetUpMapFixture( map, expectedTiles );
+   tileMap = LoadMap( 7 );
+
+   TEST_ASSERT_NULL( TileMap_GetPortal( tileMap, 0 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( tileMap, 1 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( tileMap, 2 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( tileMap, 3 ) );
+
+   TileMap_Free( tileMap, (MemArena_t*)1 );
+}
+
+void test_TileMap_GetPortal_ReturnsPortalAtSourceTileIndex( void )
+{
+   Tile_t tiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
+   TileMapPortal_t portals[1] = { { 2, 5, 10 } };
+   TestTileMap_t map = { { 1, 2, 2, False, 1 }, tiles, portals, 16, { 0 }, { 0 } };
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 2 ) );
+   TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetPortal( (TileMap_t*)&map, 2 )->sourceTileIndex );
+   TEST_ASSERT_EQUAL_UINT( 5, TileMap_GetPortal( (TileMap_t*)&map, 2 )->destinationTileMapId );
+   TEST_ASSERT_EQUAL_UINT( 10, TileMap_GetPortal( (TileMap_t*)&map, 2 )->destinationTileIndex );
+}
+
+void test_TileMap_GetPortal_ReturnsNullForNonPortalTile( void )
+{
+   Tile_t tiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
+   TileMapPortal_t portals[1] = { { 2, 5, 10 } };
+   TestTileMap_t map = { { 1, 2, 2, False, 1 }, tiles, portals, 16, { 0 }, { 0 } };
+
+   TEST_ASSERT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 0 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 1 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 3 ) );
+}
+
+void test_TileMap_GetPortal_FindsPortalAmongMultiple( void )
+{
+   Tile_t tiles[9] = { { 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 } };
+   TileMapPortal_t portals[3] = { 
+      { 0, 2, 5 }, 
+      { 4, 7, 8 }, 
+      { 8, 3, 12 } 
+   };
+   TestTileMap_t map = { { 1, 3, 3, False, 3 }, tiles, portals, 16, { 0 }, { 0 } };
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 0 ) );
+   TEST_ASSERT_EQUAL_UINT( 0, TileMap_GetPortal( (TileMap_t*)&map, 0 )->sourceTileIndex );
+   TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetPortal( (TileMap_t*)&map, 0 )->destinationTileMapId );
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 4 ) );
+   TEST_ASSERT_EQUAL_UINT( 4, TileMap_GetPortal( (TileMap_t*)&map, 4 )->sourceTileIndex );
+   TEST_ASSERT_EQUAL_UINT( 7, TileMap_GetPortal( (TileMap_t*)&map, 4 )->destinationTileMapId );
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 8 ) );
+   TEST_ASSERT_EQUAL_UINT( 8, TileMap_GetPortal( (TileMap_t*)&map, 8 )->sourceTileIndex );
+   TEST_ASSERT_EQUAL_UINT( 3, TileMap_GetPortal( (TileMap_t*)&map, 8 )->destinationTileMapId );
+}
+
+void test_TileMap_GetPortal_ReturnsFirstMatchWhenDuplicateSourceTiles( void )
+{
+   Tile_t tiles[6] = { { 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 } };
+   TileMapPortal_t portals[2] = { 
+      { 2, 7, 15 }, 
+      { 2, 8, 20 } 
+   };
+   TestTileMap_t map = { { 1, 3, 2, False, 2 }, tiles, portals, 16, { 0 }, { 0 } };
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 2 ) );
+   TEST_ASSERT_EQUAL_UINT( 7, TileMap_GetPortal( (TileMap_t*)&map, 2 )->destinationTileMapId );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
 
    RUN_TEST( test_Tile_Getters_ReturnTileProperties );
    RUN_TEST( test_Tile_Setters_UpdateTileProperties );
+   
+   RUN_TEST( test_TileMapPortal_GetStructSize_ReturnsNonZeroSize );
+   RUN_TEST( test_TileMapPortal_Getters_ReturnPortalProperties );
 
    RUN_TEST( test_TileMap_GetStructSize_ReturnsNonZeroSize );
 
@@ -409,6 +504,12 @@ int main( void )
    RUN_TEST( test_TileMap_GetTileIndexForEntity_WrapsCoordinates );
 
    RUN_TEST( test_TileMap_WrapEntityPosition_WrapsBothDirections );
+
+   RUN_TEST( test_TileMap_GetPortal_ReturnsNullWhenNoPortals );
+   RUN_TEST( test_TileMap_GetPortal_ReturnsPortalAtSourceTileIndex );
+   RUN_TEST( test_TileMap_GetPortal_ReturnsNullForNonPortalTile );
+   RUN_TEST( test_TileMap_GetPortal_FindsPortalAmongMultiple );
+   RUN_TEST( test_TileMap_GetPortal_ReturnsFirstMatchWhenDuplicateSourceTiles );
 
    return UNITY_END();
 }
