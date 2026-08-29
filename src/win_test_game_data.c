@@ -372,14 +372,22 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 10;
    curTileMap->info.tilesY = 10;
    curTileMap->info.wraps = False;
-   curTileMap->info.portalCount = 0;
 
-   curTileMap->portals = 0;
+   curTileMap->info.portalCount = 1;
+   curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
+   curTileMap->portals[0].sourceTileIndex = 74;
+   curTileMap->portals[0].destinationTileMapId = 2;
+   curTileMap->portals[0].destinationTileIndex = 0;
+
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
-      if ( ( i / curTileMap->info.tilesX ) % 2 == 0 )
+      if ( i == 74 )
+      {
+         curTileMap->tiles[i].textureIndex = 10; // portal tile
+      }
+      else if ( ( i / curTileMap->info.tilesX ) % 2 == 0 )
       {
          if ( ( i % curTileMap->info.tilesX ) % 2 == 0 )
          {
@@ -456,17 +464,30 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 128;
    curTileMap->info.tilesY = 128;
    curTileMap->info.wraps = False;
-   curTileMap->info.portalCount = 0;
 
-   curTileMap->portals = 0;
+   curTileMap->info.portalCount = 1;
+   curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
+   curTileMap->portals[0].sourceTileIndex = 2320;
+   curTileMap->portals[0].destinationTileMapId = 4;
+   curTileMap->portals[0].destinationTileIndex = 10000;
+
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
-      // random
-      index = Platform_Rand_u32Ranged( 0, 9 );
-      curTileMap->tiles[i].textureIndex = index;
-      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
+      if ( i == 2320 )
+      {
+         // portal
+         curTileMap->tiles[i].textureIndex = 10;
+         curTileMap->tiles[i].isPassable = True;
+      }
+      else
+      {
+         // random
+         index = Platform_Rand_u32Ranged( 0, 9 );
+         curTileMap->tiles[i].textureIndex = index;
+         curTileMap->tiles[i].isPassable = index == 7 ? False : True;
+      }
    }
 
    // 3: 3x3, no wrapping
@@ -475,13 +496,31 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 3;
    curTileMap->info.tilesY = 3;
    curTileMap->info.wraps = False;
-   curTileMap->info.portalCount = 0;
+   
+   curTileMap->info.portalCount = 2;
+   curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
+   curTileMap->portals[0].sourceTileIndex = 0;
+   curTileMap->portals[0].destinationTileMapId = 1;
+   curTileMap->portals[0].destinationTileIndex = 10000;
+   curTileMap->portals[1].sourceTileIndex = 2;
+   curTileMap->portals[1].destinationTileMapId = 1;
+   curTileMap->portals[1].destinationTileIndex = 5140;
+
    curTileMap->tiles = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
-      curTileMap->tiles[i].textureIndex = 1;
+      if ( i == 0 || i == 2 )
+      {
+         // portal
+         curTileMap->tiles[i].textureIndex = 10;
+      }
+      else
+      {
+         curTileMap->tiles[i].textureIndex = 1;
+      }
+
       curTileMap->tiles[i].isPassable = True;
    }
 
@@ -491,17 +530,30 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 256;
    curTileMap->info.tilesY = 256;
    curTileMap->info.wraps = False;
-   curTileMap->info.portalCount = 0;
+   
+   curTileMap->info.portalCount = 1;
+   curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
+   curTileMap->portals[0].sourceTileIndex = 1555;
+   curTileMap->portals[0].destinationTileMapId = 3;
+   curTileMap->portals[0].destinationTileIndex = 8;
 
-   curTileMap->portals = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
    for ( i = 0; i < curTileMap->info.tilesX * curTileMap->info.tilesY; i++ )
    {
-      // random
-      index = Platform_Rand_u32Ranged( 0, 9 );
-      curTileMap->tiles[i].textureIndex = index;
-      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
+      if ( i == 1555 )
+      {
+         // portal
+         curTileMap->tiles[i].textureIndex = 10;
+         curTileMap->tiles[i].isPassable = True;
+      }
+      else
+      {
+         // random
+         index = Platform_Rand_u32Ranged( 0, 9 );
+         curTileMap->tiles[i].textureIndex = index;
+         curTileMap->tiles[i].isPassable = index == 7 ? False : True;
+      }
    }
 
    return tileMaps;
@@ -683,7 +735,7 @@ internal b32 WriteTestGameDataActiveSpriteTextureSet( HANDLE hFile, DWORD* fileP
 
 internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMock_t* tileMaps, u32 tileMapCount )
 {
-   u32 i, j, tileAccum;
+   u32 i, j, tileAccum, portalAccum;
    DWORD bytesWritten;
    BOOL result;
    TileMock_t* tile;
@@ -707,14 +759,17 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
 
    offsets = (GameDataObjectOffset_t*)malloc( tileMapCount * sizeof( GameDataObjectOffset_t ) );
    tileAccum = 0;
+   portalAccum = 0;
    for ( i = 0; i < tileMapCount; i++ )
    {
       offsets[i].id = tileMaps[i].info.id;
       offsets[i].offset = sizeof( u32 )
          + ( tileMapCount * sizeof( GameDataObjectOffset_t ) )
          + ( i * sizeof( TileMapInfoMock_t ) )
-         + ( tileAccum * sizeof( TileMock_t ) );
+         + ( tileAccum * sizeof( TileMock_t ) )
+         + ( portalAccum * sizeof( TileMapPortalMock_t ) );
       tileAccum += tileMaps[i].info.tilesX * tileMaps[i].info.tilesY;
+      portalAccum += tileMaps[i].info.portalCount;
    }
 
    result = WriteFile( hFile, offsets, tileMapCount * sizeof( GameDataObjectOffset_t ), &bytesWritten, NULL );
