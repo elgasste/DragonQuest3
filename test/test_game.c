@@ -49,6 +49,12 @@ global Vector4i32_t g_anchorViewport;
 global i32 g_anchorX;
 global i32 g_anchorY;
 global u32 g_anchorTileSize;
+global u32 g_tileMapGetPortalCount;
+global TileMapPortal_t* g_testPortal;
+global u32 g_tileMapId;
+global u32 g_tileMapCenterEntityCount;
+global void (*g_playerEntityTileIndexChangedCallback)( void* receiver, u32 oldTileIndex, u32 newTileIndex );
+global void* g_playerEntityTileIndexChangedReceiver;
 
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
@@ -162,7 +168,17 @@ void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
 
 void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
 {
+   u32 oldTileIndex = entity->tileIndex;
    entity->tileIndex = tileIndex;
+   if ( g_playerEntityTileIndexChangedCallback && entity == g_playerEntity )
+   {
+      g_playerEntityTileIndexChangedCallback( g_playerEntityTileIndexChangedReceiver, oldTileIndex, tileIndex );
+   }
+}
+
+u32 Entity_GetTileIndex( Entity_t* entity )
+{
+   return entity->tileIndex;
 }
 
 ActiveSprite_t* Entity_GetSprite( Entity_t* entity )
@@ -189,8 +205,8 @@ void Entity_SetSpriteOffset( Entity_t* entity, i32 offsetX, i32 offsetY )
 void Entity_SetOnTileIndexChanged( Entity_t* entity, void* receiver, void (*onTileIndexChanged)( void* receiver, u32 oldTileIndex, u32 newTileIndex ) )
 {
    UNUSED_PARAM( entity );
-   UNUSED_PARAM( receiver );
-   UNUSED_PARAM( onTileIndexChanged );
+   g_playerEntityTileIndexChangedReceiver = receiver;
+   g_playerEntityTileIndexChangedCallback = onTileIndexChanged;
 }
 
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
@@ -329,6 +345,7 @@ u32 TileMap_GetTilesX( TileMap_t* tileMap )
 void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )
 {
    UNUSED_PARAM( tileMap );
+   g_tileMapCenterEntityCount++;
    Entity_SetPosition( entity, 100 * WORLD_UNITS_PER_PIXEL, 100 * WORLD_UNITS_PER_PIXEL );
    Entity_SetTileIndex( entity, tileIndex );
 }
@@ -337,7 +354,24 @@ TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 tileIndex )
 {
    UNUSED_PARAM( tileMap );
    UNUSED_PARAM( tileIndex );
-   return 0;
+   g_tileMapGetPortalCount++;
+   return g_testPortal;
+}
+
+u32 TileMap_GetId( TileMap_t* tileMap )
+{
+   UNUSED_PARAM( tileMap );
+   return g_tileMapId;
+}
+
+u32 TileMapPortal_GetDestinationTileMapId( TileMapPortal_t* portal )
+{
+   return portal->destinationTileMapId;
+}
+
+u32 TileMapPortal_GetDestinationTileIndex( TileMapPortal_t* portal )
+{
+   return portal->destinationTileIndex;
 }
 
 void Platform_HandleMessages( Game_t* game )
@@ -392,6 +426,12 @@ void setUp( void )
    g_gameDataFreeCount = 0;
    g_displayFreeCount = 0;
    g_entityFreeCount = 0;
+   g_tileMapGetPortalCount = 0;
+   g_testPortal = 0;
+   g_tileMapId = 1;
+   g_tileMapCenterEntityCount = 0;
+   g_playerEntityTileIndexChangedCallback = 0;
+   g_playerEntityTileIndexChangedReceiver = 0;
 }
 
 void tearDown( void ) {}
@@ -500,6 +540,31 @@ void test_Game_Free_ReleasesAllDependencies( void )
    TEST_ASSERT_EQUAL_UINT( 10, g_freeCount );
 }
 
+void test_Game_OnPlayerTileIndexChanged_DoesNothingWhenNoPortal( void )
+{
+   Game_t* game = CreateGame();
+   g_testPortal = 0;
+   g_tileMapGetPortalCount = 0;
+
+   Entity_SetTileIndex( Game_GetPlayerEntity( game ), 10 );
+
+   TEST_ASSERT_EQUAL_UINT( 1, g_tileMapGetPortalCount );
+   TEST_ASSERT_EQUAL_UINT( 10, Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_OnPlayerTileIndexChanged_CallbackIsTriggeredOnTileChange( void )
+{
+   Game_t* game = CreateGame();
+
+   Entity_SetTileIndex( Game_GetPlayerEntity( game ), 10 );
+
+   TEST_ASSERT_EQUAL_UINT( 10, Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -514,6 +579,9 @@ int main( void )
    RUN_TEST( test_Game_Run_TicsPlayerSpriteWithClockFrameDuration );
    
    RUN_TEST( test_Game_Free_ReleasesAllDependencies );
+
+   RUN_TEST( test_Game_OnPlayerTileIndexChanged_DoesNothingWhenNoPortal );
+   RUN_TEST( test_Game_OnPlayerTileIndexChanged_CallbackIsTriggeredOnTileChange );
 
    return UNITY_END();
 }
