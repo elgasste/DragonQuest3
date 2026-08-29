@@ -189,9 +189,10 @@ internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u
 
 internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
 {
-   u32 destinationTileMapId;
+   u32 destinationTileMapId, destinationTileIndex;
 
    destinationTileMapId = TileMapPortal_GetDestinationTileMapId( portal );
+   destinationTileIndex = TileMapPortal_GetDestinationTileIndex( portal );
 
    if ( destinationTileMapId != TileMap_GetId( game->tileMap ) )
    {
@@ -201,5 +202,5 @@ internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
       TileMap_SetViewportInUnits( game->tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
    }
 
-   TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, TileMapPortal_GetDestinationTileIndex( portal ) );
+   TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, destinationTileIndex );
 }

@@ -290,6 +290,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameDat
    UNUSED_PARAM( gameData );
    UNUSED_PARAM( tileSizePixels );
    g_tileMap = (TileMap_t*)MemArena_AllocMem( memArena, sizeof( TileMap_t ) );
+   g_tileMapId = tileMapId;
    g_tileMap->info.tilesX = tileMapId;
    g_tileMap->info.tilesY = tileMapId;
    g_tileMap->tiles = 0;
@@ -353,9 +354,14 @@ void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileI
 TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 tileIndex )
 {
    UNUSED_PARAM( tileMap );
-   UNUSED_PARAM( tileIndex );
    g_tileMapGetPortalCount++;
-   return g_testPortal;
+
+   if ( g_testPortal && g_testPortal->sourceTileIndex == tileIndex )
+   {
+      return g_testPortal;
+   }
+
+   return 0;
 }
 
 u32 TileMap_GetId( TileMap_t* tileMap )
@@ -565,6 +571,50 @@ void test_Game_OnPlayerTileIndexChanged_CallbackIsTriggeredOnTileChange( void )
    Game_Free( game, (MemArena_t*)1 );
 }
 
+void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapIsUnchanged( void )
+{
+   Game_t* game = CreateGame();
+   TileMapPortal_t portal = { 20, 1, 13 };
+
+   g_tileMapGetPortalCount = 0;
+   g_tileMapCenterEntityCount = 0;
+   g_tileMapFreeCount = 0;
+   g_testPortal = &portal;
+   g_tileMapId = 1;
+
+   Entity_SetTileIndex( Game_GetPlayerEntity( game ), 20 );
+
+   TEST_ASSERT_EQUAL_UINT( 2, g_tileMapGetPortalCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_tileMapCenterEntityCount );
+   TEST_ASSERT_EQUAL_UINT( 0, g_tileMapFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 1, TileMap_GetId( Game_GetTileMap( game ) ) );
+   TEST_ASSERT_EQUAL_UINT( 13, Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapChanges( void )
+{
+   Game_t* game = CreateGame();
+   TileMapPortal_t portal = { 20, 2, 24 };
+
+   g_tileMapGetPortalCount = 0;
+   g_tileMapCenterEntityCount = 0;
+   g_tileMapFreeCount = 0;
+   g_testPortal = &portal;
+   g_tileMapId = 1;
+
+   Entity_SetTileIndex( Game_GetPlayerEntity( game ), 20 );
+
+   TEST_ASSERT_EQUAL_UINT( 2, g_tileMapGetPortalCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_tileMapCenterEntityCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_tileMapFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetId( Game_GetTileMap( game ) ) );
+   TEST_ASSERT_EQUAL_UINT( 24, Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -582,6 +632,8 @@ int main( void )
 
    RUN_TEST( test_Game_OnPlayerTileIndexChanged_DoesNothingWhenNoPortal );
    RUN_TEST( test_Game_OnPlayerTileIndexChanged_CallbackIsTriggeredOnTileChange );
+   RUN_TEST( test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapIsUnchanged );
+   RUN_TEST( test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapChanges );
 
    return UNITY_END();
 }
