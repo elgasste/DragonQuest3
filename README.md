@@ -90,6 +90,8 @@ In Windows, these keys are bound to the following operations:
 - `ctrl + s + down-arrow`: decrease the graphics scale in increments of 0.5x, down to 0.5x.
 - `ctrl + f + up-arrow`: increase the game's frame rate in increments of 15 FPS, up to 120 FPS.
 - `ctrl + f + down-arrow`: decrease the game's frame rate in increments of 15 FPS, down to 15 FPS.
+- `1`: toggle no-clip mode
+- `2`: toggle showing entity hit boxes
 
 The default values for these settings are as follows:
 
