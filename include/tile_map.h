@@ -48,7 +48,7 @@ u32 TileMap_GetTilesY( TileMap_t* tileMap );
 b32 TileMap_GetWraps( TileMap_t* tileMap );
 u32 TileMap_GetPortalCount( TileMap_t* tileMap );
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex );
-TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 portalIndex );
+TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 tileIndex );
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap );
 Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap );
 

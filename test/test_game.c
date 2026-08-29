@@ -186,6 +186,13 @@ void Entity_SetSpriteOffset( Entity_t* entity, i32 offsetX, i32 offsetY )
    entity->spriteOffset.y = offsetY;
 }
 
+void Entity_SetOnTileIndexChanged( Entity_t* entity, void* receiver, void (*onTileIndexChanged)( void* receiver, u32 oldTileIndex, u32 newTileIndex ) )
+{
+   UNUSED_PARAM( entity );
+   UNUSED_PARAM( receiver );
+   UNUSED_PARAM( onTileIndexChanged );
+}
+
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
 {
    UNUSED_PARAM( filePath );
@@ -324,6 +331,13 @@ void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileI
    UNUSED_PARAM( tileMap );
    Entity_SetPosition( entity, 100 * WORLD_UNITS_PER_PIXEL, 100 * WORLD_UNITS_PER_PIXEL );
    Entity_SetTileIndex( entity, tileIndex );
+}
+
+TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 tileIndex )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( tileIndex );
+   return 0;
 }
 
 void Platform_HandleMessages( Game_t* game )

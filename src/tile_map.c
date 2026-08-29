@@ -191,6 +191,24 @@ Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
    return (Tile_t*)( (u8*)tileMap->tiles + tileIndex * sizeof( Tile_t ) );
 }
 
+TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 tileIndex )
+{
+   u32 i;
+   TileMapPortal_t* portal;
+   
+   for ( i = 0; i < tileMap->info.portalCount; i++ )
+   {
+      portal = &tileMap->portals[i];
+      
+      if ( portal->sourceTileIndex == tileIndex )
+      {
+         return portal;
+      }
+   }
+
+   return 0;
+}
+
 Vector4i32_t TileMap_GetViewportInUnits( TileMap_t* tileMap )
 {
    return tileMap->viewportInUnits;

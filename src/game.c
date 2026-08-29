@@ -32,6 +32,7 @@ struct Game_t
 };
 
 internal void Game_Tic( Game_t* game );
+internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex );
 
 size_t Game_GetStructSize( void )
 {
@@ -62,6 +63,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    Entity_SetVelocity( game->playerEntity, 0, 0 );
    Entity_SetSprite( game->playerEntity, game->playerSprite );
    Entity_SetSpriteOffset( game->playerEntity, -2, -2 );
+   Entity_SetOnTileIndexChanged( game->playerEntity, game, Game_OnPlayerTileIndexChanged );
 
    TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
 
@@ -168,4 +170,18 @@ internal void Game_Tic( Game_t* game )
    Game_TicPhysics( game );
    ActiveSprite_Tic( game->playerSprite, deltaSec );
    TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity );
+}
+
+internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex )
+{
+   TileMapPortal_t* portal;
+   Game_t* game = (Game_t*)receiver;
+
+   UNUSED_PARAM( oldTileIndex );
+
+   portal = TileMap_GetPortal( game->tileMap, newTileIndex );
+   if ( portal )
+   {
+      // TODO: actually teleport
+   }
 }

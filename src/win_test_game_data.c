@@ -47,6 +47,7 @@ typedef struct TileMock_t
 }
 TileMock_t;
 
+PACKED_STRUCT
 typedef struct TileMapPortalMock_t
 {
    u32 sourceTileIndex;
@@ -54,6 +55,7 @@ typedef struct TileMapPortalMock_t
    u32 destinationTileIndex;
 }
 TileMapPortalMock_t;
+END_PACKED_STRUCT
 
 typedef struct TileMapInfoMock_t
 {
@@ -473,6 +475,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.tilesX = 3;
    curTileMap->info.tilesY = 3;
    curTileMap->info.wraps = False;
+   curTileMap->info.portalCount = 0;
    curTileMap->tiles = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -684,6 +687,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
    DWORD bytesWritten;
    BOOL result;
    TileMock_t* tile;
+   TileMapPortalMock_t* portal;
    GameDataObjectOffset_t* offsets;
 
    bytesWritten = 0;
@@ -759,6 +763,26 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
          else if ( bytesWritten != sizeof( TileMock_t ) )
          {
             Platform_FatalError( "failed to write test game data file tile maps: wrote incorrect number of bytes." );
+            return False;
+         }
+      }
+
+      for ( j = 0; j < tileMaps[i].info.portalCount; j++ )
+      {
+         portal = &( tileMaps[i].portals[j] );
+         
+         bytesWritten = 0;
+         result = WriteFile( hFile, portal, sizeof( TileMapPortalMock_t ), &bytesWritten, NULL );
+         *filePos += bytesWritten;
+
+         if ( !result )
+         {
+            Platform_FatalError( "failed to write test game data file tile map portals." );
+            return False;
+         }
+         else if ( bytesWritten != sizeof( TileMapPortalMock_t ) )
+         {
+            Platform_FatalError( "failed to write test game data file tile map portals: wrote incorrect number of bytes." );
             return False;
          }
       }

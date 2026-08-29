@@ -35,11 +35,10 @@ void setUp( void )
    g_newTileIndex = 0;
 }
 
-void OnTileIndexChanged( Entity_t* entity, void* receiver, u32 oldTileIndex, u32 newTileIndex )
+void OnTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex )
 {
    UNUSED_PARAM( receiver );
    g_tileIndexChangedCount++;
-   g_tileIndexChangedEntity = entity;
    g_oldTileIndex = oldTileIndex;
    g_newTileIndex = newTileIndex;
 }
@@ -199,7 +198,6 @@ void test_Entity_SetOnTileIndexChanged_NotifiesCallbackWithTileIndices( void )
    Entity_SetTileIndex( entity, 7 );
 
    TEST_ASSERT_EQUAL_UINT( 1, g_tileIndexChangedCount );
-   TEST_ASSERT_EQUAL_PTR( entity, g_tileIndexChangedEntity );
    TEST_ASSERT_EQUAL_UINT( 0, g_oldTileIndex );
    TEST_ASSERT_EQUAL_UINT( 7, g_newTileIndex );
    TEST_ASSERT_EQUAL_UINT( 7, Entity_GetTileIndex( entity ) );
