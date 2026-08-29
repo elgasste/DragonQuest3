@@ -391,6 +391,82 @@ void test_TileMap_WrapEntityPosition_WrapsBothDirections( void )
    TEST_ASSERT_EQUAL_INT( 32 * WORLD_UNITS_PER_PIXEL, entity.rect.y );
 }
 
+void test_TileMap_GetPortal_ReturnsNullWhenNoPortals( void )
+{
+   Tile_t expectedTiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
+   TestTileMapData_t map = { 7, 2, 2, False, 0 };
+   TileMap_t* tileMap;
+
+   SetUpMapFixture( map, expectedTiles );
+   tileMap = LoadMap( 7 );
+
+   TEST_ASSERT_NULL( TileMap_GetPortal( tileMap, 0 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( tileMap, 1 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( tileMap, 2 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( tileMap, 3 ) );
+
+   TileMap_Free( tileMap, (MemArena_t*)1 );
+}
+
+void test_TileMap_GetPortal_ReturnsPortalAtSourceTileIndex( void )
+{
+   Tile_t tiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
+   TileMapPortal_t portals[1] = { { 2, 5, 10 } };
+   TestTileMap_t map = { { 1, 2, 2, False, 1 }, tiles, portals, 16, { 0 }, { 0 } };
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 2 ) );
+   TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetPortal( (TileMap_t*)&map, 2 )->sourceTileIndex );
+   TEST_ASSERT_EQUAL_UINT( 5, TileMap_GetPortal( (TileMap_t*)&map, 2 )->destinationTileMapId );
+   TEST_ASSERT_EQUAL_UINT( 10, TileMap_GetPortal( (TileMap_t*)&map, 2 )->destinationTileIndex );
+}
+
+void test_TileMap_GetPortal_ReturnsNullForNonPortalTile( void )
+{
+   Tile_t tiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
+   TileMapPortal_t portals[1] = { { 2, 5, 10 } };
+   TestTileMap_t map = { { 1, 2, 2, False, 1 }, tiles, portals, 16, { 0 }, { 0 } };
+
+   TEST_ASSERT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 0 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 1 ) );
+   TEST_ASSERT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 3 ) );
+}
+
+void test_TileMap_GetPortal_FindsPortalAmongMultiple( void )
+{
+   Tile_t tiles[9] = { { 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 } };
+   TileMapPortal_t portals[3] = { 
+      { 0, 2, 5 }, 
+      { 4, 7, 8 }, 
+      { 8, 3, 12 } 
+   };
+   TestTileMap_t map = { { 1, 3, 3, False, 3 }, tiles, portals, 16, { 0 }, { 0 } };
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 0 ) );
+   TEST_ASSERT_EQUAL_UINT( 0, TileMap_GetPortal( (TileMap_t*)&map, 0 )->sourceTileIndex );
+   TEST_ASSERT_EQUAL_UINT( 2, TileMap_GetPortal( (TileMap_t*)&map, 0 )->destinationTileMapId );
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 4 ) );
+   TEST_ASSERT_EQUAL_UINT( 4, TileMap_GetPortal( (TileMap_t*)&map, 4 )->sourceTileIndex );
+   TEST_ASSERT_EQUAL_UINT( 7, TileMap_GetPortal( (TileMap_t*)&map, 4 )->destinationTileMapId );
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 8 ) );
+   TEST_ASSERT_EQUAL_UINT( 8, TileMap_GetPortal( (TileMap_t*)&map, 8 )->sourceTileIndex );
+   TEST_ASSERT_EQUAL_UINT( 3, TileMap_GetPortal( (TileMap_t*)&map, 8 )->destinationTileMapId );
+}
+
+void test_TileMap_GetPortal_ReturnsFirstMatchWhenDuplicateSourceTiles( void )
+{
+   Tile_t tiles[6] = { { 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 } };
+   TileMapPortal_t portals[2] = { 
+      { 2, 7, 15 }, 
+      { 2, 8, 20 } 
+   };
+   TestTileMap_t map = { { 1, 3, 2, False, 2 }, tiles, portals, 16, { 0 }, { 0 } };
+
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( (TileMap_t*)&map, 2 ) );
+   TEST_ASSERT_EQUAL_UINT( 7, TileMap_GetPortal( (TileMap_t*)&map, 2 )->destinationTileMapId );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -428,6 +504,12 @@ int main( void )
    RUN_TEST( test_TileMap_GetTileIndexForEntity_WrapsCoordinates );
 
    RUN_TEST( test_TileMap_WrapEntityPosition_WrapsBothDirections );
+
+   RUN_TEST( test_TileMap_GetPortal_ReturnsNullWhenNoPortals );
+   RUN_TEST( test_TileMap_GetPortal_ReturnsPortalAtSourceTileIndex );
+   RUN_TEST( test_TileMap_GetPortal_ReturnsNullForNonPortalTile );
+   RUN_TEST( test_TileMap_GetPortal_FindsPortalAmongMultiple );
+   RUN_TEST( test_TileMap_GetPortal_ReturnsFirstMatchWhenDuplicateSourceTiles );
 
    return UNITY_END();
 }
