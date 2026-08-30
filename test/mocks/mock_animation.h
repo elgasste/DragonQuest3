@@ -1,0 +1,21 @@
+#if !defined( MOCK_ANIMATION_H )
+#define MOCK_ANIMATION_H
+
+#include "../../include/animation.h"
+
+typedef struct Animation_t
+{
+   AnimationType_t type;
+   r32 duration;
+   r32 elapsed;
+}
+Animation_t;
+
+typedef struct AnimationChain_t
+{
+   Animation_t* animations;
+   u32 maxAnimations;
+}
+AnimationChain_t;
+
+#endif // MOCK_ANIMATION_H

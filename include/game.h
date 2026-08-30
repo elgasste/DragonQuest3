@@ -15,6 +15,7 @@
 #define GAME_DEFAULT_FPS   60
 
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
+typedef struct AnimationChain_t AnimationChain_t;
 typedef struct Clock_t Clock_t;
 typedef struct Display_t Display_t;
 typedef struct Entity_t Entity_t;

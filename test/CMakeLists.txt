@@ -19,6 +19,12 @@ add_executable(Test_Entity
    test_entity.c
 )
 
+add_executable(Test_Animation
+   ../src/animation.c
+   vendor/unity.c
+   test_animation.c
+)
+
 add_executable(Test_Game
    ../src/game.c
    vendor/unity.c
@@ -89,6 +95,7 @@ add_executable(Test_Utility
 set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Display PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Entity PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Animation PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Physics PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Data PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -105,6 +112,7 @@ if(MSVC)
    add_compile_options(/wd4201)
    target_compile_options(Test_Clock PRIVATE /W4)
    target_compile_options(Test_Entity PRIVATE /W4)
+   target_compile_options(Test_Animation PRIVATE /W4)
    target_compile_options(Test_Display PRIVATE /W4)
    target_compile_options(Test_Game PRIVATE /W4)
    target_compile_options(Test_Game_Physics PRIVATE /W4 /wd4201)
@@ -118,6 +126,10 @@ if(MSVC)
    target_compile_options(Test_TileMap PRIVATE /W4)
    target_compile_options(Test_Utility PRIVATE /W4)
 endif()
+
+target_include_directories(Test_Animation PRIVATE vendor)
+target_include_directories(Test_Animation PRIVATE ../include)
+target_include_directories(Test_Animation PRIVATE ../src)
 
 target_include_directories(Test_Clock PRIVATE vendor)
 target_include_directories(Test_Clock PRIVATE ../include)
@@ -180,12 +192,13 @@ target_include_directories(Test_Utility PRIVATE vendor)
 target_include_directories(Test_Utility PRIVATE ../include)
 target_include_directories(Test_Utility PRIVATE ../src)
 
+add_test( NAME Unity_Animation_Tests COMMAND Test_Animation)
 add_test( NAME Unity_Clock_Tests COMMAND Test_Clock)
 add_test( NAME Unity_Display_Tests COMMAND Test_Display)
 add_test( NAME Unity_Entity_Tests COMMAND Test_Entity)
 add_test( NAME Unity_Game_Tests COMMAND Test_Game)
-add_test( NAME Unity_Game_Physics_Tests COMMAND Test_Game_Physics)
 add_test( NAME Unity_Game_Data_Tests COMMAND Test_Game_Data)
+add_test( NAME Unity_Game_Physics_Tests COMMAND Test_Game_Physics)
 add_test( NAME Unity_Game_Render_Tests COMMAND Test_Game_Render)
 add_test( NAME Unity_Input_Tests COMMAND Test_Input)
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)

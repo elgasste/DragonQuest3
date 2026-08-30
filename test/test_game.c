@@ -1,4 +1,5 @@
 #include "mocks/mock_clock.h"
+#include "mocks/mock_animation.h"
 #include "mocks/mock_display.h"
 #include "mocks/mock_entity.h"
 #include "mocks/mock_game_data.h"
@@ -10,6 +11,7 @@
 
 #include <stdlib.h>
 
+#include "animation.h"
 #include "game.h"
 #include "sprite.h"
 #include "unity.h"
@@ -33,6 +35,7 @@ global u32 g_activeSpriteTextureSetFreeCount;
 global u32 g_gameDataFreeCount;
 global u32 g_displayFreeCount;
 global u32 g_entityFreeCount;
+global u32 g_animationChainFreeCount;
 global Clock_t* g_clock;
 global Input_t* g_input;
 global Display_t* g_display;
@@ -53,6 +56,7 @@ global u32 g_tileMapGetPortalCount;
 global TileMapPortal_t* g_testPortal;
 global u32 g_tileMapId;
 global u32 g_tileMapCenterEntityCount;
+global AnimationChain_t* g_animationChain;
 global void (*g_playerEntityTileIndexChangedCallback)( void* receiver, u32 oldTileIndex, u32 newTileIndex );
 global void* g_playerEntityTileIndexChangedReceiver;
 
@@ -380,6 +384,21 @@ u32 TileMapPortal_GetDestinationTileIndex( TileMapPortal_t* portal )
    return portal->destinationTileIndex;
 }
 
+AnimationChain_t* AnimationChain_Create( MemArena_t* memArena, u32 maxAnimations )
+{
+   g_animationChain = (AnimationChain_t*)MemArena_AllocMem( memArena, sizeof( AnimationChain_t ) );
+   g_animationChain->animations = (Animation_t*)MemArena_AllocMem( memArena, sizeof( Animation_t ) * maxAnimations );
+   g_animationChain->maxAnimations = maxAnimations;
+   return g_animationChain;
+}
+
+void AnimationChain_Free( AnimationChain_t* chain, MemArena_t* memArena )
+{
+   MemArena_FreeMem( memArena, chain->animations );
+   MemArena_FreeMem( memArena, chain );
+   g_animationChainFreeCount++;
+}
+
 void Platform_HandleMessages( Game_t* game )
 {
    g_platformHandleMessagesCount++;
@@ -432,6 +451,7 @@ void setUp( void )
    g_gameDataFreeCount = 0;
    g_displayFreeCount = 0;
    g_entityFreeCount = 0;
+   g_animationChainFreeCount = 0;
    g_tileMapGetPortalCount = 0;
    g_testPortal = 0;
    g_tileMapId = 1;
@@ -461,6 +481,8 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_PTR( g_tileTextureSet, Game_GetTileTextureSet( game ) );
    TEST_ASSERT_EQUAL_PTR( g_activeSpriteTextureSet, Game_GetActiveSpriteTextureSet( game ) );
    TEST_ASSERT_EQUAL_PTR( g_tileMap, Game_GetTileMap( game ) );
+   TEST_ASSERT_NOT_NULL( g_animationChain );
+   TEST_ASSERT_EQUAL_UINT( 32, g_animationChain->maxAnimations );
 
    viewportInUnits = TileMap_GetViewportInUnits( Game_GetTileMap( game ) );
    TEST_ASSERT_EQUAL_INT( 0, viewportInUnits.x );
@@ -543,7 +565,8 @@ void test_Game_Free_ReleasesAllDependencies( void )
    TEST_ASSERT_EQUAL_UINT( 1, g_tileTextureSetFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_activeSpriteTextureSetFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_entityFreeCount );
-   TEST_ASSERT_EQUAL_UINT( 10, g_freeCount );
+   TEST_ASSERT_EQUAL_UINT( 1, g_animationChainFreeCount );
+   TEST_ASSERT_EQUAL_UINT( 12, g_freeCount );
 }
 
 void test_Game_OnPlayerTileIndexChanged_DoesNothingWhenNoPortal( void )

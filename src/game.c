@@ -1,3 +1,4 @@
+#include "animation.h"
 #include "clock.h"
 #include "display.h"
 #include "entity.h"
@@ -23,6 +24,7 @@ struct Game_t
    ActiveSpriteTextureSet_t* activeSpriteTextureSet;
 
    TileMap_t *tileMap;
+   AnimationChain_t* animationChain;
 
    // TODO: this is the player, temporarily
    ActiveSprite_t* playerSprite;
@@ -56,6 +58,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
 
    // TODO: temporary, everything from here down will come from the game data file.
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   game->animationChain = AnimationChain_Create( memArena, 32 );
 
    game->playerSprite = ActiveSprite_Create( game->memArena, game->activeSpriteTextureSet );
    ActiveSprite_SetTextureIndex( game->playerSprite, 1 );
@@ -85,6 +88,7 @@ void Game_Free( Game_t* game, MemArena_t* memArena )
    {
       TileMap_Free( game->tileMap, memArena );
    }
+   AnimationChain_Free( game->animationChain, memArena );
 
    TileTextureSet_Free( game->tileTextureSet, memArena );
    ActiveSpriteTextureSet_Free( game->activeSpriteTextureSet, memArena );
