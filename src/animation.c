@@ -10,8 +10,9 @@ struct Animation_t
     r32 duration;
     r32 elapsed;
 
-    void (*finishedCallback)( void* callbackData );
-    void* callbackData;
+    void (*finishedCallback)( void* callbackData1, void* callbackData2 );
+    void* callbackData1;
+    void* callbackData2;
 };
 
 size_t Animation_GetStructSize( void )
@@ -34,8 +35,9 @@ struct AnimationChain_t
    u32 curAnimation;
    r32 isRunning;
 
-   void (*finishedCallback)( void* callbackData );
-   void* callbackData;
+   void (*finishedCallback)( void* callbackData1, void* callbackData2 );
+   void* callbackData1;
+   void* callbackData2;
 };
 
 size_t AnimationChain_GetStructSize( void )
@@ -79,10 +81,11 @@ void AnimationChain_Reset( AnimationChain_t* chain )
    chain->curAnimation = 0;
    chain->isRunning = False;
    chain->finishedCallback = 0;
-   chain->callbackData = 0;
+   chain->callbackData1 = 0;
+   chain->callbackData2 = 0;
 }
 
-void AnimationChain_Push( AnimationChain_t* chain, AnimationType_t type, r32 duration, void (*finishedCallback)( void* callbackData ), void* callbackData )
+void AnimationChain_Push( AnimationChain_t* chain, AnimationType_t type, r32 duration, void (*finishedCallback)( void* callbackData1, void* callbackData2 ), void* callbackData1, void* callbackData2 )
 {
    Animation_t* anim;
 
@@ -97,15 +100,17 @@ void AnimationChain_Push( AnimationChain_t* chain, AnimationType_t type, r32 dur
    anim->duration = duration;
    anim->elapsed = 0.0f;
    anim->finishedCallback = finishedCallback;
-   anim->callbackData = callbackData;
+   anim->callbackData1 = callbackData1;
+   anim->callbackData2 = callbackData2;
    chain->count++;
 }
 
-void AnimationChain_Start( AnimationChain_t* chain, void (*finishedCallback)( void* callbackData ), void* callbackData )
+void AnimationChain_Start( AnimationChain_t* chain, void (*finishedCallback)( void* callbackData1, void* callbackData2 ), void* callbackData1, void* callbackData2 )
 {
    chain->isRunning = True;
    chain->finishedCallback = finishedCallback;
-   chain->callbackData = callbackData;
+   chain->callbackData1 = callbackData1;
+   chain->callbackData2 = callbackData2;
 }
 
 void AnimationChain_Tic( AnimationChain_t* chain, r32 deltaTime )
@@ -130,7 +135,7 @@ void AnimationChain_Tic( AnimationChain_t* chain, r32 deltaTime )
    {
       if ( anim->finishedCallback )
       {
-         anim->finishedCallback( anim->callbackData );
+         anim->finishedCallback( anim->callbackData1, anim->callbackData2 );
       }
 
       chain->curAnimation++;
@@ -140,7 +145,7 @@ void AnimationChain_Tic( AnimationChain_t* chain, r32 deltaTime )
          chain->isRunning = False;
          if ( chain->finishedCallback )
          {
-            chain->finishedCallback( chain->callbackData );
+            chain->finishedCallback( chain->callbackData1, chain->callbackData2 );
          }
       }
    }

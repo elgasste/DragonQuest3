@@ -154,7 +154,6 @@ void Game_Run( Game_t* game )
       Clock_StartFrame( game->clock );
       Input_ResetPressStates( game->input );
       Platform_HandleMessages( game );
-      Game_HandleInput( game );
       Game_Tic( game );
       Game_Render( game );
       Clock_EndFrame( game->clock );
@@ -172,7 +171,16 @@ internal void Game_Tic( Game_t* game )
 
    deltaSec = Clock_GetFrameSec( game->clock );
    
-   Game_TicPhysics( game );
+   if ( AnimationChain_GetIsRunning( game->animationChain ) )
+   {
+      AnimationChain_Tic( game->animationChain, deltaSec );
+   }
+   else
+   {
+      Game_HandleInput( game );
+      Game_TicPhysics( game );
+   }
+
    ActiveSprite_Tic( game->playerSprite, deltaSec );
    TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity );
 }
@@ -187,7 +195,11 @@ internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u
    portal = TileMap_GetPortal( game->tileMap, newTileIndex );
    if ( portal )
    {
-      Game_EnterPortal( game, portal );
+      AnimationChain_Reset( game->animationChain );
+      AnimationChain_Push( game->animationChain, AnimationType_FadeOut, 0.5f, Game_EnterPortal, game, portal );
+      AnimationChain_Push( game->animationChain, AnimationType_Pause, 0.2f, 0, 0, 0 );
+      AnimationChain_Push( game->animationChain, AnimationType_FadeIn, 0.5f, 0, 0, 0 );
+      AnimationChain_Start( game->animationChain, 0, 0, 0 );
    }
 }
 

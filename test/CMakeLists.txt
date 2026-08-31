@@ -86,6 +86,12 @@ add_executable(Test_TileMap
    test_tile_map.c
 )
 
+add_executable(Test_Tile_Texture_Set
+   ../src/tile_texture_set.c
+   vendor/unity.c
+   test_tile_texture_set.c
+)
+
 add_executable(Test_Utility
    ../src/utility.c
    vendor/unity.c
@@ -106,6 +112,7 @@ set_property(TARGET Test_PixelBuffer PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Sprite PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Sprite_Texture_Set PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_TileMap PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Tile_Texture_Set PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Utility PROPERTY COMPILE_WARNING_AS_ERROR ON)
 
 if(MSVC)
@@ -124,6 +131,7 @@ if(MSVC)
    target_compile_options(Test_Sprite PRIVATE /W4)
    target_compile_options(Test_Sprite_Texture_Set PRIVATE /W4)
    target_compile_options(Test_TileMap PRIVATE /W4)
+   target_compile_options(Test_Tile_Texture_Set PRIVATE /W4)
    target_compile_options(Test_Utility PRIVATE /W4)
 endif()
 
@@ -188,6 +196,11 @@ target_include_directories(Test_TileMap PRIVATE mocks)
 target_include_directories(Test_TileMap PRIVATE ../include)
 target_include_directories(Test_TileMap PRIVATE ../src)
 
+target_include_directories(Test_Tile_Texture_Set PRIVATE vendor)
+target_include_directories(Test_Tile_Texture_Set PRIVATE mocks)
+target_include_directories(Test_Tile_Texture_Set PRIVATE ../include)
+target_include_directories(Test_Tile_Texture_Set PRIVATE ../src)
+
 target_include_directories(Test_Utility PRIVATE vendor)
 target_include_directories(Test_Utility PRIVATE ../include)
 target_include_directories(Test_Utility PRIVATE ../src)
@@ -206,4 +219,5 @@ add_test( NAME Unity_PixelBuffer_Tests COMMAND Test_PixelBuffer)
 add_test( NAME Unity_Sprite_Tests COMMAND Test_Sprite)
 add_test( NAME Unity_Sprite_Texture_Set_Tests COMMAND Test_Sprite_Texture_Set)
 add_test( NAME Unity_TileMap_Tests COMMAND Test_TileMap)
+add_test( NAME Unity_Tile_Texture_Set_Tests COMMAND Test_Tile_Texture_Set)
 add_test( NAME Unity_Utility_Tests COMMAND Test_Utility)

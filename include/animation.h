@@ -28,8 +28,8 @@ u32 AnimationChain_GetCount( AnimationChain_t* chain );
 r32 AnimationChain_GetIsRunning( AnimationChain_t* chain );
 
 void AnimationChain_Reset( AnimationChain_t* chain );
-void AnimationChain_Push( AnimationChain_t* chain, AnimationType_t type, r32 duration, void (*finishedCallback)( void* callbackData ), void* callbackData );
-void AnimationChain_Start( AnimationChain_t* chain, void (*finishedCallback)( void* callbackData ), void* callbackData );
+void AnimationChain_Push( AnimationChain_t* chain, AnimationType_t type, r32 duration, void (*finishedCallback)( void* callbackData1, void* callbackData2 ), void* callbackData1, void* callbackData2 );
+void AnimationChain_Start( AnimationChain_t* chain, void (*finishedCallback)( void* callbackData1, void* callbackData2 ), void* callbackData1, void* callbackData2 );
 void AnimationChain_Tic( AnimationChain_t* chain, r32 deltaTime );
 
 #endif // ANIMATION_H

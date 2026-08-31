@@ -9,7 +9,8 @@ global u32 g_allocCount;
 global u32 g_freeCount;
 global u32 g_animationCallbackCount;
 global u32 g_chainCallbackCount;
-global void* g_callbackData;
+global void* g_callbackData1;
+global void* g_callbackData2;
 
 void Platform_FatalError( const char* msg )
 {
@@ -36,21 +37,24 @@ void setUp( void )
    g_freeCount = 0;
    g_animationCallbackCount = 0;
    g_chainCallbackCount = 0;
-   g_callbackData = 0;
+   g_callbackData1 = 0;
+   g_callbackData2 = 0;
 }
 
 void tearDown( void ) {}
 
-void AnimationFinishedCallback( void* callbackData )
+void AnimationFinishedCallback( void* callbackData1, void* callbackData2 )
 {
    g_animationCallbackCount++;
-   g_callbackData = callbackData;
+   g_callbackData1 = callbackData1;
+   g_callbackData2 = callbackData2;
 }
 
-void ChainFinishedCallback( void* callbackData )
+void ChainFinishedCallback( void* callbackData1, void* callbackData2 )
 {
    g_chainCallbackCount++;
-   g_callbackData = callbackData;
+   g_callbackData1 = callbackData1;
+   g_callbackData2 = callbackData2;
 }
 
 void test_Animation_GetStructSize_ReturnsNonZeroSize( void )
@@ -131,16 +135,18 @@ void test_AnimationChain_Create_InitializesState( void )
 void test_AnimationChain_Push_StoresAnimation( void )
 {
    AnimationChain_t* chain = AnimationChain_Create( (MemArena_t*)1, 8 );
-   void* callbackData = (void*)42;
+   void* callbackData1 = (void*)42;
+   void* callbackData2 = (void*)84;
 
-   AnimationChain_Push( chain, AnimationType_FadeOut, 2.5f, AnimationFinishedCallback, callbackData );
+   AnimationChain_Push( chain, AnimationType_FadeOut, 2.5f, AnimationFinishedCallback, callbackData1, callbackData2 );
 
    TEST_ASSERT_EQUAL_UINT( 1, AnimationChain_GetCount( chain ) );
    TEST_ASSERT_EQUAL_INT( AnimationType_FadeOut, chain->animations[0].type );
    TEST_ASSERT_EQUAL_FLOAT( 2.5f, chain->animations[0].duration );
    TEST_ASSERT_EQUAL_FLOAT( 0.0f, chain->animations[0].elapsed );
    TEST_ASSERT_EQUAL_PTR( AnimationFinishedCallback, chain->animations[0].finishedCallback );
-   TEST_ASSERT_EQUAL_PTR( callbackData, chain->animations[0].callbackData );
+   TEST_ASSERT_EQUAL_PTR( callbackData1, chain->animations[0].callbackData1 );
+   TEST_ASSERT_EQUAL_PTR( callbackData2, chain->animations[0].callbackData2 );
 
    AnimationChain_Free( chain, (MemArena_t*)1 );
 }
@@ -148,13 +154,15 @@ void test_AnimationChain_Push_StoresAnimation( void )
 void test_AnimationChain_Start_SetsRunningAndCallback( void )
 {
    AnimationChain_t* chain = AnimationChain_Create( (MemArena_t*)1, 8 );
-   void* callbackData = (void*)42;
+   void* callbackData1 = (void*)42;
+   void* callbackData2 = (void*)84;
 
-   AnimationChain_Start( chain, ChainFinishedCallback, callbackData );
+   AnimationChain_Start( chain, ChainFinishedCallback, callbackData1, callbackData2 );
 
    TEST_ASSERT_EQUAL_FLOAT( True, AnimationChain_GetIsRunning( chain ) );
    TEST_ASSERT_EQUAL_PTR( ChainFinishedCallback, chain->finishedCallback );
-   TEST_ASSERT_EQUAL_PTR( callbackData, chain->callbackData );
+   TEST_ASSERT_EQUAL_PTR( callbackData1, chain->callbackData1 );
+   TEST_ASSERT_EQUAL_PTR( callbackData2, chain->callbackData2 );
 
    AnimationChain_Free( chain, (MemArena_t*)1 );
 }
@@ -162,11 +170,12 @@ void test_AnimationChain_Start_SetsRunningAndCallback( void )
 void test_AnimationChain_Tic_AdvancesAndFinishesAnimations( void )
 {
    AnimationChain_t* chain = AnimationChain_Create( (MemArena_t*)1, 8 );
-   void* callbackData = (void*)42;
+   void* callbackData1 = (void*)42;
+   void* callbackData2 = (void*)84;
 
-   AnimationChain_Push( chain, AnimationType_Pause, 1.0f, AnimationFinishedCallback, callbackData );
-   AnimationChain_Push( chain, AnimationType_FadeIn, 2.0f, AnimationFinishedCallback, callbackData );
-   AnimationChain_Start( chain, ChainFinishedCallback, callbackData );
+   AnimationChain_Push( chain, AnimationType_Pause, 1.0f, AnimationFinishedCallback, callbackData1, callbackData2 );
+   AnimationChain_Push( chain, AnimationType_FadeIn, 2.0f, AnimationFinishedCallback, callbackData1, callbackData2 );
+   AnimationChain_Start( chain, ChainFinishedCallback, callbackData1, callbackData2 );
 
    AnimationChain_Tic( chain, 0.5f );
    TEST_ASSERT_EQUAL_FLOAT( 0.5f, chain->animations[0].elapsed );
@@ -182,7 +191,8 @@ void test_AnimationChain_Tic_AdvancesAndFinishesAnimations( void )
    TEST_ASSERT_EQUAL_UINT( 2, g_animationCallbackCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_chainCallbackCount );
    TEST_ASSERT_EQUAL_FLOAT( False, AnimationChain_GetIsRunning( chain ) );
-   TEST_ASSERT_EQUAL_PTR( callbackData, g_callbackData );
+   TEST_ASSERT_EQUAL_PTR( callbackData1, g_callbackData1 );
+   TEST_ASSERT_EQUAL_PTR( callbackData2, g_callbackData2 );
 
    AnimationChain_Free( chain, (MemArena_t*)1 );
 }
@@ -191,7 +201,7 @@ void test_AnimationChain_Tic_DoesNothingWhenNotRunning( void )
 {
    AnimationChain_t* chain = AnimationChain_Create( (MemArena_t*)1, 8 );
 
-   AnimationChain_Push( chain, AnimationType_Pause, 1.0f, AnimationFinishedCallback, 0 );
+   AnimationChain_Push( chain, AnimationType_Pause, 1.0f, AnimationFinishedCallback, 0, 0 );
    AnimationChain_Tic( chain, 1.0f );
 
    TEST_ASSERT_EQUAL_FLOAT( 0.0f, chain->animations[0].elapsed );
@@ -204,8 +214,8 @@ void test_AnimationChain_Reset_ClearsState( void )
 {
    AnimationChain_t* chain = AnimationChain_Create( (MemArena_t*)1, 8 );
 
-   AnimationChain_Push( chain, AnimationType_Pause, 1.0f, AnimationFinishedCallback, 0 );
-   AnimationChain_Start( chain, ChainFinishedCallback, 0 );
+   AnimationChain_Push( chain, AnimationType_Pause, 1.0f, AnimationFinishedCallback, 0, 0 );
+   AnimationChain_Start( chain, ChainFinishedCallback, 0, 0 );
    AnimationChain_Tic( chain, 1.0f );
    AnimationChain_Reset( chain );
 
@@ -213,7 +223,8 @@ void test_AnimationChain_Reset_ClearsState( void )
    TEST_ASSERT_EQUAL_UINT( 0, chain->curAnimation );
    TEST_ASSERT_EQUAL_FLOAT( False, AnimationChain_GetIsRunning( chain ) );
    TEST_ASSERT_NULL( chain->finishedCallback );
-   TEST_ASSERT_NULL( chain->callbackData );
+   TEST_ASSERT_NULL( chain->callbackData1 );
+   TEST_ASSERT_NULL( chain->callbackData2 );
 
    AnimationChain_Free( chain, (MemArena_t*)1 );
 }
