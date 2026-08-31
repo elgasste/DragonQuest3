@@ -119,6 +119,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winDebugFlags.showDiagnostics = False;
    g_winDebugFlags.noClip = False;
    g_winDebugFlags.showHitBoxes = False;
+   g_winDebugFlags.moveFast = False;
 
    g_winGlobals.hWndMain = CreateWindowExA( 0,
                                             mainWindowClass.lpszClassName,
@@ -424,6 +425,13 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
                else
                   StartCornerPopup( "Hiding hit boxes" );
                break;
+            case VK_MOVEFAST:
+               TOGGLE_BOOL( g_winDebugFlags.moveFast );
+               if ( g_winDebugFlags.moveFast )
+                  StartCornerPopup( "Moving fast" );
+               else
+                  StartCornerPopup( "Moving normal speed" );
+               break;
          }
       }
       else
@@ -464,7 +472,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    r.bottom = 0;
 
    // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 314, 276, RGB( 0, 0, 128 ), 200 );
+   DrawTranslucentRectangle( *dcMem, 0, 0, 314, 292, RGB( 0, 0, 128 ), 200 );
 
    oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
 
@@ -558,6 +566,11 @@ internal void DrawDiagnostics( HDC* dcMem )
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "2 - Show Hit Boxes" );
    SetTextColor( *dcMem, g_winDebugFlags.showHitBoxes ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "3 - Move Fast" );
+   SetTextColor( *dcMem, g_winDebugFlags.moveFast ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 

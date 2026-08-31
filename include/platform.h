@@ -10,6 +10,7 @@
       b32 showDiagnostics;
       b32 noClip;
       b32 showHitBoxes;
+      b32 moveFast;
    }
    WinDebugFlags_t;
 
