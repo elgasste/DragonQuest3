@@ -219,8 +219,7 @@ internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
    {
       TileMap_Free( game->tileMap, game->memArena );
       game->tileMap = TileMap_CreateFromGameData( game->memArena, game->gameData, destinationTileMapId, TileTextureSet_GetTileSize( game->tileTextureSet ) );
-      // TODO: we shouldn't have to do this every time we swap tile maps, maybe it should be stored somewhere else?
-      TileMap_SetViewportInUnits( game->tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
+      ActiveSprite_SetDirection( game->playerSprite, TileMapPortal_GetDestinationDir( portal ) );
    }
 
    TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, destinationTileIndex );

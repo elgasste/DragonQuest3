@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "animation.h"
+#include "display.h"
 #include "game.h"
 #include "sprite.h"
 #include "unity.h"
@@ -45,6 +46,7 @@ global ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
 global ActiveSprite_t* g_playerSprite;
 global ActiveSpriteTextureSet_t* g_playerSpriteTextureSet;
 global u32 g_playerSpriteTextureIndex;
+global Direction_t g_playerSpriteDirection;
 global TileMap_t* g_tileMap;
 global Entity_t* g_playerEntity;
 global Vector4i32_t g_tileMapViewportInUnits;
@@ -278,6 +280,12 @@ void ActiveSprite_SetTextureIndex( ActiveSprite_t* activeSprite, u32 textureInde
    g_playerSpriteTextureIndex = textureIndex;
 }
 
+void ActiveSprite_SetDirection( ActiveSprite_t* activeSprite, Direction_t dir )
+{
+   UNUSED_PARAM( activeSprite );
+   g_playerSpriteDirection = dir;
+}
+
 ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* activeSprite )
 {
    UNUSED_PARAM( activeSprite );
@@ -382,6 +390,11 @@ u32 TileMapPortal_GetDestinationTileMapId( TileMapPortal_t* portal )
 u32 TileMapPortal_GetDestinationTileIndex( TileMapPortal_t* portal )
 {
    return portal->destinationTileIndex;
+}
+
+Direction_t TileMapPortal_GetDestinationDir( TileMapPortal_t* portal )
+{
+   return portal->destinationDir;
 }
 
 AnimationChain_t* AnimationChain_Create( MemArena_t* memArena, u32 maxAnimations )
@@ -499,6 +512,7 @@ void setUp( void )
    g_playerSprite = 0;
    g_playerSpriteTextureSet = 0;
    g_playerSpriteTextureIndex = 0;
+   g_playerSpriteDirection = Direction_Down;
    g_gameDataFreeCount = 0;
    g_displayFreeCount = 0;
    g_entityFreeCount = 0;
@@ -648,7 +662,7 @@ void test_Game_OnPlayerTileIndexChanged_CallbackIsTriggeredOnTileChange( void )
 void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapIsUnchanged( void )
 {
    Game_t* game = CreateGame();
-   TileMapPortal_t portal = { 20, 1, 13 };
+   TileMapPortal_t portal = { 20, 1, 13, Direction_Left };
 
    g_tileMapGetPortalCount = 0;
    g_tileMapCenterEntityCount = 0;
@@ -665,6 +679,7 @@ void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapIsUnchanged
    TEST_ASSERT_EQUAL_UINT( 3, AnimationChain_GetCount( g_animationChain ) );
    TEST_ASSERT_EQUAL_FLOAT( True, AnimationChain_GetIsRunning( g_animationChain ) );
    TEST_ASSERT_EQUAL_UINT( 20, Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
+   TEST_ASSERT_EQUAL_INT( Direction_Down, g_playerSpriteDirection );
 
    Game_Free( game, (MemArena_t*)1 );
 }
@@ -672,7 +687,7 @@ void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapIsUnchanged
 void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapChanges( void )
 {
    Game_t* game = CreateGame();
-   TileMapPortal_t portal = { 20, 2, 24 };
+   TileMapPortal_t portal = { 20, 2, 24, Direction_Up };
 
    g_tileMapGetPortalCount = 0;
    g_tileMapCenterEntityCount = 0;
@@ -689,6 +704,7 @@ void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapChanges( vo
    TEST_ASSERT_EQUAL_UINT( 3, AnimationChain_GetCount( g_animationChain ) );
    TEST_ASSERT_EQUAL_FLOAT( True, AnimationChain_GetIsRunning( g_animationChain ) );
    TEST_ASSERT_EQUAL_UINT( 20, Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
+   TEST_ASSERT_EQUAL_INT( Direction_Down, g_playerSpriteDirection );
 
    Game_Free( game, (MemArena_t*)1 );
 }

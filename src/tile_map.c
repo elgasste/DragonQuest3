@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "display.h"
 #include "entity.h"
 #include "file.h"
 #include "game_data.h"
@@ -46,6 +47,7 @@ struct TileMapPortal_t
    u32 sourceTileIndex;
    u32 destinationTileMapId;
    u32 destinationTileIndex;
+   Direction_t destinationDir;
 };
 END_PACKED_STRUCT
 
@@ -67,6 +69,11 @@ u32 TileMapPortal_GetDestinationTileMapId( TileMapPortal_t* portal )
 u32 TileMapPortal_GetDestinationTileIndex( TileMapPortal_t* portal )
 {
    return portal->destinationTileIndex;
+}
+
+Direction_t TileMapPortal_GetDestinationDir( TileMapPortal_t* portal )
+{
+   return portal->destinationDir;
 }
 
 struct TileMap_t
@@ -141,6 +148,8 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
             Platform_ReadFileBytes( file, portals, tileMap->info.portalCount * sizeof( TileMapPortal_t ) );
             tileMap->portals = (TileMapPortal_t*)portals;
          }
+
+         TileMap_SetViewportInUnits( tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
 
          return tileMap;
       }

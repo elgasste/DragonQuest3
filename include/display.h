@@ -4,6 +4,9 @@
 #include "common.h"
 #include "vector.h"
 
+#define DISPLAY_WIDTH    320
+#define DISPLAY_HEIGHT   240
+
 typedef struct MemArena_t MemArena_t;
 typedef struct TileMap_t TileMap_t;
 typedef struct TileTextureSet_t TileTextureSet_t;

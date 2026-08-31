@@ -15,6 +15,7 @@ typedef struct TileMapPortal_t
    u32 sourceTileIndex;
    u32 destinationTileMapId;
    u32 destinationTileIndex;
+   Direction_t destinationDir;
 }
 TileMapPortal_t;
 

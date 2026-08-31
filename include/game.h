@@ -4,10 +4,6 @@
 #include "common.h"
 #include "vector.h"
 
-// TODO: define these values somewhere else
-#define DISPLAY_WIDTH    320
-#define DISPLAY_HEIGHT   240
-
 // 32 MB
 #define GAME_MEMORY_SIZE   ( 1024 * 1024 * 32 )
 
