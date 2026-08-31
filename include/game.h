@@ -4,8 +4,8 @@
 #include "common.h"
 #include "vector.h"
 
-// 32 MB
-#define GAME_MEMORY_SIZE   ( 1024 * 1024 * 32 )
+// 4 MB
+#define GAME_MEMORY_SIZE   ( 1024 * 1024 * 4 )
 
 // TODO: this should probably also go somewhere else
 #define GAME_DEFAULT_FPS   60
