@@ -131,6 +131,7 @@ void WriteTestGameDataFile( const char* filePath )
    for ( i = 0; i < tileMapCount; i++ )
    {
       free( tileMaps[i].tiles );
+      free( tileMaps[i].portals );
    }
    free( tileMaps );
 

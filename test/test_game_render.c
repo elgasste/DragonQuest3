@@ -1,5 +1,6 @@
 #include "display.h"
 #include "game.h"
+#include "mocks/mock_animation.h"
 #include "mocks/mock_entity.h"
 #include "sprite.h"
 #include "sprite_texture_set.h"
@@ -64,6 +65,14 @@ typedef struct PlatformRenderDisplayBufferCall_t
 }
 PlatformRenderDisplayBufferCall_t;
 
+typedef struct DisplayApplyFadeCall_t
+{
+   Display_t* display;
+   r32 alpha;
+   int callCount;
+}
+DisplayApplyFadeCall_t;
+
 static Display_t* g_display;
 #if defined( _WIN32 )
 WinDebugFlags_t g_winDebugFlags;
@@ -73,6 +82,8 @@ static TileTextureSet_t* g_tileTextureSet;
 static ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
 static Entity_t g_playerEntity;
 static ActiveSprite_t g_playerSprite;
+static AnimationChain_t g_animationChain;
+static Animation_t g_animation;
 static u32 g_playerTexture[1];
 static Vector4i32_t g_viewportInPixels;
 static Vector4i32_t g_playerRect;
@@ -81,6 +92,7 @@ static DisplayDrawTileMapViewportCall_t g_displayDrawTileMapViewportCall;
 static DisplayDrawRectCall_t g_displayDrawRectCall;
 static DisplayDrawBufferCall_t g_displayDrawBufferCall;
 static PlatformRenderDisplayBufferCall_t g_platformRenderDisplayBufferCall;
+static DisplayApplyFadeCall_t g_displayApplyFadeCall;
 
 void setUp( void )
 {
@@ -92,6 +104,11 @@ void setUp( void )
    g_tileMap = (TileMap_t*)2;
    g_tileTextureSet = (TileTextureSet_t*)3;
    g_activeSpriteTextureSet = (ActiveSpriteTextureSet_t*)5;
+   g_animationChain.isRunning = False;
+   g_animationChain.curAnimation = 0;
+   g_animation.type = AnimationType_Pause;
+   g_animation.duration = 1.0f;
+   g_animation.elapsed = 0.0f;
    g_playerSprite.textureSet = g_activeSpriteTextureSet;
    g_playerSprite.dir = Direction_Right;
    g_playerSprite.frameIndex = 1;
@@ -139,6 +156,10 @@ void setUp( void )
 
    g_platformRenderDisplayBufferCall.display = 0;
    g_platformRenderDisplayBufferCall.callCount = 0;
+
+   g_displayApplyFadeCall.display = 0;
+   g_displayApplyFadeCall.alpha = 0.0f;
+   g_displayApplyFadeCall.callCount = 0;
 }
 
 void tearDown( void ) {}
@@ -179,6 +200,39 @@ TileMap_t* Game_GetTileMap( Game_t* game )
 {
    UNUSED_PARAM( game );
    return g_tileMap;
+}
+
+AnimationChain_t* Game_GetAnimationChain( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   return &g_animationChain;
+}
+
+Animation_t* AnimationChain_GetCurAnimation( AnimationChain_t* chain )
+{
+   UNUSED_PARAM( chain );
+   return &g_animation;
+}
+
+AnimationType_t AnimationChain_GetCurAnimationType( AnimationChain_t* chain )
+{
+   UNUSED_PARAM( chain );
+   return g_animation.type;
+}
+
+r32 Animation_GetDuration( Animation_t* animation )
+{
+   return animation->duration;
+}
+
+r32 Animation_GetElapsed( Animation_t* animation )
+{
+   return animation->elapsed;
+}
+
+r32 AnimationChain_GetIsRunning( AnimationChain_t* chain )
+{
+   return chain->isRunning;
 }
 
 Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap )
@@ -281,6 +335,13 @@ void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color
    g_displayDrawRectCall.callCount++;
 }
 
+void Display_ApplyFade( Display_t* display, r32 alpha )
+{
+   g_displayApplyFadeCall.display = display;
+   g_displayApplyFadeCall.alpha = alpha;
+   g_displayApplyFadeCall.callCount++;
+}
+
 void Display_DrawVector4i( Display_t* display, Vector4i32_t rect, u32 color )
 {
    UNUSED_PARAM( display );
@@ -330,6 +391,58 @@ void test_Game_Render_PresentsDisplayBuffer( void )
    TEST_ASSERT_EQUAL_INT( 1, g_platformRenderDisplayBufferCall.callCount );
 }
 
+void test_Game_Render_AppliesFadeOut( void )
+{
+   g_animationChain.isRunning = True;
+   g_animation.type = AnimationType_FadeOut;
+   g_animation.duration = 2.0f;
+   g_animation.elapsed = 0.5f;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_PTR( g_display, g_displayApplyFadeCall.display );
+   TEST_ASSERT_EQUAL_FLOAT( 0.25f, g_displayApplyFadeCall.alpha );
+   TEST_ASSERT_EQUAL_INT( 1, g_displayApplyFadeCall.callCount );
+}
+
+void test_Game_Render_AppliesFadeIn( void )
+{
+   g_animationChain.isRunning = True;
+   g_animation.type = AnimationType_FadeIn;
+   g_animation.duration = 2.0f;
+   g_animation.elapsed = 0.5f;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_FLOAT( 0.75f, g_displayApplyFadeCall.alpha );
+   TEST_ASSERT_EQUAL_INT( 1, g_displayApplyFadeCall.callCount );
+}
+
+void test_Game_Render_DrawsBlackout( void )
+{
+   g_animationChain.isRunning = True;
+   g_animation.type = AnimationType_Blackout;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_INT( 0, g_displayDrawRectCall.x );
+   TEST_ASSERT_EQUAL_INT( 0, g_displayDrawRectCall.y );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_WIDTH, g_displayDrawRectCall.w );
+   TEST_ASSERT_EQUAL_INT( DISPLAY_HEIGHT, g_displayDrawRectCall.h );
+   TEST_ASSERT_EQUAL_HEX32( 0xFF000000, g_displayDrawRectCall.color );
+   TEST_ASSERT_EQUAL_INT( 1, g_displayDrawRectCall.callCount );
+}
+
+void test_Game_Render_DoesNotApplyOverlayWhenAnimationStopped( void )
+{
+   g_animationChain.isRunning = False;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_INT( 0, g_displayApplyFadeCall.callCount );
+   TEST_ASSERT_EQUAL_INT( 0, g_displayDrawRectCall.callCount );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -338,6 +451,10 @@ int main( void )
    RUN_TEST( test_Game_Render_RendersTileMapViewport );
    RUN_TEST( test_Game_Render_DrawsPlayerRelativeToViewport );
    RUN_TEST( test_Game_Render_PresentsDisplayBuffer );
+   RUN_TEST( test_Game_Render_AppliesFadeOut );
+   RUN_TEST( test_Game_Render_AppliesFadeIn );
+   RUN_TEST( test_Game_Render_DrawsBlackout );
+   RUN_TEST( test_Game_Render_DoesNotApplyOverlayWhenAnimationStopped );
 
    return UNITY_END();
 }

@@ -1,3 +1,4 @@
+#include "animation.h"
 #include "display.h"
 #include "entity.h"
 #include "game.h"
@@ -7,6 +8,9 @@
 #include "tile_map.h"
 
 internal void GameRender_DrawPlayer( Game_t* game );
+internal void GameRender_ApplyFadeOut( Game_t* game );
+internal void GameRender_ApplyFadeIn( Game_t* game );
+internal void GameRender_ApplyBlackout( Game_t* game );
 
 void Game_Render( Game_t* game )
 {
@@ -22,8 +26,23 @@ void Game_Render( Game_t* game )
 
    // TODO: draw this in the correct place based on the game state
    Display_DrawTileMapViewport( display, tileMap, tileTextureSet, 0, 0 );
-
    GameRender_DrawPlayer( game );
+
+   if ( AnimationChain_GetIsRunning( Game_GetAnimationChain( game ) ) )
+   {
+      switch( AnimationChain_GetCurAnimationType( Game_GetAnimationChain( game ) ) )
+      {
+         case AnimationType_FadeOut:
+            GameRender_ApplyFadeOut( game );
+            break;
+         case AnimationType_FadeIn:
+            GameRender_ApplyFadeIn( game );
+            break;
+         case AnimationType_Blackout:
+            GameRender_ApplyBlackout( game );
+            break;
+      }
+   }
 
    Platform_RenderDisplayBuffer( display );
 }
@@ -65,4 +84,29 @@ internal void GameRender_DrawPlayer( Game_t* game )
       Display_DrawRect( Game_GetDisplay( game ), displayX, displayY, playerRect.w / WORLD_UNITS_PER_PIXEL, playerRect.h / WORLD_UNITS_PER_PIXEL, 0x99FF0000 );
    }
 #endif
+}
+
+internal void GameRender_ApplyFadeOut( Game_t* game )
+{
+   r32 progress;
+   Animation_t* anim;
+
+   anim = AnimationChain_GetCurAnimation( Game_GetAnimationChain( game ) );
+   progress = Animation_GetElapsed( anim ) / Animation_GetDuration( anim );
+   Display_ApplyFade( Game_GetDisplay( game ), progress );
+}
+
+internal void GameRender_ApplyFadeIn( Game_t* game )
+{
+   r32 progress;
+   Animation_t* anim;
+
+   anim = AnimationChain_GetCurAnimation( Game_GetAnimationChain( game ) );
+   progress = Animation_GetElapsed( anim ) / Animation_GetDuration( anim );
+   Display_ApplyFade( Game_GetDisplay( game ), 1.0f - progress );
+}
+
+internal void GameRender_ApplyBlackout( Game_t* game )
+{
+   Display_DrawRect( Game_GetDisplay( game ), 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, 0xFF000000 );
 }

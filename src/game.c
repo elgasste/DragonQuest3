@@ -1,3 +1,4 @@
+#include "animation.h"
 #include "clock.h"
 #include "display.h"
 #include "entity.h"
@@ -23,6 +24,7 @@ struct Game_t
    ActiveSpriteTextureSet_t* activeSpriteTextureSet;
 
    TileMap_t *tileMap;
+   AnimationChain_t* animationChain;
 
    // TODO: this is the player, temporarily
    ActiveSprite_t* playerSprite;
@@ -56,6 +58,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
 
    // TODO: temporary, everything from here down will come from the game data file.
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   game->animationChain = AnimationChain_Create( memArena, 32 );
 
    game->playerSprite = ActiveSprite_Create( game->memArena, game->activeSpriteTextureSet );
    ActiveSprite_SetTextureIndex( game->playerSprite, 1 );
@@ -85,6 +88,7 @@ void Game_Free( Game_t* game, MemArena_t* memArena )
    {
       TileMap_Free( game->tileMap, memArena );
    }
+   AnimationChain_Free( game->animationChain, memArena );
 
    TileTextureSet_Free( game->tileTextureSet, memArena );
    ActiveSpriteTextureSet_Free( game->activeSpriteTextureSet, memArena );
@@ -130,6 +134,11 @@ TileMap_t* Game_GetTileMap( Game_t* game )
    return game->tileMap;
 }
 
+AnimationChain_t* Game_GetAnimationChain( Game_t* game )
+{
+   return game->animationChain;
+}
+
 Entity_t* Game_GetPlayerEntity( Game_t* game )
 {
    return game->playerEntity;
@@ -150,7 +159,6 @@ void Game_Run( Game_t* game )
       Clock_StartFrame( game->clock );
       Input_ResetPressStates( game->input );
       Platform_HandleMessages( game );
-      Game_HandleInput( game );
       Game_Tic( game );
       Game_Render( game );
       Clock_EndFrame( game->clock );
@@ -168,7 +176,16 @@ internal void Game_Tic( Game_t* game )
 
    deltaSec = Clock_GetFrameSec( game->clock );
    
-   Game_TicPhysics( game );
+   if ( AnimationChain_GetIsRunning( game->animationChain ) )
+   {
+      AnimationChain_Tic( game->animationChain, deltaSec );
+   }
+   else
+   {
+      Game_HandleInput( game );
+      Game_TicPhysics( game );
+   }
+
    ActiveSprite_Tic( game->playerSprite, deltaSec );
    TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity );
 }
@@ -183,7 +200,11 @@ internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u
    portal = TileMap_GetPortal( game->tileMap, newTileIndex );
    if ( portal )
    {
-      Game_EnterPortal( game, portal );
+      AnimationChain_Reset( game->animationChain );
+      AnimationChain_Push( game->animationChain, AnimationType_FadeOut, 0.2f, Game_EnterPortal, game, portal );
+      AnimationChain_Push( game->animationChain, AnimationType_Blackout, 0.2f, 0, 0, 0 );
+      AnimationChain_Push( game->animationChain, AnimationType_FadeIn, 0.2f, 0, 0, 0 );
+      AnimationChain_Start( game->animationChain, 0, 0, 0 );
    }
 }
 

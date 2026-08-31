@@ -6,6 +6,7 @@ enable_testing()
 include_directories(src)
 
 add_executable(DragonQuest3
+   src/animation.c
    src/clock.c
    src/display.c
    src/entity.c
