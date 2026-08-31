@@ -4,7 +4,6 @@
 #include "file.h"
 #include "game_data.h"
 #include "mocks/mock_game_data.h"
-#include "mocks/mock_mem_arena.h"
 #include "platform.h"
 #include "tile_texture_set.h"
 #include "unity.h"

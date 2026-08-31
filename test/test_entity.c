@@ -1,7 +1,6 @@
 #include <stdlib.h>
 
 #include "entity.h"
-#include "mem_arena.h"
 #include "unity.h"
 #if defined( _WIN32 )
 #include "platform.h"
