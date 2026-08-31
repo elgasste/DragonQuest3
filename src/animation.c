@@ -1,6 +1,7 @@
 #include "animation.h"
 #include "mem_arena.h"
 
+// MUFFINS: let's add callbacks next
 struct Animation_t
 {
     AnimationType_t type;
