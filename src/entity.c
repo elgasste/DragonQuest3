@@ -1,5 +1,6 @@
 #include "entity.h"
 #include "mem_arena.h"
+#include "platform.h"
 
 struct Entity_t
 {
@@ -43,6 +44,20 @@ Vector4i32_t Entity_GetRect( Entity_t* entity )
 
 Vector2i32_t Entity_GetVelocity( Entity_t* entity )
 {
+#if defined( _WIN32 )
+   if ( g_winDebugFlags.moveFast )
+   {
+      if ( entity->velocity.x != 0 )
+      {
+         entity->velocity.x = ( entity->velocity.x < 0 ) ? -( 180 * WORLD_UNITS_PER_PIXEL ) : ( 180 * WORLD_UNITS_PER_PIXEL );
+      }
+      if ( entity->velocity.y != 0 )
+      {
+         entity->velocity.y = ( entity->velocity.y < 0 ) ? -( 180 * WORLD_UNITS_PER_PIXEL ) : ( 180 * WORLD_UNITS_PER_PIXEL );
+      }
+   }
+#endif
+
    return entity->velocity;
 }
 

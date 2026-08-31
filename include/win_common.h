@@ -21,6 +21,7 @@
 
 #define VK_NOCLIP                49    // 1
 #define VK_SHOWHITBOXES          50    // 2
+#define VK_MOVEFAST              51    // 3
 
 typedef struct MemArena_t MemArena_t;
 typedef struct Game_t Game_t;
