@@ -180,11 +180,12 @@ void test_TileMapPortal_GetStructSize_ReturnsNonZeroSize( void )
 
 void test_TileMapPortal_Getters_ReturnPortalProperties( void )
 {
-   TileMapPortal_t portal = { 12, 7, 23 };
+   TileMapPortal_t portal = { 12, 7, 23, Direction_Left };
 
    TEST_ASSERT_EQUAL_UINT( 12, TileMapPortal_GetSourceTileIndex( &portal ) );
    TEST_ASSERT_EQUAL_UINT( 7, TileMapPortal_GetDestinationTileMapId( &portal ) );
    TEST_ASSERT_EQUAL_UINT( 23, TileMapPortal_GetDestinationTileIndex( &portal ) );
+   TEST_ASSERT_EQUAL_INT( Direction_Left, TileMapPortal_GetDestinationDir( &portal ) );
 }
 
 void test_TileMap_CreateFromGameData_LoadsMapAndTiles( void )

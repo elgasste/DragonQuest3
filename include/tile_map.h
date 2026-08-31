@@ -4,6 +4,7 @@
 #include "common.h"
 #include "platform.h"
 #include "vector.h"
+#include "direction.h"
 
 typedef struct Entity_t Entity_t;
 typedef struct GameData_t GameData_t;
@@ -24,6 +25,7 @@ size_t TileMapPortal_GetStructSize( void );
 u32 TileMapPortal_GetSourceTileIndex( TileMapPortal_t* portal );
 u32 TileMapPortal_GetDestinationTileMapId( TileMapPortal_t* portal );
 u32 TileMapPortal_GetDestinationTileIndex( TileMapPortal_t* portal );
+Direction_t TileMapPortal_GetDestinationDir( TileMapPortal_t* portal );
 
 PACKED_STRUCT
 typedef struct TileMapInfo_t

@@ -53,6 +53,7 @@ typedef struct TileMapPortalMock_t
    u32 sourceTileIndex;
    u32 destinationTileMapId;
    u32 destinationTileIndex;
+   Direction_t destinationDir;
 }
 TileMapPortalMock_t;
 END_PACKED_STRUCT
@@ -379,6 +380,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].sourceTileIndex = 74;
    curTileMap->portals[0].destinationTileMapId = 2;
    curTileMap->portals[0].destinationTileIndex = 0;
+   curTileMap->portals[0].destinationDir = Direction_Left;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -426,6 +428,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].sourceTileIndex = 5130;
    curTileMap->portals[0].destinationTileMapId = 0;
    curTileMap->portals[0].destinationTileIndex = 38;
+   curTileMap->portals[0].destinationDir = Direction_Right;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -471,6 +474,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].sourceTileIndex = 2320;
    curTileMap->portals[0].destinationTileMapId = 4;
    curTileMap->portals[0].destinationTileIndex = 10000;
+   curTileMap->portals[0].destinationDir = Direction_Down;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -503,9 +507,11 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].sourceTileIndex = 0;
    curTileMap->portals[0].destinationTileMapId = 1;
    curTileMap->portals[0].destinationTileIndex = 10000;
+   curTileMap->portals[0].destinationDir = Direction_Up;
    curTileMap->portals[1].sourceTileIndex = 2;
    curTileMap->portals[1].destinationTileMapId = 1;
    curTileMap->portals[1].destinationTileIndex = 5140;
+   curTileMap->portals[1].destinationDir = Direction_Right;
 
    curTileMap->tiles = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
@@ -537,6 +543,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].sourceTileIndex = 1555;
    curTileMap->portals[0].destinationTileMapId = 3;
    curTileMap->portals[0].destinationTileIndex = 8;
+   curTileMap->portals[0].destinationDir = Direction_Left;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
