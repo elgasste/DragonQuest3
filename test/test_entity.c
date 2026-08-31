@@ -3,6 +3,9 @@
 #include "entity.h"
 #include "mem_arena.h"
 #include "unity.h"
+#if defined( _WIN32 )
+#include "platform.h"
+#endif
 
 global u32 g_allocCount;
 global u32 g_freeCount;
@@ -10,6 +13,9 @@ global u32 g_tileIndexChangedCount;
 global Entity_t* g_tileIndexChangedEntity;
 global u32 g_oldTileIndex;
 global u32 g_newTileIndex;
+#if defined( _WIN32 )
+WinDebugFlags_t g_winDebugFlags;
+#endif
 
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
@@ -33,6 +39,9 @@ void setUp( void )
    g_tileIndexChangedEntity = 0;
    g_oldTileIndex = 0;
    g_newTileIndex = 0;
+#if defined( _WIN32 )
+   g_winDebugFlags.moveFast = False;
+#endif
 }
 
 void OnTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex )
@@ -167,6 +176,38 @@ void test_Entity_GetVelocity_ReturnsLatestVelocity( void )
    Entity_Free( entity, (MemArena_t*)1 );
 }
 
+#if defined( _WIN32 )
+void test_Entity_GetVelocity_MoveFastScalesNonZeroComponents( void )
+{
+   Vector2i32_t velocity;
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   Entity_SetVelocity( entity, -2 * WORLD_UNITS_PER_PIXEL, 3 * WORLD_UNITS_PER_PIXEL );
+   g_winDebugFlags.moveFast = True;
+   velocity = Entity_GetVelocity( entity );
+
+   TEST_ASSERT_EQUAL_INT( -180 * WORLD_UNITS_PER_PIXEL, velocity.x );
+   TEST_ASSERT_EQUAL_INT( 180 * WORLD_UNITS_PER_PIXEL, velocity.y );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
+void test_Entity_GetVelocity_MoveFastLeavesZeroComponentsUnchanged( void )
+{
+   Vector2i32_t velocity;
+   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+
+   Entity_SetVelocity( entity, 0, 0 );
+   g_winDebugFlags.moveFast = True;
+   velocity = Entity_GetVelocity( entity );
+
+   TEST_ASSERT_EQUAL_INT( 0, velocity.x );
+   TEST_ASSERT_EQUAL_INT( 0, velocity.y );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+#endif
+
 void test_Entity_SetTileIndex_UpdatesTileIndex( void )
 {
    Entity_t* entity = Entity_Create( (MemArena_t*)1 );
@@ -263,6 +304,10 @@ int main( void )
    RUN_TEST( test_Entity_SetVelocity_UpdatesVelocity );
 
    RUN_TEST( test_Entity_GetVelocity_ReturnsLatestVelocity );
+#if defined( _WIN32 )
+   RUN_TEST( test_Entity_GetVelocity_MoveFastScalesNonZeroComponents );
+   RUN_TEST( test_Entity_GetVelocity_MoveFastLeavesZeroComponentsUnchanged );
+#endif
 
    RUN_TEST( test_Entity_SetTileIndex_UpdatesTileIndex );
    RUN_TEST( test_Entity_GetTileIndex_ReturnsLatestTileIndex );
