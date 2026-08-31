@@ -339,3 +339,8 @@ internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t*
       }
    }
 }
+
+void Display_ApplyFade( Display_t* display, r32 alpha )
+{
+   Display_DrawRect( display, 0, 0, Display_GetWidth( display ), Display_GetHeight( display ), (u32)( alpha * 0xFF ) << 24 );
+}

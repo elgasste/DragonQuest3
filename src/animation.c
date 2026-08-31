@@ -20,6 +20,16 @@ size_t Animation_GetStructSize( void )
     return sizeof( Animation_t );
 }
 
+r32 Animation_GetDuration( Animation_t* animation )
+{
+   return animation->duration;
+}
+
+r32 Animation_GetElapsed( Animation_t* animation )
+{
+   return animation->elapsed;
+}
+
 internal void Animation_Tic( Animation_t* anim, r32 deltaTime )
 {
    // TODO: handle different animation types
@@ -70,9 +80,29 @@ u32 AnimationChain_GetCount( AnimationChain_t* chain )
     return chain->count;
 }
 
+Animation_t* AnimationChain_GetCurAnimation( AnimationChain_t* chain )
+{
+   if ( chain->curAnimation >= chain->count )
+   {
+      return 0;
+   }
+
+   return &chain->animations[ chain->curAnimation ];
+}
+
 r32 AnimationChain_GetIsRunning( AnimationChain_t* chain )
 {
    return chain->isRunning;
+}
+
+AnimationType_t AnimationChain_GetCurAnimationType( AnimationChain_t* chain )
+{
+   if ( chain->curAnimation >= chain->count )
+   {
+      return Animation_Count;
+   }
+
+   return chain->animations[ chain->curAnimation ].type;
 }
 
 void AnimationChain_Reset( AnimationChain_t* chain )
