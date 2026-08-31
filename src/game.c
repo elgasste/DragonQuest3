@@ -201,9 +201,9 @@ internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u
    if ( portal )
    {
       AnimationChain_Reset( game->animationChain );
-      AnimationChain_Push( game->animationChain, AnimationType_FadeOut, 0.5f, Game_EnterPortal, game, portal );
+      AnimationChain_Push( game->animationChain, AnimationType_FadeOut, 0.2f, Game_EnterPortal, game, portal );
       AnimationChain_Push( game->animationChain, AnimationType_Blackout, 0.2f, 0, 0, 0 );
-      AnimationChain_Push( game->animationChain, AnimationType_FadeIn, 0.5f, 0, 0, 0 );
+      AnimationChain_Push( game->animationChain, AnimationType_FadeIn, 0.2f, 0, 0, 0 );
       AnimationChain_Start( game->animationChain, 0, 0, 0 );
    }
 }
