@@ -23,4 +23,13 @@ size_t AnimationChain_GetStructSize( void );
 AnimationChain_t* AnimationChain_Create( MemArena_t* memArena, u32 maxAnimations );
 void AnimationChain_Free( AnimationChain_t* chain, MemArena_t* memArena );
 
+u32 AnimationChain_GetMaxAnimations( AnimationChain_t* chain );
+u32 AnimationChain_GetCount( AnimationChain_t* chain );
+r32 AnimationChain_GetIsRunning( AnimationChain_t* chain );
+
+void AnimationChain_Reset( AnimationChain_t* chain );
+void AnimationChain_Push( AnimationChain_t* chain, AnimationType_t type, r32 duration, void (*finishedCallback)( void* callbackData ), void* callbackData );
+void AnimationChain_Start( AnimationChain_t* chain, void (*finishedCallback)( void* callbackData ), void* callbackData );
+void AnimationChain_Tic( AnimationChain_t* chain, r32 deltaTime );
+
 #endif // ANIMATION_H

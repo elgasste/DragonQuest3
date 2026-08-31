@@ -8,6 +8,8 @@ typedef struct Animation_t
    AnimationType_t type;
    r32 duration;
    r32 elapsed;
+   void (*finishedCallback)( void* callbackData );
+   void* callbackData;
 }
 Animation_t;
 
@@ -15,6 +17,11 @@ typedef struct AnimationChain_t
 {
    Animation_t* animations;
    u32 maxAnimations;
+   u32 count;
+   u32 curAnimation;
+   r32 isRunning;
+   void (*finishedCallback)( void* callbackData );
+   void* callbackData;
 }
 AnimationChain_t;
 
