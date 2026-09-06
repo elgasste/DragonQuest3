@@ -95,7 +95,7 @@ size_t TileMap_GetStructSize( void )
 TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameData, u32 tileMapId, u32 tileSizePixels )
 {
    u32 tileMapCount, i;
-   i32 chunkOffset, tileMapOffset, tileCount, tilesOffset;
+   i32 chunkOffset, tileMapOffset, tileCount, tilesOffset, portalsOffset;
    TileMap_t *tileMap;
    GameDataFileOffsets_t fileOffsets;
    GameDataObjectOffset_t tileMapFileOffset;
@@ -131,7 +131,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          tilesOffset = tileMapOffset + sizeof( TileMapInfo_t );
          if ( tilesOffset + (i32)( tileCount * sizeof( Tile_t ) ) > file->size )
          {
-            Platform_FatalError( "game data file is too small to contain all the requested tile map tiles." );
+            Platform_FatalError( "game data file is too small to contain all the tile map tiles." );
             MemArena_FreeMem( memArena, tileMap );
             return 0;
          }
@@ -141,10 +141,18 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          Platform_ReadFileBytes( file, tiles, tileCount * sizeof( Tile_t ) );
          tileMap->tiles = (Tile_t*)tiles;
 
+         portalsOffset = tilesOffset + tileCount * sizeof( Tile_t );
          if ( tileMap->info.portalCount > 0 )
          {
+            if ( portalsOffset + (i32)( tileMap->info.portalCount * sizeof( TileMapPortal_t ) ) > file->size )
+            {
+               Platform_FatalError( "game data file is too small to contain all the tile map portals." );
+               MemArena_FreeMem( memArena, tileMap );
+               return 0;
+            }
+
             portals = (u8*)MemArena_AllocMem( memArena, tileMap->info.portalCount * sizeof( TileMapPortal_t ) );
-            Platform_FileSeek( file, tilesOffset + tileCount * sizeof( Tile_t ), 0 );
+            Platform_FileSeek( file, portalsOffset, 0 );
             Platform_ReadFileBytes( file, portals, tileMap->info.portalCount * sizeof( TileMapPortal_t ) );
             tileMap->portals = (TileMapPortal_t*)portals;
          }
@@ -166,6 +174,7 @@ void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
    {
       MemArena_FreeMem( memArena, tileMap->portals );
    }
+
    MemArena_FreeMem( memArena, tileMap->tiles );
    MemArena_FreeMem( memArena, tileMap );
 }

@@ -125,6 +125,21 @@ internal void SetUpMapFixture( TestTileMapData_t map, Tile_t* tiles )
    g_tileMapOffset.offset = 0;
 }
 
+internal void SetUpMapFixtureWithPortals( u32 id, Tile_t* tiles, u32 tileCount, TileMapPortal_t* portals, u32 portalCount, size_t fileSize )
+{
+   TileMapInfo_t mapInfo = { id, tileCount, 1, False, portalCount };
+
+   memcpy( g_fileData, &mapInfo, sizeof( mapInfo ) );
+   memcpy( g_fileData + sizeof( mapInfo ), tiles, tileCount * sizeof( Tile_t ) );
+   memcpy( g_fileData + sizeof( mapInfo ) + tileCount * sizeof( Tile_t ), portals, portalCount * sizeof( TileMapPortal_t ) );
+   g_file.size = (i32)fileSize;
+   g_filePosition = 0;
+   g_fatalErrorCount = 0;
+   g_fileOffsets.tileMaps = 0;
+   g_tileMapOffset.id = id;
+   g_tileMapOffset.offset = 0;
+}
+
 internal TileMap_t* LoadMap( u32 id )
 {
    return TileMap_CreateFromGameData( (MemArena_t*)1, (GameData_t*)1, id, 16 );
@@ -206,6 +221,39 @@ void test_TileMap_CreateFromGameData_LoadsMapAndTiles( void )
    TEST_ASSERT_EQUAL_UINT( 4, TileMap_GetTile( tileMap, 3 )->textureIndex );
 
    TileMap_Free( tileMap, (MemArena_t*)1 );
+}
+
+void test_TileMap_CreateFromGameData_LoadsPortals( void )
+{
+   Tile_t tiles[1] = { { 1 } };
+   TileMapPortal_t expectedPortal = { 0, 5, 10, Direction_Right };
+   TileMap_t* tileMap;
+
+   SetUpMapFixtureWithPortals( 7, tiles, 1, &expectedPortal, 1, sizeof( TileMapInfo_t ) + sizeof( Tile_t ) + sizeof( TileMapPortal_t ) );
+   tileMap = LoadMap( 7 );
+
+   TEST_ASSERT_NOT_NULL( tileMap );
+   TEST_ASSERT_EQUAL_UINT( 1, TileMap_GetPortalCount( tileMap ) );
+   TEST_ASSERT_NOT_NULL( TileMap_GetPortal( tileMap, 0 ) );
+   TEST_ASSERT_EQUAL_UINT( 5, TileMapPortal_GetDestinationTileMapId( TileMap_GetPortal( tileMap, 0 ) ) );
+   TEST_ASSERT_EQUAL_UINT( 10, TileMapPortal_GetDestinationTileIndex( TileMap_GetPortal( tileMap, 0 ) ) );
+   TEST_ASSERT_EQUAL_INT( Direction_Right, TileMapPortal_GetDestinationDir( TileMap_GetPortal( tileMap, 0 ) ) );
+
+   TileMap_Free( tileMap, (MemArena_t*)1 );
+}
+
+void test_TileMap_CreateFromGameData_RejectsTruncatedPortals( void )
+{
+   Tile_t tiles[1] = { { 1 } };
+   TileMapPortal_t portal = { 0, 5, 10, Direction_Right };
+   TileMap_t* tileMap;
+   size_t fileSize = sizeof( TileMapInfo_t ) + sizeof( Tile_t );
+
+   SetUpMapFixtureWithPortals( 7, tiles, 1, &portal, 1, fileSize );
+   tileMap = LoadMap( 7 );
+
+   TEST_ASSERT_NULL( tileMap );
+   TEST_ASSERT_EQUAL_UINT( 1, g_fatalErrorCount );
 }
 
 void test_TileMap_GetTile_ReturnsTilesInRowMajorOrder( void )
@@ -481,6 +529,8 @@ int main( void )
    RUN_TEST( test_TileMap_GetStructSize_ReturnsNonZeroSize );
 
    RUN_TEST( test_TileMap_CreateFromGameData_LoadsMapAndTiles );
+   RUN_TEST( test_TileMap_CreateFromGameData_LoadsPortals );
+   RUN_TEST( test_TileMap_CreateFromGameData_RejectsTruncatedPortals );
 
    RUN_TEST( test_TileMap_GetTile_ReturnsTilesInRowMajorOrder );
    
