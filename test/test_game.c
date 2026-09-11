@@ -287,9 +287,10 @@ u32 TileTextureSet_GetTileSize( TileTextureSet_t* tileTextureSet )
    return tileTextureSet->info.tileSize;
 }
 
-TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, u32 tileMapId, u32 tileSizePixels )
+TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameData, ActiveSpriteTextureSet_t* activeSpriteTextureSet, u32 tileMapId, u32 tileSizePixels )
 {
    UNUSED_PARAM( gameData );
+   UNUSED_PARAM( activeSpriteTextureSet );
    UNUSED_PARAM( tileSizePixels );
    g_tileMap = (TileMap_t*)MemArena_AllocMem( memArena, sizeof( TileMap_t ) );
    g_tileMapId = tileMapId;

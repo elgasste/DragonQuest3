@@ -9,6 +9,7 @@
 typedef struct Entity_t Entity_t;
 typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
+typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
 
 typedef struct Tile_t Tile_t;
 size_t Tile_GetStructSize( void );
@@ -35,13 +36,14 @@ typedef struct TileMapInfo_t
    u32 tilesY;
    b32 wraps;
    u32 portalCount;
+   u32 npcCount;
 }
 TileMapInfo_t;
 END_PACKED_STRUCT
 
 typedef struct TileMap_t TileMap_t;
 size_t TileMap_GetStructSize( void );
-TileMap_t *TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t *gameData, u32 tileMapId, u32 tileSizePixels );
+TileMap_t *TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t *gameData, ActiveSpriteTextureSet_t* activeSpriteTextureSet, u32 tileMapId, u32 tileSizePixels );
 void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena );
 
 u32 TileMap_GetId( TileMap_t* tileMap );

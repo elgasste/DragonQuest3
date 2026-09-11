@@ -5,6 +5,7 @@
 #include "file.h"
 #include "game_data.h"
 #include "mem_arena.h"
+#include "npc.h"
 #include "tile_map.h"
 #include "utility.h"
 
@@ -81,6 +82,7 @@ struct TileMap_t
    TileMapInfo_t info;
    Tile_t* tiles;
    TileMapPortal_t* portals;
+   Npc_t* npcs;
 
    u32 tileSizePixels;
    Vector4i32_t viewportInUnits;
@@ -92,10 +94,10 @@ size_t TileMap_GetStructSize( void )
    return sizeof( TileMap_t );
 }
 
-TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameData, u32 tileMapId, u32 tileSizePixels )
+TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameData, ActiveSpriteTextureSet_t* activeSpriteTextureSet, u32 tileMapId, u32 tileSizePixels )
 {
-   u32 tileMapCount, i;
-   i32 chunkOffset, tileMapOffset, tileCount, tilesOffset, portalsOffset;
+   u32 tileMapCount, i, j;
+   i32 chunkOffset, tileMapOffset, tileCount, tilesOffset, portalsOffset, npcsOffset, npcOffset;
    TileMap_t *tileMap;
    GameDataFileOffsets_t fileOffsets;
    GameDataObjectOffset_t tileMapFileOffset;
@@ -121,12 +123,14 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
             return 0;
          }
 
+         // tile map
          tileMap = (TileMap_t*)MemArena_AllocMem( memArena, TileMap_GetStructSize() );
          tileMap->tileSizePixels = tileSizePixels;
          tileMap->portals = 0;
          Platform_FileSeek( file, tileMapOffset, 0 );
          Platform_ReadFileBytes( file, (u8*)( &tileMap->info ), sizeof( TileMapInfo_t ) );
 
+         // tiles
          tileCount = (i32)( tileMap->info.tilesX * tileMap->info.tilesY );
          tilesOffset = tileMapOffset + sizeof( TileMapInfo_t );
          if ( tilesOffset + (i32)( tileCount * sizeof( Tile_t ) ) > file->size )
@@ -141,6 +145,7 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          Platform_ReadFileBytes( file, tiles, tileCount * sizeof( Tile_t ) );
          tileMap->tiles = (Tile_t*)tiles;
 
+         // portals
          portalsOffset = tilesOffset + tileCount * sizeof( Tile_t );
          if ( tileMap->info.portalCount > 0 )
          {
@@ -157,6 +162,27 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
             tileMap->portals = (TileMapPortal_t*)portals;
          }
 
+         // NPCs
+         npcsOffset = portalsOffset + tileMap->info.portalCount * sizeof( TileMapPortal_t );
+         if ( tileMap->info.npcCount > 0 )
+         {
+            if ( npcsOffset + (i32)( tileMap->info.npcCount * sizeof( NpcInfo_t ) ) > file->size )
+            {
+               Platform_FatalError( "game data file is too small to contain all the tile map NPCs." );
+               MemArena_FreeMem( memArena, tileMap );
+               return 0;
+            }
+
+            tileMap->npcs = (Npc_t*)MemArena_AllocMem( memArena, tileMap->info.npcCount * Npc_GetStructSize() );
+            npcOffset = npcsOffset;
+
+            for ( j = 0; j < tileMap->info.npcCount; j++ )
+            {
+               Npc_LoadFromGameData( (Npc_t*)( (u8*)tileMap->npcs + ( j * Npc_GetStructSize() ) ), memArena, gameData, npcOffset, activeSpriteTextureSet );
+               npcOffset += sizeof( NpcInfo_t );
+            }
+         }
+
          TileMap_SetViewportInUnits( tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
 
          return tileMap;
@@ -170,11 +196,23 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
 void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
 {
+   u32 i;
+
    if ( tileMap->portals )
    {
       MemArena_FreeMem( memArena, tileMap->portals );
    }
 
+   if ( tileMap->info.npcCount > 0 )
+   {
+      for ( i = 0; i < tileMap->info.npcCount; i++ )
+      {
+         Npc_Free( (Npc_t*)( (u8*)tileMap->npcs + ( i * Npc_GetStructSize() ) ), memArena );
+      }
+
+      MemArena_FreeMem( memArena, tileMap->npcs );
+   }
+   
    MemArena_FreeMem( memArena, tileMap->tiles );
    MemArena_FreeMem( memArena, tileMap );
 }

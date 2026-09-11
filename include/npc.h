@@ -26,7 +26,7 @@ END_PACKED_STRUCT
 
 typedef struct Npc_t Npc_t;
 size_t Npc_GetStructSize( void );
-Npc_t *Npc_CreateFromGameData( MemArena_t *memArena, GameData_t *gameData, i32 gameDataOffset, ActiveSpriteTextureSet_t* textureSet );
+void Npc_LoadFromGameData( Npc_t* npc, MemArena_t *memArena, GameData_t *gameData, i32 gameDataOffset, ActiveSpriteTextureSet_t* textureSet );
 void Npc_Free( Npc_t* npc, MemArena_t* memArena );
 
 Entity_t* Npc_GetEntity( Npc_t* npc );

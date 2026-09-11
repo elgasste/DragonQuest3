@@ -56,7 +56,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->activeSpriteTextureSet = ActiveSpriteTextureSet_CreateFromGameData( game->memArena, game->gameData );
 
    // TODO: temporary, everything from here down will come from the game data file.
-   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+   game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, game->activeSpriteTextureSet, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
    game->animationChain = AnimationChain_Create( memArena, 32 );
 
    game->playerSprite = ActiveSprite_Create( game->memArena, game->activeSpriteTextureSet );
@@ -211,7 +211,7 @@ internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
    if ( destinationTileMapId != TileMap_GetId( game->tileMap ) )
    {
       TileMap_Free( game->tileMap, game->memArena );
-      game->tileMap = TileMap_CreateFromGameData( game->memArena, game->gameData, destinationTileMapId, TileTextureSet_GetTileSize( game->tileTextureSet ) );
+      game->tileMap = TileMap_CreateFromGameData( game->memArena, game->gameData, game->activeSpriteTextureSet, destinationTileMapId, TileTextureSet_GetTileSize( game->tileTextureSet ) );
       ActiveSprite_SetDirection( game->playerSprite, TileMapPortal_GetDestinationDir( portal ) );
    }
 
