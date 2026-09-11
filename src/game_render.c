@@ -52,31 +52,77 @@ void Game_Render( Game_t* game )
 
 internal void GameRender_DrawEntities( Game_t* game )
 {
-   u32 i;
-   u32 npcCount;
-   Vector4i32_t viewportInPixels;
-   Vector4i32_t entityRect;
+   u32 i, drawOrder, npcCount;
+   i32 selectedY, selectedOrder, lastY, lastOrder;
+   b32 hasSelection, hasPrevious, playerDrawn;
+   Vector4i32_t viewportInPixels, entityRect;
    TileMap_t* tileMap;
-   Entity_t* playerEntity;
-   Entity_t* npcEntity;
+   Entity_t *playerEntity, *npcEntity, *selectedEntity;
 
    tileMap = Game_GetTileMap( game );
    viewportInPixels = TileMap_GetViewportInPixels( tileMap );
    playerEntity = Game_GetPlayerEntity( game );
-   GameRender_DrawEntity( game, playerEntity );
-
    npcCount = TileMap_GetNpcCount( tileMap );
-   for ( i = 0; i < npcCount; i++ )
+   playerDrawn = False;
+   lastY = 0;
+   selectedY = 0;
+   hasPrevious = False;
+   lastOrder = -1;
+
+   for ( drawOrder = 0; drawOrder <= npcCount; drawOrder++ )
    {
-      npcEntity = Npc_GetEntity( TileMap_GetNpc( tileMap, i ) );
-      entityRect = Entity_GetRect( npcEntity );
-      if ( entityRect.x + entityRect.w > viewportInPixels.x * WORLD_UNITS_PER_PIXEL &&
-           entityRect.x < ( viewportInPixels.x + viewportInPixels.w ) * WORLD_UNITS_PER_PIXEL &&
-           entityRect.y + entityRect.h > viewportInPixels.y * WORLD_UNITS_PER_PIXEL &&
-           entityRect.y < ( viewportInPixels.y + viewportInPixels.h ) * WORLD_UNITS_PER_PIXEL )
+      hasSelection = False;
+      selectedEntity = 0;
+      selectedOrder = 0;
+
+      if ( !playerDrawn )
       {
-         GameRender_DrawEntity( game, npcEntity );
+         entityRect = Entity_GetRect( playerEntity );
+         if ( !playerDrawn &&
+              ( !hasPrevious || entityRect.y > lastY || ( entityRect.y == lastY && 0 > lastOrder ) ) &&
+              ( !hasSelection || entityRect.y < selectedY || ( entityRect.y == selectedY && 0 < selectedOrder ) ) )
+         {
+            selectedEntity = playerEntity;
+            selectedY = entityRect.y;
+            selectedOrder = 0;
+            hasSelection = True;
+         }
       }
+
+      for ( i = 0; i < npcCount; i++ )
+      {
+         npcEntity = Npc_GetEntity( TileMap_GetNpc( tileMap, i ) );
+         entityRect = Entity_GetRect( npcEntity );
+         
+         if ( entityRect.x + entityRect.w > viewportInPixels.x * WORLD_UNITS_PER_PIXEL &&
+              entityRect.x < ( viewportInPixels.x + viewportInPixels.w ) * WORLD_UNITS_PER_PIXEL &&
+              entityRect.y + entityRect.h > viewportInPixels.y * WORLD_UNITS_PER_PIXEL &&
+              entityRect.y < ( viewportInPixels.y + viewportInPixels.h ) * WORLD_UNITS_PER_PIXEL &&
+              ( !hasPrevious || entityRect.y > lastY || ( entityRect.y == lastY && (i32)( i + 1 ) > lastOrder ) ) &&
+              ( !hasSelection || entityRect.y < selectedY || ( entityRect.y == selectedY && (i32)( i + 1 ) < selectedOrder ) ) )
+         {
+            selectedEntity = npcEntity;
+            selectedY = entityRect.y;
+            selectedOrder = (i32)( i + 1 );
+            hasSelection = True;
+         }
+      }
+
+      if ( !hasSelection )
+      {
+         break;
+      }
+
+      GameRender_DrawEntity( game, selectedEntity );
+
+      if ( selectedEntity == playerEntity )
+      {
+         playerDrawn = True;
+      }
+
+      lastY = selectedY;
+      lastOrder = selectedOrder;
+      hasPrevious = True;
    }
 }
 

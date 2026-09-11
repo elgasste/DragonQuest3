@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "display.h"
 #include "game.h"
 #include "mocks/mock_animation.h"
@@ -89,6 +91,8 @@ static Npc_t g_npc;
 static AnimationChain_t g_animationChain;
 static Animation_t g_animation;
 static u32 g_playerTexture[1];
+static u32 g_npcTexture[1];
+static DisplayDrawBufferCall_t g_displayDrawBufferCalls[2];
 static Vector4i32_t g_viewportInPixels;
 static Vector4i32_t g_playerRect;
 static DisplayFillCall_t g_displayFillCall;
@@ -118,6 +122,7 @@ void setUp( void )
    g_playerSprite.frameIndex = 1;
    g_playerSprite.textureIndex = 1;
    g_playerTexture[0] = 0x12345678;
+   g_npcTexture[0] = 0x87654321;
    g_viewportInPixels.x = 10;
    g_viewportInPixels.y = 20;
    g_viewportInPixels.w = 320;
@@ -169,6 +174,7 @@ void setUp( void )
    g_displayDrawBufferCall.displayX = 0;
    g_displayDrawBufferCall.displayY = 0;
    g_displayDrawBufferCall.callCount = 0;
+   memset( g_displayDrawBufferCalls, 0, sizeof( g_displayDrawBufferCalls ) );
 
    g_platformRenderDisplayBufferCall.display = 0;
    g_platformRenderDisplayBufferCall.callCount = 0;
@@ -326,8 +332,7 @@ u32 ActiveSpriteTextureSet_GetFrameSize( ActiveSpriteTextureSet_t* textureSet )
 u32* ActiveSpriteTextureSet_GetTexture( ActiveSpriteTextureSet_t* textureSet, u32 index )
 {
    UNUSED_PARAM( textureSet );
-   UNUSED_PARAM( index );
-   return g_playerTexture;
+   return ( index == 9 ) ? g_npcTexture : g_playerTexture;
 }
 
 void Display_Fill( Display_t* display, u32 color )
@@ -346,6 +351,10 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
    g_displayDrawBufferCall.displayX = displayX;
    g_displayDrawBufferCall.displayY = displayY;
    g_displayDrawBufferCall.callCount++;
+   if ( g_displayDrawBufferCall.callCount <= 2 )
+   {
+      g_displayDrawBufferCalls[g_displayDrawBufferCall.callCount - 1] = g_displayDrawBufferCall;
+   }
 }
 
 void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY )
@@ -428,6 +437,21 @@ void test_Game_Render_DrawsVisibleNpcRelativeToViewport( void )
    TEST_ASSERT_EQUAL_INT( 79, g_displayDrawBufferCall.displayY );
 }
 
+void test_Game_Render_DrawsEntitiesInVerticalOrder( void )
+{
+   g_npcEntity.rect.y = 40 * WORLD_UNITS_PER_PIXEL;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_INT( 2, g_displayDrawBufferCall.callCount );
+   TEST_ASSERT_EQUAL_PTR( g_npcTexture, g_displayDrawBufferCalls[0].buffer );
+   TEST_ASSERT_EQUAL_INT( 71, g_displayDrawBufferCalls[0].displayX );
+   TEST_ASSERT_EQUAL_INT( 19, g_displayDrawBufferCalls[0].displayY );
+   TEST_ASSERT_EQUAL_PTR( g_playerTexture, g_displayDrawBufferCalls[1].buffer );
+   TEST_ASSERT_EQUAL_INT( 28, g_displayDrawBufferCalls[1].displayX );
+   TEST_ASSERT_EQUAL_INT( 43, g_displayDrawBufferCalls[1].displayY );
+}
+
 void test_Game_Render_DoesNotDrawNpcOutsideViewport( void )
 {
    g_npcEntity.rect.x = 400 * WORLD_UNITS_PER_PIXEL;
@@ -505,6 +529,7 @@ int main( void )
    RUN_TEST( test_Game_Render_RendersTileMapViewport );
    RUN_TEST( test_Game_Render_DrawsPlayerRelativeToViewport );
    RUN_TEST( test_Game_Render_DrawsVisibleNpcRelativeToViewport );
+   RUN_TEST( test_Game_Render_DrawsEntitiesInVerticalOrder );
    RUN_TEST( test_Game_Render_DoesNotDrawNpcOutsideViewport );
    RUN_TEST( test_Game_Render_PresentsDisplayBuffer );
    RUN_TEST( test_Game_Render_AppliesFadeOut );
