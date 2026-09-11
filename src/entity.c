@@ -24,6 +24,8 @@ Entity_t* Entity_Create( MemArena_t* memArena, ActiveSprite_t* sprite )
    entity = (Entity_t*)MemArena_AllocMem( memArena, sizeof( Entity_t ) );
    entity->tileIndex = 0;
    entity->sprite = sprite;
+   entity->spriteOffset.x = 0;
+   entity->spriteOffset.y = 0;
 
    return entity;
 }

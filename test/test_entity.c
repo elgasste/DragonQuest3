@@ -58,6 +58,19 @@ void test_Entity_Create_InitializesSpriteToNull( void )
    Entity_Free( entity, (MemArena_t*)1 );
 }
 
+void test_Entity_Create_InitializesSpriteOffsetToZero( void )
+{
+   Vector2i32_t spriteOffset;
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
+
+   spriteOffset = Entity_GetSpriteOffset( entity );
+
+   TEST_ASSERT_EQUAL_INT( 0, spriteOffset.x );
+   TEST_ASSERT_EQUAL_INT( 0, spriteOffset.y );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
 void test_Entity_SetSprite_UpdatesSprite( void )
 {
    ActiveSprite_t* expectedSprite = (ActiveSprite_t*)1;
@@ -238,6 +251,7 @@ int main( void )
    RUN_TEST( test_Entity_GetStructSize_ReturnsNonZeroSize );
 
    RUN_TEST( test_Entity_Create_InitializesSpriteToNull );
+   RUN_TEST( test_Entity_Create_InitializesSpriteOffsetToZero );
    RUN_TEST( test_Entity_SetSprite_UpdatesSprite );
    RUN_TEST( test_Entity_SetSpriteOffset_UpdatesOffset );
    RUN_TEST( test_Entity_Setters_ReplaceSpriteAndSpriteOffset );

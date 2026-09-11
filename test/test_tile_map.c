@@ -534,6 +534,22 @@ void test_TileMap_WrapEntityPosition_WrapsBothDirections( void )
    TEST_ASSERT_EQUAL_INT( 32 * WORLD_UNITS_PER_PIXEL, entity.rect.y );
 }
 
+void test_TileMap_CenterEntityInTile_CentersEntityWithZeroSpriteOffset( void )
+{
+   TestTileMap_t map = { { 1, 4, 3, False, 0 }, 0, 0, 0, 16, { 0 }, { 0 } };
+   Entity_t entity = { { 0, 0, 16 * WORLD_UNITS_PER_PIXEL, 16 * WORLD_UNITS_PER_PIXEL }, { 0 }, 0, 0, { 0, 0 } };
+   Vector4i32_t rect;
+
+   TileMap_CenterEntityInTile( (TileMap_t*)&map, &entity, 5 );
+   rect = Entity_GetRect( &entity );
+
+   TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, rect.x );
+   TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, rect.y );
+   TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, rect.w );
+   TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, rect.h );
+   TEST_ASSERT_EQUAL_UINT( 5, entity.tileIndex );
+}
+
 void test_TileMap_GetPortal_ReturnsNullWhenNoPortals( void )
 {
    Tile_t expectedTiles[4] = { { 1 }, { 2 }, { 3 }, { 4 } };
@@ -651,6 +667,7 @@ int main( void )
    RUN_TEST( test_TileMap_GetTileIndexForEntity_WrapsCoordinates );
 
    RUN_TEST( test_TileMap_WrapEntityPosition_WrapsBothDirections );
+   RUN_TEST( test_TileMap_CenterEntityInTile_CentersEntityWithZeroSpriteOffset );
 
    RUN_TEST( test_TileMap_GetPortal_ReturnsNullWhenNoPortals );
    RUN_TEST( test_TileMap_GetPortal_ReturnsPortalAtSourceTileIndex );

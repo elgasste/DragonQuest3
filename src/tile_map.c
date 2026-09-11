@@ -247,6 +247,16 @@ u32 TileMap_GetPortalCount( TileMap_t* tileMap )
    return tileMap->info.portalCount;
 }
 
+u32 TileMap_GetNpcCount( TileMap_t* tileMap )
+{
+   return tileMap->info.npcCount;
+}
+
+Npc_t* TileMap_GetNpc( TileMap_t* tileMap, u32 npcIndex )
+{
+   return (Npc_t*)( (u8*)tileMap->npcs + ( npcIndex * Npc_GetStructSize() ) );
+}
+
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
 {
    return (Tile_t*)( (u8*)tileMap->tiles + tileIndex * sizeof( Tile_t ) );
