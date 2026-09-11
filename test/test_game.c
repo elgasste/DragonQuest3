@@ -5,6 +5,7 @@
 #include "mocks/mock_game_data.h"
 #include "mocks/mock_input.h"
 #include "mocks/mock_mem_arena.h"
+#include "mocks/mock_npc.h"
 #include "mocks/mock_sprite_texture_set.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
@@ -44,6 +45,10 @@ global GameData_t* g_gameData;
 global TileTextureSet_t* g_tileTextureSet;
 global ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
 global ActiveSprite_t* g_playerSprite;
+global ActiveSprite_t* g_npcSprite;
+global Entity_t g_npcEntity;
+global Npc_t g_npc;
+global u32 g_npcCount;
 global ActiveSpriteTextureSet_t* g_playerSpriteTextureSet;
 global u32 g_playerSpriteTextureIndex;
 global Direction_t g_playerSpriteDirection;
@@ -187,6 +192,24 @@ u32 Entity_GetTileIndex( Entity_t* entity )
 ActiveSprite_t* Entity_GetSprite( Entity_t* entity )
 {
    return entity->sprite;
+}
+
+u32 TileMap_GetNpcCount( TileMap_t* tileMap )
+{
+   UNUSED_PARAM( tileMap );
+   return g_npcCount;
+}
+
+Npc_t* TileMap_GetNpc( TileMap_t* tileMap, u32 npcIndex )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( npcIndex );
+   return &g_npc;
+}
+
+Entity_t* Npc_GetEntity( Npc_t* npc )
+{
+   return npc->entity;
 }
 
 Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity )
@@ -501,6 +524,10 @@ void setUp( void )
    g_tileTextureSetFreeCount = 0;
    g_activeSpriteTextureSetFreeCount = 0;
    g_playerSprite = 0;
+   g_npcCount = 0;
+   g_npcSprite = (ActiveSprite_t*)2;
+   g_npc.entity = &g_npcEntity;
+   g_npcEntity.sprite = g_npcSprite;
    g_playerSpriteTextureSet = 0;
    g_playerSpriteTextureIndex = 0;
    g_playerSpriteDirection = Direction_Down;
@@ -607,6 +634,21 @@ void test_Game_Run_TicsPlayerSpriteWithClockFrameDuration( void )
    Game_Free( game, (MemArena_t*)1 );
 }
 
+void test_Game_Run_TicsNpcSpritesWithClockFrameDuration( void )
+{
+   Game_t* game = CreateGame();
+
+   g_npcCount = 1;
+   g_frameSec = 0.25f;
+   Game_Run( game );
+
+   TEST_ASSERT_EQUAL_UINT( 2, g_spriteTicCount );
+   TEST_ASSERT_EQUAL_PTR( g_npcSprite, g_spriteTicSprite );
+   TEST_ASSERT_EQUAL_FLOAT( 0.25f, g_spriteTicDeltaSec );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
 void test_Game_Free_ReleasesAllDependencies( void )
 {
    Game_t* game = CreateGame();
@@ -702,6 +744,7 @@ int main( void )
 
    RUN_TEST( test_Game_Run_ExecutesOneFrameAndUpdatesViewport );
    RUN_TEST( test_Game_Run_TicsPlayerSpriteWithClockFrameDuration );
+   RUN_TEST( test_Game_Run_TicsNpcSpritesWithClockFrameDuration );
    
    RUN_TEST( test_Game_Free_ReleasesAllDependencies );
 

@@ -6,6 +6,7 @@
 #include "game_data.h"
 #include "input.h"
 #include "mem_arena.h"
+#include "npc.h"
 #include "sprite.h"
 #include "sprite_texture_set.h"
 #include "tile_map.h"
@@ -34,6 +35,7 @@ struct Game_t
 };
 
 internal void Game_Tic( Game_t* game );
+internal void Game_TicEntities( Game_t* game, r32 deltaSec );
 internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal );
 
 size_t Game_GetStructSize( void )
@@ -197,8 +199,27 @@ internal void Game_Tic( Game_t* game )
       Game_TicPhysics( game );
    }
 
-   ActiveSprite_Tic( game->playerSprite, deltaSec );
+   Game_TicEntities( game, deltaSec );
+
    TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity );
+}
+
+internal void Game_TicEntities( Game_t* game, r32 deltaSec )
+{
+   u32 i;
+   Npc_t* npc;
+   Entity_t* entity;
+   ActiveSprite_t* sprite;
+
+   ActiveSprite_Tic( game->playerSprite, deltaSec );
+
+   for ( i = 0; i < TileMap_GetNpcCount( game->tileMap ); i++ )
+   {
+      npc = TileMap_GetNpc( game->tileMap, i );
+      entity = Npc_GetEntity( npc );
+      sprite = Entity_GetSprite( entity );
+      ActiveSprite_Tic( sprite, deltaSec );
+   }
 }
 
 internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
