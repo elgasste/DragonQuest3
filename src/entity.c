@@ -1,6 +1,7 @@
 #include "entity.h"
 #include "mem_arena.h"
 #include "platform.h"
+#include "sprite.h"
 
 struct Entity_t
 {
@@ -16,19 +17,20 @@ size_t Entity_GetStructSize( void )
    return sizeof( Entity_t );
 }
 
-Entity_t* Entity_Create( MemArena_t* memArena )
+Entity_t* Entity_Create( MemArena_t* memArena, ActiveSprite_t* sprite )
 {
    Entity_t* entity;
 
    entity = (Entity_t*)MemArena_AllocMem( memArena, sizeof( Entity_t ) );
    entity->tileIndex = 0;
-   entity->sprite = 0;
+   entity->sprite = sprite;
 
    return entity;
 }
 
 void Entity_Free( Entity_t* entity, MemArena_t* memArena )
 {
+   ActiveSprite_Free( entity->sprite, memArena );
    MemArena_FreeMem( memArena, entity );
 }
 

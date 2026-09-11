@@ -19,6 +19,14 @@ add_executable(Test_Entity
    test_entity.c
 )
 
+add_executable(Test_Npc
+   ../src/entity.c
+   ../src/npc.c
+   ../src/sprite.c
+   vendor/unity.c
+   test_npc.c
+)
+
 add_executable(Test_Animation
    ../src/animation.c
    vendor/unity.c
@@ -101,6 +109,7 @@ add_executable(Test_Utility
 set_property(TARGET Test_Clock PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Display PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Entity PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Npc PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Animation PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Physics PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -119,6 +128,7 @@ if(MSVC)
    add_compile_options(/wd4201)
    target_compile_options(Test_Clock PRIVATE /W4)
    target_compile_options(Test_Entity PRIVATE /W4)
+   target_compile_options(Test_Npc PRIVATE /W4)
    target_compile_options(Test_Animation PRIVATE /W4)
    target_compile_options(Test_Display PRIVATE /W4)
    target_compile_options(Test_Game PRIVATE /W4)
@@ -179,6 +189,11 @@ target_include_directories(Test_MemArena PRIVATE vendor)
 target_include_directories(Test_MemArena PRIVATE ../include)
 target_include_directories(Test_MemArena PRIVATE ../src)
 
+target_include_directories(Test_Npc PRIVATE vendor)
+target_include_directories(Test_Npc PRIVATE mocks)
+target_include_directories(Test_Npc PRIVATE ../include)
+target_include_directories(Test_Npc PRIVATE ../src)
+
 target_include_directories(Test_PixelBuffer PRIVATE vendor)
 target_include_directories(Test_PixelBuffer PRIVATE ../include)
 target_include_directories(Test_PixelBuffer PRIVATE ../src)
@@ -215,6 +230,7 @@ add_test( NAME Unity_Game_Physics_Tests COMMAND Test_Game_Physics)
 add_test( NAME Unity_Game_Render_Tests COMMAND Test_Game_Render)
 add_test( NAME Unity_Input_Tests COMMAND Test_Input)
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)
+add_test( NAME Unity_Npc_Tests COMMAND Test_Npc)
 add_test( NAME Unity_PixelBuffer_Tests COMMAND Test_PixelBuffer)
 add_test( NAME Unity_Sprite_Tests COMMAND Test_Sprite)
 add_test( NAME Unity_Sprite_Texture_Set_Tests COMMAND Test_Sprite_Texture_Set)

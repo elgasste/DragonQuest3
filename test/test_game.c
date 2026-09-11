@@ -135,14 +135,16 @@ void Display_Free( Display_t* display, MemArena_t* memArena )
    g_displayFreeCount++;
 }
 
-Entity_t* Entity_Create( MemArena_t* memArena )
+Entity_t* Entity_Create( MemArena_t* memArena, ActiveSprite_t* sprite )
 {
    g_playerEntity = (Entity_t*)MemArena_AllocMem( memArena, sizeof( Entity_t ) );
+   g_playerEntity->sprite = sprite;
    return g_playerEntity;
 }
 
 void Entity_Free( Entity_t* entity, MemArena_t* memArena )
 {
+   ActiveSprite_Free( entity->sprite, memArena );
    MemArena_FreeMem( memArena, entity );
    g_entityFreeCount++;
 }

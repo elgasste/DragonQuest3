@@ -61,10 +61,9 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
 
    game->playerSprite = ActiveSprite_Create( game->memArena, game->activeSpriteTextureSet );
    ActiveSprite_SetTextureIndex( game->playerSprite, 1 );
-   game->playerEntity = Entity_Create( game->memArena );
+   game->playerEntity = Entity_Create( game->memArena, game->playerSprite );
    Entity_SetSize( game->playerEntity, 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL );
    Entity_SetVelocity( game->playerEntity, 0, 0 );
-   Entity_SetSprite( game->playerEntity, game->playerSprite );
    Entity_SetSpriteOffset( game->playerEntity, -2, -2 );
 
    TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
@@ -91,7 +90,6 @@ void Game_Free( Game_t* game, MemArena_t* memArena )
    TileTextureSet_Free( game->tileTextureSet, memArena );
    ActiveSpriteTextureSet_Free( game->activeSpriteTextureSet, memArena );
 
-   ActiveSprite_Free( game->playerSprite, memArena );
    Entity_Free( game->playerEntity, memArena );
 
    MemArena_FreeMem( memArena, game );

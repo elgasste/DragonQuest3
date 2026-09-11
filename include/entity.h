@@ -9,7 +9,7 @@ typedef struct ActiveSprite_t ActiveSprite_t;
 
 typedef struct Entity_t Entity_t;
 size_t Entity_GetStructSize( void );
-Entity_t* Entity_Create( MemArena_t* memArena );
+Entity_t* Entity_Create( MemArena_t* memArena, ActiveSprite_t* sprite );
 void Entity_Free( Entity_t* entity, MemArena_t* memArena );
 
 Vector4i32_t Entity_GetRect( Entity_t* entity );
