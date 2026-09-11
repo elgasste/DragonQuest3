@@ -3,6 +3,7 @@
 
 #include "direction.h"
 #include "game_data.h"
+#include "npc.h"
 #include "platform.h"
 #include "version.h"
 #include "win_common.h"
@@ -74,6 +75,7 @@ typedef struct TileMapMock_t
    TileMapInfoMock_t info;
    TileMock_t* tiles;
    TileMapPortalMock_t* portals;
+   NpcInfo_t* npcs;
 }
 TileMapMock_t;
 
@@ -134,6 +136,7 @@ void WriteTestGameDataFile( const char* filePath )
    {
       free( tileMaps[i].tiles );
       free( tileMaps[i].portals );
+      free( tileMaps[i].npcs );
    }
    free( tileMaps );
 
@@ -384,6 +387,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].destinationDir = Direction_Left;
 
    curTileMap->info.npcCount = 0;
+   curTileMap->npcs = 0;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -433,7 +437,16 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].destinationTileIndex = 38;
    curTileMap->portals[0].destinationDir = Direction_Right;
 
-   curTileMap->info.npcCount = 0;
+   curTileMap->info.npcCount = 1;
+   curTileMap->npcs = (NpcInfo_t*)malloc( sizeof( NpcInfo_t ) );
+   curTileMap->npcs[0].tileIndex = 5657;
+   curTileMap->npcs[0].w = 16;
+   curTileMap->npcs[0].h = 16;
+   curTileMap->npcs[0].spriteOffsetX = 0;
+   curTileMap->npcs[0].spriteOffsetY = 0;
+   curTileMap->npcs[0].direction = Direction_Down;
+   curTileMap->npcs[0].spriteTextureIndex = 0;
+   curTileMap->npcs[0].wanders = False;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -482,6 +495,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].destinationDir = Direction_Down;
 
    curTileMap->info.npcCount = 0;
+   curTileMap->npcs = 0;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -521,6 +535,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[1].destinationDir = Direction_Right;
 
    curTileMap->info.npcCount = 0;
+   curTileMap->npcs = 0;
 
    curTileMap->tiles = 0;
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
@@ -555,6 +570,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].destinationDir = Direction_Left;
 
    curTileMap->info.npcCount = 0;
+   curTileMap->npcs = 0;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -754,11 +770,12 @@ internal b32 WriteTestGameDataActiveSpriteTextureSet( HANDLE hFile, DWORD* fileP
 
 internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMock_t* tileMaps, u32 tileMapCount )
 {
-   u32 i, j, tileAccum, portalAccum;
+   u32 i, j, tileAccum, portalAccum, npcAccum;
    DWORD bytesWritten;
    BOOL result;
    TileMock_t* tile;
    TileMapPortalMock_t* portal;
+   NpcInfo_t* npc;
    GameDataObjectOffset_t* offsets;
 
    bytesWritten = 0;
@@ -779,6 +796,7 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
    offsets = (GameDataObjectOffset_t*)malloc( tileMapCount * sizeof( GameDataObjectOffset_t ) );
    tileAccum = 0;
    portalAccum = 0;
+   npcAccum = 0;
    for ( i = 0; i < tileMapCount; i++ )
    {
       offsets[i].id = tileMaps[i].info.id;
@@ -786,9 +804,11 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
          + ( tileMapCount * sizeof( GameDataObjectOffset_t ) )
          + ( i * sizeof( TileMapInfoMock_t ) )
          + ( tileAccum * sizeof( TileMock_t ) )
-         + ( portalAccum * sizeof( TileMapPortalMock_t ) );
+         + ( portalAccum * sizeof( TileMapPortalMock_t ) )
+         + ( npcAccum * sizeof( NpcInfo_t ) );
       tileAccum += tileMaps[i].info.tilesX * tileMaps[i].info.tilesY;
       portalAccum += tileMaps[i].info.portalCount;
+      npcAccum += tileMaps[i].info.npcCount;
    }
 
    result = WriteFile( hFile, offsets, tileMapCount * sizeof( GameDataObjectOffset_t ), &bytesWritten, NULL );
@@ -857,6 +877,26 @@ internal b32 WriteTestGameDataTileMaps( HANDLE hFile, DWORD* filePos, TileMapMoc
          else if ( bytesWritten != sizeof( TileMapPortalMock_t ) )
          {
             Platform_FatalError( "failed to write test game data file tile map portals: wrote incorrect number of bytes." );
+            return False;
+         }
+      }
+
+      for ( j = 0; j < tileMaps[i].info.npcCount; j++ )
+      {
+         npc = &( tileMaps[i].npcs[j] );
+
+         bytesWritten = 0;
+         result = WriteFile( hFile, npc, sizeof( NpcInfo_t ), &bytesWritten, NULL );
+         *filePos += bytesWritten;
+
+         if ( !result )
+         {
+            Platform_FatalError( "failed to write test game data file tile map NPCs." );
+            return False;
+         }
+         else if ( bytesWritten != sizeof( NpcInfo_t ) )
+         {
+            Platform_FatalError( "failed to write test game data file tile map NPCs: wrote incorrect number of bytes." );
             return False;
          }
       }

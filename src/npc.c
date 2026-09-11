@@ -41,6 +41,8 @@ void Npc_LoadFromGameData( Npc_t* npc, MemArena_t *memArena, GameData_t *gameDat
 
    npc->entity = Entity_Create( memArena, sprite );
    Entity_SetTileIndex( npc->entity, info.tileIndex );
+   Entity_SetPosition( npc->entity, 0, 0 );
+   Entity_SetVelocity( npc->entity, 0, 0 );
    Entity_SetSize( npc->entity, info.w, info.h );
    Entity_SetSpriteOffset( npc->entity, info.spriteOffsetX, info.spriteOffsetY );
 }

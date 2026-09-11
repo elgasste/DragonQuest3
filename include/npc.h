@@ -2,6 +2,7 @@
 #define NPC_H
 
 #include "common.h"
+#include "direction.h"
 #include "platform.h"
 
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
@@ -17,7 +18,7 @@ typedef struct NpcInfo_t
    i32 h;
    i32 spriteOffsetX;
    i32 spriteOffsetY;
-   i32 direction;
+   Direction_t direction;
    u32 spriteTextureIndex;
    b32 wanders;
 }

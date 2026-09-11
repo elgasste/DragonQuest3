@@ -99,6 +99,8 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
    u32 tileMapCount, i, j;
    i32 chunkOffset, tileMapOffset, tileCount, tilesOffset, portalsOffset, npcsOffset, npcOffset;
    TileMap_t *tileMap;
+   Npc_t* npc;
+   Entity_t* entity;
    GameDataFileOffsets_t fileOffsets;
    GameDataObjectOffset_t tileMapFileOffset;
    File_t* file;
@@ -178,7 +180,10 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
             for ( j = 0; j < tileMap->info.npcCount; j++ )
             {
-               Npc_LoadFromGameData( (Npc_t*)( (u8*)tileMap->npcs + ( j * Npc_GetStructSize() ) ), memArena, gameData, npcOffset, activeSpriteTextureSet );
+               npc = (Npc_t*)( (u8*)tileMap->npcs + ( j * Npc_GetStructSize() ) );
+               Npc_LoadFromGameData( npc, memArena, gameData, npcOffset, activeSpriteTextureSet );
+               entity = Npc_GetEntity( npc );
+               TileMap_CenterEntityInTile( tileMap, entity, Entity_GetTileIndex( entity ) );
                npcOffset += sizeof( NpcInfo_t );
             }
          }
@@ -212,7 +217,7 @@ void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
 
       MemArena_FreeMem( memArena, tileMap->npcs );
    }
-   
+
    MemArena_FreeMem( memArena, tileMap->tiles );
    MemArena_FreeMem( memArena, tileMap );
 }

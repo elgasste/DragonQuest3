@@ -43,6 +43,7 @@ global u32 g_npcLoadCount;
 global u32 g_npcFreeCount;
 global i32 g_npcLoadOffsets[ 4 ];
 global ActiveSpriteTextureSet_t* g_npcTextureSet;
+global Entity_t g_npcEntity;
 
 size_t Npc_GetStructSize( void )
 {
@@ -54,9 +55,15 @@ void Npc_LoadFromGameData( Npc_t* npc, MemArena_t* memArena, GameData_t* gameDat
    UNUSED_PARAM( npc );
    UNUSED_PARAM( memArena );
    UNUSED_PARAM( gameData );
+   npc->entity = &g_npcEntity;
    g_npcLoadOffsets[ g_npcLoadCount ] = gameDataOffset;
    g_npcTextureSet = textureSet;
    g_npcLoadCount++;
+}
+
+Entity_t* Npc_GetEntity( Npc_t* npc )
+{
+   return npc->entity;
 }
 
 void Npc_Free( Npc_t* npc, MemArena_t* memArena )
@@ -80,6 +87,11 @@ void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
 void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
 {
    entity->tileIndex = tileIndex;
+}
+
+u32 Entity_GetTileIndex( Entity_t* entity )
+{
+   return entity->tileIndex;
 }
 
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
@@ -186,6 +198,7 @@ void setUp( void )
    g_npcFreeCount = 0;
    memset( g_npcLoadOffsets, 0, sizeof( g_npcLoadOffsets ) );
    g_npcTextureSet = 0;
+   g_npcEntity.tileIndex = 5657;
 }
 
 void tearDown( void ) {}
