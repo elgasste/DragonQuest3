@@ -3,11 +3,13 @@
 #include "clock.h"
 #include "entity.h"
 #include "game.h"
+#include "npc.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
 
 internal i32 GamePhysics_GetPixelMovement( i32 velocity, r32 frameSeconds, u32 frameCount );
 internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Vector4i32_t rect, u32 tileSize );
+internal b32 GamePhysics_RectCollidesWithNpc( TileMap_t* tileMap, Vector4i32_t rect );
 
 void Game_TicPhysics( Game_t* game )
 {
@@ -42,7 +44,8 @@ void Game_TicPhysics( Game_t* game )
       if ( step < abs( moveX ) )
       {
          playerRect.x += stepX * WORLD_UNITS_PER_PIXEL;
-         if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, playerRect, tileSize ) )
+         if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, playerRect, tileSize ) ||
+              GamePhysics_RectCollidesWithNpc( tileMap, playerRect ) )
          {
             playerRect.x -= stepX * WORLD_UNITS_PER_PIXEL;
          }
@@ -51,7 +54,8 @@ void Game_TicPhysics( Game_t* game )
       if ( step < abs( moveY ) )
       {
          playerRect.y += stepY * WORLD_UNITS_PER_PIXEL;
-         if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, playerRect, tileSize ) )
+         if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, playerRect, tileSize ) ||
+              GamePhysics_RectCollidesWithNpc( tileMap, playerRect ) )
          {
             playerRect.y -= stepY * WORLD_UNITS_PER_PIXEL;
          }
@@ -167,6 +171,36 @@ internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Ve
          {
             return True;
          }
+      }
+   }
+
+   return False;
+}
+
+internal b32 GamePhysics_RectCollidesWithNpc( TileMap_t* tileMap, Vector4i32_t rect )
+{
+   u32 i;
+   Vector4i32_t npcRect;
+   Entity_t* npcEntity;
+
+#if defined( _WIN32 )
+   if ( g_winDebugFlags.noClip )
+   {
+      return False;
+   }
+#endif
+
+   for ( i = 0; i < TileMap_GetNpcCount( tileMap ); i++ )
+   {
+      npcEntity = Npc_GetEntity( TileMap_GetNpc( tileMap, i ) );
+      npcRect = Entity_GetRect( npcEntity );
+
+      if ( rect.x < npcRect.x + npcRect.w &&
+           rect.x + rect.w > npcRect.x &&
+           rect.y < npcRect.y + npcRect.h &&
+           rect.y + rect.h > npcRect.y )
+      {
+         return True;
       }
    }
 

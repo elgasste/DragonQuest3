@@ -1,4 +1,5 @@
 #include "mocks/mock_entity.h"
+#include "mocks/mock_npc.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
 
@@ -19,6 +20,9 @@ Game_t;
 
 global Game_t g_game;
 global Entity_t g_entity;
+global Entity_t g_npcEntity;
+global Npc_t g_npc;
+global u32 g_npcCount;
 global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
 global Tile_t g_tiles[80];
@@ -55,6 +59,24 @@ Entity_t* Game_GetPlayerEntity( Game_t* game )
 TileMap_t* Game_GetTileMap( Game_t* game )
 {
    return game->tileMap;
+}
+
+u32 TileMap_GetNpcCount( TileMap_t* tileMap )
+{
+   UNUSED_PARAM( tileMap );
+   return g_npcCount;
+}
+
+Npc_t* TileMap_GetNpc( TileMap_t* tileMap, u32 npcIndex )
+{
+   UNUSED_PARAM( tileMap );
+   UNUSED_PARAM( npcIndex );
+   return &g_npc;
+}
+
+Entity_t* Npc_GetEntity( Npc_t* npc )
+{
+   return npc->entity;
 }
 
 TileTextureSet_t* Game_GetTileTextureSet( Game_t* game )
@@ -166,6 +188,7 @@ void setUp( void )
    g_winDebugFlags.showHitBoxes = False;
 #endif
    g_clockFrameCount = 0;
+   g_npcCount = 0;
    g_gameOnPlayerTileIndexChangedCount = 0;
    g_gameOnPlayerTileIndexChangedTileIndex = 0;
    g_entity.rect.x = 20 * WORLD_UNITS_PER_PIXEL;
@@ -174,6 +197,11 @@ void setUp( void )
    g_entity.rect.h = 12 * WORLD_UNITS_PER_PIXEL;
    g_entity.velocity.x = 3 * WORLD_UNITS_PER_PIXEL * 60;
    g_entity.velocity.y = 4 * WORLD_UNITS_PER_PIXEL * 60;
+   g_npc.entity = &g_npcEntity;
+   g_npcEntity.rect.x = 16 * WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.rect.y = 0;
+   g_npcEntity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.rect.h = WORLD_UNITS_PER_PIXEL;
    g_tileMap.info.tilesX = 10;
    g_tileMap.info.tilesY = 8;
    g_tileMap.info.wraps = False;
@@ -214,6 +242,21 @@ void test_Game_TicPhysics_StopsBeforeNonPassableTile( void )
    Game_TicPhysics( &g_game );
 
    TEST_ASSERT_EQUAL_INT( 31 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+}
+
+void test_Game_TicPhysics_StopsBeforeNpc( void )
+{
+   g_npcCount = 1;
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 30 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 15 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
 }
 
 void test_Game_TicPhysics_DoesNotEnterNonPassableTile( void )
@@ -372,6 +415,7 @@ int main( void )
 
    RUN_TEST( test_Game_TicPhysics_MovesPlayerByVelocity );
    RUN_TEST( test_Game_TicPhysics_StopsBeforeNonPassableTile );
+   RUN_TEST( test_Game_TicPhysics_StopsBeforeNpc );
    RUN_TEST( test_Game_TicPhysics_DoesNotEnterNonPassableTile );
    RUN_TEST( test_Game_TicPhysics_MovesDiagonally );
    RUN_TEST( test_Game_TicPhysics_AllowsOtherAxisAfterCollision );
