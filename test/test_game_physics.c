@@ -23,6 +23,8 @@ global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
 global Tile_t g_tiles[80];
 global u32 g_clockFrameCount;
+global u32 g_gameOnPlayerTileIndexChangedCount;
+global u32 g_gameOnPlayerTileIndexChangedTileIndex;
 #if defined( _WIN32 )
 WinDebugFlags_t g_winDebugFlags;
 #endif
@@ -60,9 +62,21 @@ TileTextureSet_t* Game_GetTileTextureSet( Game_t* game )
    return game->tileTextureSet;
 }
 
+void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex )
+{
+   UNUSED_PARAM( game );
+   g_gameOnPlayerTileIndexChangedCount++;
+   g_gameOnPlayerTileIndexChangedTileIndex = newTileIndex;
+}
+
 Vector4i32_t Entity_GetRect( Entity_t* entity )
 {
    return entity->rect;
+}
+
+u32 Entity_GetTileIndex( Entity_t* entity )
+{
+   return entity->tileIndex;
 }
 
 Vector2i32_t Entity_GetVelocity( Entity_t* entity )
@@ -152,6 +166,8 @@ void setUp( void )
    g_winDebugFlags.showHitBoxes = False;
 #endif
    g_clockFrameCount = 0;
+   g_gameOnPlayerTileIndexChangedCount = 0;
+   g_gameOnPlayerTileIndexChangedTileIndex = 0;
    g_entity.rect.x = 20 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 30 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.w = 10 * WORLD_UNITS_PER_PIXEL;
@@ -304,6 +320,25 @@ void test_Game_TicPhysics_UpdatesPlayerTileIndex( void )
    TEST_ASSERT_EQUAL_UINT( 7, g_entity.tileIndex );
 }
 
+void test_Game_TicPhysics_NotifiesWhenPlayerTileIndexChanges( void )
+{
+   g_entity.tileIndex = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_UINT( 1, g_gameOnPlayerTileIndexChangedCount );
+   TEST_ASSERT_EQUAL_UINT( 7, g_gameOnPlayerTileIndexChangedTileIndex );
+}
+
+void test_Game_TicPhysics_DoesNotNotifyWhenPlayerTileIndexIsUnchanged( void )
+{
+   g_entity.tileIndex = 7;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_UINT( 0, g_gameOnPlayerTileIndexChangedCount );
+}
+
 void test_Game_TicPhysics_ClampsOversizedPlayerToOrigin( void )
 {
    g_entity.rect.x = 5 * WORLD_UNITS_PER_PIXEL;
@@ -344,6 +379,8 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtUpperBounds );
    RUN_TEST( test_Game_TicPhysics_DoesNotClampWrappingMap );
    RUN_TEST( test_Game_TicPhysics_UpdatesPlayerTileIndex );
+   RUN_TEST( test_Game_TicPhysics_NotifiesWhenPlayerTileIndexChanges );
+   RUN_TEST( test_Game_TicPhysics_DoesNotNotifyWhenPlayerTileIndexIsUnchanged );
    RUN_TEST( test_Game_TicPhysics_ClampsOversizedPlayerToOrigin );
    RUN_TEST( test_Game_TicPhysics_WrapsPlayerAtLowerBounds );
 

@@ -12,7 +12,7 @@ internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Ve
 void Game_TicPhysics( Game_t* game )
 {
    i32 mapWidth, mapHeight, maxX, maxY, moveX, moveY, stepX, stepY, steps;
-   u32 tileSize;
+   u32 tileSize, prevTileIndex;
    r32 frameSeconds;
    Vector4i32_t playerRect;
    Vector2i32_t playerVelocity;
@@ -101,9 +101,16 @@ void Game_TicPhysics( Game_t* game )
       playerRect = Entity_GetRect( playerEntity );
    }
 
+   prevTileIndex = Entity_GetTileIndex( playerEntity );
+
    Entity_SetPosition( playerEntity, playerRect.x, playerRect.y );
    Entity_SetTileIndex( playerEntity, TileMap_GetTileIndexForEntity( tileMap, playerEntity ) );
    Entity_SetVelocity( playerEntity, 0, 0 );
+
+   if ( prevTileIndex != Entity_GetTileIndex( playerEntity ) )
+   {
+      Game_OnPlayerTileIndexChanged( game, Entity_GetTileIndex( playerEntity ) );
+   }
 }
 
 internal i32 GamePhysics_GetPixelMovement( i32 velocity, r32 frameSeconds, u32 frameCount )

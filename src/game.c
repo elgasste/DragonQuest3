@@ -34,7 +34,6 @@ struct Game_t
 };
 
 internal void Game_Tic( Game_t* game );
-internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex );
 internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal );
 
 size_t Game_GetStructSize( void )
@@ -67,7 +66,6 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    Entity_SetVelocity( game->playerEntity, 0, 0 );
    Entity_SetSprite( game->playerEntity, game->playerSprite );
    Entity_SetSpriteOffset( game->playerEntity, -2, -2 );
-   Entity_SetOnTileIndexChanged( game->playerEntity, game, Game_OnPlayerTileIndexChanged );
 
    TileMap_CenterEntityInTile( game->tileMap, game->playerEntity, ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
 
@@ -144,12 +142,6 @@ Entity_t* Game_GetPlayerEntity( Game_t* game )
    return game->playerEntity;
 }
 
-void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect )
-{
-   Entity_SetPosition( game->playerEntity, playerRect.x, playerRect.y );
-   Entity_SetSize( game->playerEntity, playerRect.w, playerRect.h );
-}
-
 void Game_Run( Game_t* game )
 {
    game->shutdown = False;
@@ -170,6 +162,27 @@ void Game_Stop( Game_t* game )
    game->shutdown = True;
 }
 
+void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect )
+{
+   Entity_SetPosition( game->playerEntity, playerRect.x, playerRect.y );
+   Entity_SetSize( game->playerEntity, playerRect.w, playerRect.h );
+}
+
+void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex )
+{
+   TileMapPortal_t* portal;
+
+   portal = TileMap_GetPortal( game->tileMap, newTileIndex );
+   if ( portal )
+   {
+      AnimationChain_Reset( game->animationChain );
+      AnimationChain_Push( game->animationChain, AnimationType_FadeOut, 0.2f, Game_EnterPortal, game, portal );
+      AnimationChain_Push( game->animationChain, AnimationType_Blackout, 0.2f, 0, 0, 0 );
+      AnimationChain_Push( game->animationChain, AnimationType_FadeIn, 0.2f, 0, 0, 0 );
+      AnimationChain_Start( game->animationChain, 0, 0, 0 );
+   }
+}
+
 internal void Game_Tic( Game_t* game )
 {
    r32 deltaSec;
@@ -188,24 +201,6 @@ internal void Game_Tic( Game_t* game )
 
    ActiveSprite_Tic( game->playerSprite, deltaSec );
    TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity );
-}
-
-internal void Game_OnPlayerTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex )
-{
-   TileMapPortal_t* portal;
-   Game_t* game = (Game_t*)receiver;
-
-   UNUSED_PARAM( oldTileIndex );
-
-   portal = TileMap_GetPortal( game->tileMap, newTileIndex );
-   if ( portal )
-   {
-      AnimationChain_Reset( game->animationChain );
-      AnimationChain_Push( game->animationChain, AnimationType_FadeOut, 0.2f, Game_EnterPortal, game, portal );
-      AnimationChain_Push( game->animationChain, AnimationType_Blackout, 0.2f, 0, 0, 0 );
-      AnimationChain_Push( game->animationChain, AnimationType_FadeIn, 0.2f, 0, 0, 0 );
-      AnimationChain_Start( game->animationChain, 0, 0, 0 );
-   }
 }
 
 internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )

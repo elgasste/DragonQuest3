@@ -59,8 +59,6 @@ global TileMapPortal_t* g_testPortal;
 global u32 g_tileMapId;
 global u32 g_tileMapCenterEntityCount;
 global AnimationChain_t* g_animationChain;
-global void (*g_playerEntityTileIndexChangedCallback)( void* receiver, u32 oldTileIndex, u32 newTileIndex );
-global void* g_playerEntityTileIndexChangedReceiver;
 
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
@@ -176,10 +174,7 @@ void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
 {
    u32 oldTileIndex = entity->tileIndex;
    entity->tileIndex = tileIndex;
-   if ( g_playerEntityTileIndexChangedCallback && entity == g_playerEntity )
-   {
-      g_playerEntityTileIndexChangedCallback( g_playerEntityTileIndexChangedReceiver, oldTileIndex, tileIndex );
-   }
+   UNUSED_PARAM( oldTileIndex );
 }
 
 u32 Entity_GetTileIndex( Entity_t* entity )
@@ -206,13 +201,6 @@ void Entity_SetSpriteOffset( Entity_t* entity, i32 offsetX, i32 offsetY )
 {
    entity->spriteOffset.x = offsetX;
    entity->spriteOffset.y = offsetY;
-}
-
-void Entity_SetOnTileIndexChanged( Entity_t* entity, void* receiver, void (*onTileIndexChanged)( void* receiver, u32 oldTileIndex, u32 newTileIndex ) )
-{
-   UNUSED_PARAM( entity );
-   g_playerEntityTileIndexChangedReceiver = receiver;
-   g_playerEntityTileIndexChangedCallback = onTileIndexChanged;
 }
 
 GameData_t* GameData_Create( MemArena_t* memArena, const char* filePath )
@@ -521,8 +509,6 @@ void setUp( void )
    g_testPortal = 0;
    g_tileMapId = 1;
    g_tileMapCenterEntityCount = 0;
-   g_playerEntityTileIndexChangedCallback = 0;
-   g_playerEntityTileIndexChangedReceiver = 0;
 }
 
 void tearDown( void ) {}
@@ -641,19 +627,9 @@ void test_Game_OnPlayerTileIndexChanged_DoesNothingWhenNoPortal( void )
    g_tileMapGetPortalCount = 0;
 
    Entity_SetTileIndex( Game_GetPlayerEntity( game ), 10 );
+   Game_OnPlayerTileIndexChanged( game, 10 );
 
    TEST_ASSERT_EQUAL_UINT( 1, g_tileMapGetPortalCount );
-   TEST_ASSERT_EQUAL_UINT( 10, Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
-
-   Game_Free( game, (MemArena_t*)1 );
-}
-
-void test_Game_OnPlayerTileIndexChanged_CallbackIsTriggeredOnTileChange( void )
-{
-   Game_t* game = CreateGame();
-
-   Entity_SetTileIndex( Game_GetPlayerEntity( game ), 10 );
-
    TEST_ASSERT_EQUAL_UINT( 10, Entity_GetTileIndex( Game_GetPlayerEntity( game ) ) );
 
    Game_Free( game, (MemArena_t*)1 );
@@ -671,6 +647,7 @@ void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapIsUnchanged
    g_tileMapId = 1;
 
    Entity_SetTileIndex( Game_GetPlayerEntity( game ), 20 );
+   Game_OnPlayerTileIndexChanged( game, 20 );
 
    TEST_ASSERT_EQUAL_UINT( 1, g_tileMapGetPortalCount );
    TEST_ASSERT_EQUAL_UINT( 0, g_tileMapCenterEntityCount );
@@ -696,6 +673,7 @@ void test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapChanges( vo
    g_tileMapId = 1;
 
    Entity_SetTileIndex( Game_GetPlayerEntity( game ), 20 );
+   Game_OnPlayerTileIndexChanged( game, 20 );
 
    TEST_ASSERT_EQUAL_UINT( 1, g_tileMapGetPortalCount );
    TEST_ASSERT_EQUAL_UINT( 0, g_tileMapCenterEntityCount );
@@ -725,7 +703,6 @@ int main( void )
    RUN_TEST( test_Game_Free_ReleasesAllDependencies );
 
    RUN_TEST( test_Game_OnPlayerTileIndexChanged_DoesNothingWhenNoPortal );
-   RUN_TEST( test_Game_OnPlayerTileIndexChanged_CallbackIsTriggeredOnTileChange );
    RUN_TEST( test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapIsUnchanged );
    RUN_TEST( test_Game_OnPlayerTileIndexChanged_EntersPortalWhenPresentAndMapChanges );
 

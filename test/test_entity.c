@@ -8,10 +8,6 @@
 
 global u32 g_allocCount;
 global u32 g_freeCount;
-global u32 g_tileIndexChangedCount;
-global Entity_t* g_tileIndexChangedEntity;
-global u32 g_oldTileIndex;
-global u32 g_newTileIndex;
 #if defined( _WIN32 )
 WinDebugFlags_t g_winDebugFlags;
 #endif
@@ -34,21 +30,9 @@ void setUp( void )
 {
    g_allocCount = 0;
    g_freeCount = 0;
-   g_tileIndexChangedCount = 0;
-   g_tileIndexChangedEntity = 0;
-   g_oldTileIndex = 0;
-   g_newTileIndex = 0;
 #if defined( _WIN32 )
    g_winDebugFlags.moveFast = False;
 #endif
-}
-
-void OnTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex )
-{
-   UNUSED_PARAM( receiver );
-   g_tileIndexChangedCount++;
-   g_oldTileIndex = oldTileIndex;
-   g_newTileIndex = newTileIndex;
 }
 
 void tearDown( void ) {}
@@ -230,51 +214,6 @@ void test_Entity_GetTileIndex_ReturnsLatestTileIndex( void )
    Entity_Free( entity, (MemArena_t*)1 );
 }
 
-void test_Entity_SetOnTileIndexChanged_NotifiesCallbackWithTileIndices( void )
-{
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
-
-   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
-   Entity_SetTileIndex( entity, 7 );
-
-   TEST_ASSERT_EQUAL_UINT( 1, g_tileIndexChangedCount );
-   TEST_ASSERT_EQUAL_UINT( 0, g_oldTileIndex );
-   TEST_ASSERT_EQUAL_UINT( 7, g_newTileIndex );
-   TEST_ASSERT_EQUAL_UINT( 7, Entity_GetTileIndex( entity ) );
-
-   Entity_Free( entity, (MemArena_t*)1 );
-}
-
-void test_Entity_SetOnTileIndexChanged_NotifiesOnEachTileChange( void )
-{
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
-
-   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
-   Entity_SetTileIndex( entity, 3 );
-   Entity_SetTileIndex( entity, 12 );
-
-   TEST_ASSERT_EQUAL_UINT( 2, g_tileIndexChangedCount );
-   TEST_ASSERT_EQUAL_UINT( 3, g_oldTileIndex );
-   TEST_ASSERT_EQUAL_UINT( 12, g_newTileIndex );
-
-   Entity_Free( entity, (MemArena_t*)1 );
-}
-
-void test_Entity_SetTileIndex_DoesNotNotifyWhenIndexIsUnchanged( void )
-{
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
-
-   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
-   Entity_SetTileIndex( entity, 7 );
-   g_tileIndexChangedCount = 0;
-   Entity_SetTileIndex( entity, 7 );
-
-   TEST_ASSERT_EQUAL_UINT( 0, g_tileIndexChangedCount );
-   TEST_ASSERT_EQUAL_UINT( 7, Entity_GetTileIndex( entity ) );
-
-   Entity_Free( entity, (MemArena_t*)1 );
-}
-
 void test_Entity_Free_ReleasesAllocatedEntity( void )
 {
    Entity_t* entity = Entity_Create( (MemArena_t*)1 );
@@ -311,10 +250,6 @@ int main( void )
    RUN_TEST( test_Entity_SetTileIndex_UpdatesTileIndex );
    RUN_TEST( test_Entity_GetTileIndex_ReturnsLatestTileIndex );
 
-   RUN_TEST( test_Entity_SetOnTileIndexChanged_NotifiesCallbackWithTileIndices );
-   RUN_TEST( test_Entity_SetOnTileIndexChanged_NotifiesOnEachTileChange );
-   RUN_TEST( test_Entity_SetTileIndex_DoesNotNotifyWhenIndexIsUnchanged );
-   
    RUN_TEST( test_Entity_Free_ReleasesAllocatedEntity );
 
    return UNITY_END();
