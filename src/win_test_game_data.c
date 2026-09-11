@@ -440,10 +440,10 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->info.npcCount = 1;
    curTileMap->npcs = (NpcInfo_t*)malloc( sizeof( NpcInfo_t ) );
    curTileMap->npcs[0].tileIndex = 5657;
-   curTileMap->npcs[0].w = 16 * WORLD_UNITS_PER_PIXEL;
-   curTileMap->npcs[0].h = 16 * WORLD_UNITS_PER_PIXEL;
-   curTileMap->npcs[0].spriteOffsetX = 0;
-   curTileMap->npcs[0].spriteOffsetY = 0;
+   curTileMap->npcs[0].w = 12 * WORLD_UNITS_PER_PIXEL;
+   curTileMap->npcs[0].h = 12 * WORLD_UNITS_PER_PIXEL;
+   curTileMap->npcs[0].spriteOffsetX = -2;
+   curTileMap->npcs[0].spriteOffsetY = -2;
    curTileMap->npcs[0].direction = Direction_Down;
    curTileMap->npcs[0].spriteTextureIndex = 0;
    curTileMap->npcs[0].wanders = False;
