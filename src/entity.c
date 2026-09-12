@@ -1,6 +1,7 @@
 #include "entity.h"
 #include "mem_arena.h"
 #include "platform.h"
+#include "sprite.h"
 
 struct Entity_t
 {
@@ -9,9 +10,6 @@ struct Entity_t
    u32 tileIndex;
    ActiveSprite_t* sprite;
    Vector2i32_t spriteOffset;
-
-   void (*onTileIndexChanged)( void* receiver, u32 oldTileIndex, u32 newTileIndex );
-   void* onTileIndexChangedReceiver;
 };
 
 size_t Entity_GetStructSize( void )
@@ -19,21 +17,22 @@ size_t Entity_GetStructSize( void )
    return sizeof( Entity_t );
 }
 
-Entity_t* Entity_Create( MemArena_t* memArena )
+Entity_t* Entity_Create( MemArena_t* memArena, ActiveSprite_t* sprite )
 {
    Entity_t* entity;
 
    entity = (Entity_t*)MemArena_AllocMem( memArena, sizeof( Entity_t ) );
    entity->tileIndex = 0;
-   entity->sprite = 0;
-   entity->onTileIndexChanged = 0;
-   entity->onTileIndexChangedReceiver = 0;
+   entity->sprite = sprite;
+   entity->spriteOffset.x = 0;
+   entity->spriteOffset.y = 0;
 
    return entity;
 }
 
 void Entity_Free( Entity_t* entity, MemArena_t* memArena )
 {
+   ActiveSprite_Free( entity->sprite, memArena );
    MemArena_FreeMem( memArena, entity );
 }
 
@@ -44,6 +43,7 @@ Vector4i32_t Entity_GetRect( Entity_t* entity )
 
 Vector2i32_t Entity_GetVelocity( Entity_t* entity )
 {
+// MUFFINS: this should only apply to the player, let's fix that
 #if defined( _WIN32 )
    if ( g_winDebugFlags.moveFast )
    {
@@ -61,6 +61,16 @@ Vector2i32_t Entity_GetVelocity( Entity_t* entity )
    return entity->velocity;
 }
 
+i32 Entity_GetVelocityX( Entity_t* entity )
+{
+   return entity->velocity.x;
+}
+
+i32 Entity_GetVelocityY( Entity_t* entity )
+{
+   return entity->velocity.y;
+}
+
 u32 Entity_GetTileIndex( Entity_t* entity )
 {
    return entity->tileIndex;
@@ -74,12 +84,6 @@ ActiveSprite_t* Entity_GetSprite( Entity_t* entity )
 Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity )
 {
    return entity->spriteOffset;
-}
-
-void Entity_SetOnTileIndexChanged( Entity_t* entity, void* receiver, void (*onTileIndexChanged)( void* receiver, u32 oldTileIndex, u32 newTileIndex ) )
-{
-   entity->onTileIndexChanged = onTileIndexChanged;
-   entity->onTileIndexChangedReceiver = receiver;
 }
 
 void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
@@ -100,13 +104,18 @@ void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
    entity->velocity.y = vy;
 }
 
+void Entity_SetVelocityX( Entity_t* entity, i32 vx )
+{
+   entity->velocity.x = vx;
+}
+
+void Entity_SetVelocityY( Entity_t* entity, i32 vy )
+{
+   entity->velocity.y = vy;
+}
+
 void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
 {
-   if( entity->tileIndex != tileIndex && entity->onTileIndexChanged )
-   {
-       entity->onTileIndexChanged( entity->onTileIndexChangedReceiver, entity->tileIndex, tileIndex );
-   }
-
    entity->tileIndex = tileIndex;
 }
 

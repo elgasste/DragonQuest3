@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "entity.h"
+#include "sprite.h"
 #include "unity.h"
 #if defined( _WIN32 )
 #include "platform.h"
@@ -8,10 +9,6 @@
 
 global u32 g_allocCount;
 global u32 g_freeCount;
-global u32 g_tileIndexChangedCount;
-global Entity_t* g_tileIndexChangedEntity;
-global u32 g_oldTileIndex;
-global u32 g_newTileIndex;
 #if defined( _WIN32 )
 WinDebugFlags_t g_winDebugFlags;
 #endif
@@ -30,25 +27,19 @@ void MemArena_FreeMem( MemArena_t* arena, void* mem )
    free( mem );
 }
 
+void ActiveSprite_Free( ActiveSprite_t* activeSprite, MemArena_t* memArena )
+{
+   UNUSED_PARAM( activeSprite );
+   UNUSED_PARAM( memArena );
+}
+
 void setUp( void )
 {
    g_allocCount = 0;
    g_freeCount = 0;
-   g_tileIndexChangedCount = 0;
-   g_tileIndexChangedEntity = 0;
-   g_oldTileIndex = 0;
-   g_newTileIndex = 0;
 #if defined( _WIN32 )
    g_winDebugFlags.moveFast = False;
 #endif
-}
-
-void OnTileIndexChanged( void* receiver, u32 oldTileIndex, u32 newTileIndex )
-{
-   UNUSED_PARAM( receiver );
-   g_tileIndexChangedCount++;
-   g_oldTileIndex = oldTileIndex;
-   g_newTileIndex = newTileIndex;
 }
 
 void tearDown( void ) {}
@@ -60,9 +51,22 @@ void test_Entity_GetStructSize_ReturnsNonZeroSize( void )
 
 void test_Entity_Create_InitializesSpriteToNull( void )
 {
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    TEST_ASSERT_NULL( Entity_GetSprite( entity ) );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
+void test_Entity_Create_InitializesSpriteOffsetToZero( void )
+{
+   Vector2i32_t spriteOffset;
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
+
+   spriteOffset = Entity_GetSpriteOffset( entity );
+
+   TEST_ASSERT_EQUAL_INT( 0, spriteOffset.x );
+   TEST_ASSERT_EQUAL_INT( 0, spriteOffset.y );
 
    Entity_Free( entity, (MemArena_t*)1 );
 }
@@ -70,7 +74,7 @@ void test_Entity_Create_InitializesSpriteToNull( void )
 void test_Entity_SetSprite_UpdatesSprite( void )
 {
    ActiveSprite_t* expectedSprite = (ActiveSprite_t*)1;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetSprite( entity, expectedSprite );
 
@@ -82,7 +86,7 @@ void test_Entity_SetSprite_UpdatesSprite( void )
 void test_Entity_SetSpriteOffset_UpdatesOffset( void )
 {
    Vector2i32_t spriteOffset;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetSpriteOffset( entity, -12, 18 );
    spriteOffset = Entity_GetSpriteOffset( entity );
@@ -97,7 +101,7 @@ void test_Entity_Setters_ReplaceSpriteAndSpriteOffset( void )
 {
    Vector2i32_t spriteOffset;
    ActiveSprite_t* expectedSprite = (ActiveSprite_t*)2;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetSprite( entity, (ActiveSprite_t*)1 );
    Entity_SetSpriteOffset( entity, 3, 4 );
@@ -115,7 +119,7 @@ void test_Entity_Setters_ReplaceSpriteAndSpriteOffset( void )
 void test_Entity_SetPosition_UpdatesOnlyPosition( void )
 {
    Vector4i32_t rect;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetSize( entity, 30, 40 );
    Entity_SetPosition( entity, -15, 25 );
@@ -132,7 +136,7 @@ void test_Entity_SetPosition_UpdatesOnlyPosition( void )
 void test_Entity_SetSize_UpdatesOnlySize( void )
 {
    Vector4i32_t rect;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetPosition( entity, 1, 2 );
    Entity_SetSize( entity, 75, 90 );
@@ -149,7 +153,7 @@ void test_Entity_SetSize_UpdatesOnlySize( void )
 void test_Entity_SetVelocity_UpdatesVelocity( void )
 {
    Vector2i32_t velocity;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetVelocity( entity, -7, 11 );
    velocity = Entity_GetVelocity( entity );
@@ -163,7 +167,7 @@ void test_Entity_SetVelocity_UpdatesVelocity( void )
 void test_Entity_GetVelocity_ReturnsLatestVelocity( void )
 {
    Vector2i32_t velocity;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetVelocity( entity, 3, -4 );
    Entity_SetVelocity( entity, 12, 18 );
@@ -175,11 +179,25 @@ void test_Entity_GetVelocity_ReturnsLatestVelocity( void )
    Entity_Free( entity, (MemArena_t*)1 );
 }
 
+void test_Entity_AxisVelocityAccessors_UpdateIndividualComponents( void )
+{
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
+
+   Entity_SetVelocity( entity, 3, 4 );
+   Entity_SetVelocityX( entity, -7 );
+   Entity_SetVelocityY( entity, 11 );
+
+   TEST_ASSERT_EQUAL_INT( -7, Entity_GetVelocityX( entity ) );
+   TEST_ASSERT_EQUAL_INT( 11, Entity_GetVelocityY( entity ) );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
 #if defined( _WIN32 )
 void test_Entity_GetVelocity_MoveFastScalesNonZeroComponents( void )
 {
    Vector2i32_t velocity;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetVelocity( entity, -2 * WORLD_UNITS_PER_PIXEL, 3 * WORLD_UNITS_PER_PIXEL );
    g_winDebugFlags.moveFast = True;
@@ -194,7 +212,7 @@ void test_Entity_GetVelocity_MoveFastScalesNonZeroComponents( void )
 void test_Entity_GetVelocity_MoveFastLeavesZeroComponentsUnchanged( void )
 {
    Vector2i32_t velocity;
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetVelocity( entity, 0, 0 );
    g_winDebugFlags.moveFast = True;
@@ -209,7 +227,7 @@ void test_Entity_GetVelocity_MoveFastLeavesZeroComponentsUnchanged( void )
 
 void test_Entity_SetTileIndex_UpdatesTileIndex( void )
 {
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetTileIndex( entity, 7 );
 
@@ -220,7 +238,7 @@ void test_Entity_SetTileIndex_UpdatesTileIndex( void )
 
 void test_Entity_GetTileIndex_ReturnsLatestTileIndex( void )
 {
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_SetTileIndex( entity, 3 );
    Entity_SetTileIndex( entity, 12 );
@@ -230,54 +248,9 @@ void test_Entity_GetTileIndex_ReturnsLatestTileIndex( void )
    Entity_Free( entity, (MemArena_t*)1 );
 }
 
-void test_Entity_SetOnTileIndexChanged_NotifiesCallbackWithTileIndices( void )
-{
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
-
-   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
-   Entity_SetTileIndex( entity, 7 );
-
-   TEST_ASSERT_EQUAL_UINT( 1, g_tileIndexChangedCount );
-   TEST_ASSERT_EQUAL_UINT( 0, g_oldTileIndex );
-   TEST_ASSERT_EQUAL_UINT( 7, g_newTileIndex );
-   TEST_ASSERT_EQUAL_UINT( 7, Entity_GetTileIndex( entity ) );
-
-   Entity_Free( entity, (MemArena_t*)1 );
-}
-
-void test_Entity_SetOnTileIndexChanged_NotifiesOnEachTileChange( void )
-{
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
-
-   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
-   Entity_SetTileIndex( entity, 3 );
-   Entity_SetTileIndex( entity, 12 );
-
-   TEST_ASSERT_EQUAL_UINT( 2, g_tileIndexChangedCount );
-   TEST_ASSERT_EQUAL_UINT( 3, g_oldTileIndex );
-   TEST_ASSERT_EQUAL_UINT( 12, g_newTileIndex );
-
-   Entity_Free( entity, (MemArena_t*)1 );
-}
-
-void test_Entity_SetTileIndex_DoesNotNotifyWhenIndexIsUnchanged( void )
-{
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
-
-   Entity_SetOnTileIndexChanged( entity, NULL, OnTileIndexChanged );
-   Entity_SetTileIndex( entity, 7 );
-   g_tileIndexChangedCount = 0;
-   Entity_SetTileIndex( entity, 7 );
-
-   TEST_ASSERT_EQUAL_UINT( 0, g_tileIndexChangedCount );
-   TEST_ASSERT_EQUAL_UINT( 7, Entity_GetTileIndex( entity ) );
-
-   Entity_Free( entity, (MemArena_t*)1 );
-}
-
 void test_Entity_Free_ReleasesAllocatedEntity( void )
 {
-   Entity_t* entity = Entity_Create( (MemArena_t*)1 );
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
 
    Entity_Free( entity, (MemArena_t*)1 );
 
@@ -292,6 +265,7 @@ int main( void )
    RUN_TEST( test_Entity_GetStructSize_ReturnsNonZeroSize );
 
    RUN_TEST( test_Entity_Create_InitializesSpriteToNull );
+   RUN_TEST( test_Entity_Create_InitializesSpriteOffsetToZero );
    RUN_TEST( test_Entity_SetSprite_UpdatesSprite );
    RUN_TEST( test_Entity_SetSpriteOffset_UpdatesOffset );
    RUN_TEST( test_Entity_Setters_ReplaceSpriteAndSpriteOffset );
@@ -303,6 +277,7 @@ int main( void )
    RUN_TEST( test_Entity_SetVelocity_UpdatesVelocity );
 
    RUN_TEST( test_Entity_GetVelocity_ReturnsLatestVelocity );
+   RUN_TEST( test_Entity_AxisVelocityAccessors_UpdateIndividualComponents );
 #if defined( _WIN32 )
    RUN_TEST( test_Entity_GetVelocity_MoveFastScalesNonZeroComponents );
    RUN_TEST( test_Entity_GetVelocity_MoveFastLeavesZeroComponentsUnchanged );
@@ -311,10 +286,6 @@ int main( void )
    RUN_TEST( test_Entity_SetTileIndex_UpdatesTileIndex );
    RUN_TEST( test_Entity_GetTileIndex_ReturnsLatestTileIndex );
 
-   RUN_TEST( test_Entity_SetOnTileIndexChanged_NotifiesCallbackWithTileIndices );
-   RUN_TEST( test_Entity_SetOnTileIndexChanged_NotifiesOnEachTileChange );
-   RUN_TEST( test_Entity_SetTileIndex_DoesNotNotifyWhenIndexIsUnchanged );
-   
    RUN_TEST( test_Entity_Free_ReleasesAllocatedEntity );
 
    return UNITY_END();

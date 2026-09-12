@@ -151,6 +151,11 @@ void Platform_Rand_Seed( u32 seed )
    srand( seed );
 }
 
+i32 Platform_Rand_i32Ranged( i32 min, i32 max )
+{
+   return min + ( rand() % ( max - min + 1 ) );
+}
+
 u32 Platform_Rand_u32Ranged( u32 min, u32 max )
 {
    return min + (u32)( rand() % ( max - min + 1 ) );

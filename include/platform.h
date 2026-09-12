@@ -33,6 +33,7 @@ void Platform_SleepMs( u32 ms );
 
 // random
 void Platform_Rand_Seed( u32 seed );
+i32 Platform_Rand_i32Ranged( i32 min, i32 max );
 u32 Platform_Rand_u32Ranged( u32 min, u32 max );
 
 // file operations

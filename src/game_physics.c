@@ -3,33 +3,58 @@
 #include "clock.h"
 #include "entity.h"
 #include "game.h"
+#include "npc.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
+#include "utility.h"
 
 internal i32 GamePhysics_GetPixelMovement( i32 velocity, r32 frameSeconds, u32 frameCount );
 internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Vector4i32_t rect, u32 tileSize );
+internal b32 GamePhysics_RectCollidesWithNpc( TileMap_t* tileMap, Entity_t* movingEntity, Vector4i32_t rect );
+internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlayer );
 
 void Game_TicPhysics( Game_t* game )
 {
+   u32 i;
+   TileMap_t* tileMap;
+
+   tileMap = Game_GetTileMap( game );
+   GamePhysics_TicEntity( game, Game_GetPlayerEntity( game ), True );
+
+   for ( i = 0; i < TileMap_GetNpcCount( tileMap ); i++ )
+   {
+      GamePhysics_TicEntity( game, Npc_GetEntity( TileMap_GetNpc( tileMap, i ) ), False );
+   }
+}
+
+internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlayer )
+{
    i32 mapWidth, mapHeight, maxX, maxY, moveX, moveY, stepX, stepY, steps;
-   u32 tileSize;
+   u32 tileSize, prevTileIndex;
    r32 frameSeconds;
-   Vector4i32_t playerRect;
-   Vector2i32_t playerVelocity;
+   Vector4i32_t entityRect;
+   i32 velocityX, velocityY;
    TileMap_t* tileMap;
    TileTextureSet_t* tileTextureSet;
-   Entity_t* playerEntity;
 
    frameSeconds = Clock_GetFrameSec( Game_GetClock( game ) );
-   playerEntity = Game_GetPlayerEntity( game );
    tileMap = Game_GetTileMap( game );
    tileTextureSet = Game_GetTileTextureSet( game );
-   playerRect = Entity_GetRect( playerEntity );
-   playerVelocity = Entity_GetVelocity( playerEntity );
+   entityRect = Entity_GetRect( entity );
+   if ( isPlayer )
+   {
+      velocityX = Entity_GetVelocity( entity ).x;
+      velocityY = Entity_GetVelocity( entity ).y;
+   }
+   else
+   {
+      velocityX = Entity_GetVelocityX( entity );
+      velocityY = Entity_GetVelocityY( entity );
+   }
 
    tileSize = TileTextureSet_GetTileSize( tileTextureSet ) * WORLD_UNITS_PER_PIXEL;
-   moveX = GamePhysics_GetPixelMovement( playerVelocity.x, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
-   moveY = GamePhysics_GetPixelMovement( playerVelocity.y, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
+   moveX = GamePhysics_GetPixelMovement( velocityX, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
+   moveY = GamePhysics_GetPixelMovement( velocityY, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
    stepX = ( moveX < 0 ) ? -1 : 1;
    stepY = ( moveY < 0 ) ? -1 : 1;
    steps = ( abs( moveX ) > abs( moveY ) ) ? abs( moveX ) : abs( moveY );
@@ -41,32 +66,36 @@ void Game_TicPhysics( Game_t* game )
    {
       if ( step < abs( moveX ) )
       {
-         playerRect.x += stepX * WORLD_UNITS_PER_PIXEL;
-         if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, playerRect, tileSize ) )
+         entityRect.x += stepX * WORLD_UNITS_PER_PIXEL;
+         if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, entityRect, tileSize ) ||
+              GamePhysics_RectCollidesWithNpc( tileMap, entity, entityRect ) ||
+              ( !isPlayer && Utility_RectsOverlap( entityRect, Entity_GetRect( Game_GetPlayerEntity( game ) ) ) ) )
          {
-            playerRect.x -= stepX * WORLD_UNITS_PER_PIXEL;
+            entityRect.x -= stepX * WORLD_UNITS_PER_PIXEL;
          }
       }
 
       if ( step < abs( moveY ) )
       {
-         playerRect.y += stepY * WORLD_UNITS_PER_PIXEL;
-         if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, playerRect, tileSize ) )
+         entityRect.y += stepY * WORLD_UNITS_PER_PIXEL;
+         if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, entityRect, tileSize ) ||
+              GamePhysics_RectCollidesWithNpc( tileMap, entity, entityRect ) ||
+              ( !isPlayer && Utility_RectsOverlap( entityRect, Entity_GetRect( Game_GetPlayerEntity( game ) ) ) ) )
          {
-            playerRect.y -= stepY * WORLD_UNITS_PER_PIXEL;
+            entityRect.y -= stepY * WORLD_UNITS_PER_PIXEL;
          }
       }
    }
 
-   Entity_SetPosition( playerEntity, playerRect.x, playerRect.y );
+   Entity_SetPosition( entity, entityRect.x, entityRect.y );
 
    // clamp the player to the edge of the map as well, if it doesn't wrap
    if ( !TileMap_GetWraps( tileMap ) )
    {
       mapWidth = (i32)( TileMap_GetTilesX( tileMap ) * TileTextureSet_GetTileSize( tileTextureSet ) ) * WORLD_UNITS_PER_PIXEL;
       mapHeight = (i32)( TileMap_GetTilesY( tileMap ) * TileTextureSet_GetTileSize( tileTextureSet ) ) * WORLD_UNITS_PER_PIXEL;
-      maxX = mapWidth - playerRect.w;
-      maxY = mapHeight - playerRect.h;
+      maxX = mapWidth - entityRect.w;
+      maxY = mapHeight - entityRect.h;
 
       if ( maxX < 0 )
       {
@@ -77,33 +106,43 @@ void Game_TicPhysics( Game_t* game )
          maxY = 0;
       }
 
-      if ( playerRect.x < 0 )
+      if ( entityRect.x < 0 )
       {
-         playerRect.x = 0;
+         entityRect.x = 0;
       }
-      else if ( playerRect.x > maxX )
+      else if ( entityRect.x > maxX )
       {
-         playerRect.x = maxX;
+         entityRect.x = maxX;
       }
 
-      if ( playerRect.y < 0 )
+      if ( entityRect.y < 0 )
       {
-         playerRect.y = 0;
+         entityRect.y = 0;
       }
-      else if ( playerRect.y > maxY )
+      else if ( entityRect.y > maxY )
       {
-         playerRect.y = maxY;
+         entityRect.y = maxY;
       }
    }
    else
    {
-      TileMap_WrapEntityPosition( tileMap, playerEntity );
-      playerRect = Entity_GetRect( playerEntity );
+      TileMap_WrapEntityPosition( tileMap, entity );
+      entityRect = Entity_GetRect( entity );
    }
 
-   Entity_SetPosition( playerEntity, playerRect.x, playerRect.y );
-   Entity_SetTileIndex( playerEntity, TileMap_GetTileIndexForEntity( tileMap, playerEntity ) );
-   Entity_SetVelocity( playerEntity, 0, 0 );
+   prevTileIndex = Entity_GetTileIndex( entity );
+
+   Entity_SetPosition( entity, entityRect.x, entityRect.y );
+   Entity_SetTileIndex( entity, TileMap_GetTileIndexForEntity( tileMap, entity ) );
+   if ( isPlayer )
+   {
+      Entity_SetVelocity( entity, 0, 0 );
+   }
+
+   if ( isPlayer && prevTileIndex != Entity_GetTileIndex( entity ) )
+   {
+      Game_OnPlayerTileIndexChanged( game, Entity_GetTileIndex( entity ) );
+   }
 }
 
 internal i32 GamePhysics_GetPixelMovement( i32 velocity, r32 frameSeconds, u32 frameCount )
@@ -160,6 +199,37 @@ internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Ve
          {
             return True;
          }
+      }
+   }
+
+   return False;
+}
+
+internal b32 GamePhysics_RectCollidesWithNpc( TileMap_t* tileMap, Entity_t* movingEntity, Vector4i32_t rect )
+{
+   u32 i;
+   Vector4i32_t npcRect;
+   Entity_t* npcEntity;
+
+#if defined( _WIN32 )
+   if ( g_winDebugFlags.noClip )
+   {
+      return False;
+   }
+#endif
+
+   for ( i = 0; i < TileMap_GetNpcCount( tileMap ); i++ )
+   {
+      npcEntity = Npc_GetEntity( TileMap_GetNpc( tileMap, i ) );
+      if ( npcEntity == movingEntity )
+      {
+         continue;
+      }
+      npcRect = Entity_GetRect( npcEntity );
+
+      if ( Utility_RectsOverlap( rect, npcRect ) )
+      {
+         return True;
       }
    }
 

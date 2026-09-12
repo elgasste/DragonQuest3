@@ -5,6 +5,7 @@
 #include "file.h"
 #include "game_data.h"
 #include "mem_arena.h"
+#include "npc.h"
 #include "tile_map.h"
 #include "utility.h"
 
@@ -81,6 +82,7 @@ struct TileMap_t
    TileMapInfo_t info;
    Tile_t* tiles;
    TileMapPortal_t* portals;
+   Npc_t* npcs;
 
    u32 tileSizePixels;
    Vector4i32_t viewportInUnits;
@@ -92,11 +94,13 @@ size_t TileMap_GetStructSize( void )
    return sizeof( TileMap_t );
 }
 
-TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameData, u32 tileMapId, u32 tileSizePixels )
+TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameData, ActiveSpriteTextureSet_t* activeSpriteTextureSet, u32 tileMapId, u32 tileSizePixels )
 {
-   u32 tileMapCount, i;
-   i32 chunkOffset, tileMapOffset, tileCount, tilesOffset;
+   u32 tileMapCount, i, j;
+   i32 chunkOffset, tileMapOffset, tileCount, tilesOffset, portalsOffset, npcsOffset, npcOffset;
    TileMap_t *tileMap;
+   Npc_t* npc;
+   Entity_t* entity;
    GameDataFileOffsets_t fileOffsets;
    GameDataObjectOffset_t tileMapFileOffset;
    File_t* file;
@@ -121,17 +125,19 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
             return 0;
          }
 
+         // tile map
          tileMap = (TileMap_t*)MemArena_AllocMem( memArena, TileMap_GetStructSize() );
          tileMap->tileSizePixels = tileSizePixels;
          tileMap->portals = 0;
          Platform_FileSeek( file, tileMapOffset, 0 );
          Platform_ReadFileBytes( file, (u8*)( &tileMap->info ), sizeof( TileMapInfo_t ) );
 
+         // tiles
          tileCount = (i32)( tileMap->info.tilesX * tileMap->info.tilesY );
          tilesOffset = tileMapOffset + sizeof( TileMapInfo_t );
          if ( tilesOffset + (i32)( tileCount * sizeof( Tile_t ) ) > file->size )
          {
-            Platform_FatalError( "game data file is too small to contain all the requested tile map tiles." );
+            Platform_FatalError( "game data file is too small to contain all the tile map tiles." );
             MemArena_FreeMem( memArena, tileMap );
             return 0;
          }
@@ -141,12 +147,45 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
          Platform_ReadFileBytes( file, tiles, tileCount * sizeof( Tile_t ) );
          tileMap->tiles = (Tile_t*)tiles;
 
+         // portals
+         portalsOffset = tilesOffset + tileCount * sizeof( Tile_t );
          if ( tileMap->info.portalCount > 0 )
          {
+            if ( portalsOffset + (i32)( tileMap->info.portalCount * sizeof( TileMapPortal_t ) ) > file->size )
+            {
+               Platform_FatalError( "game data file is too small to contain all the tile map portals." );
+               MemArena_FreeMem( memArena, tileMap );
+               return 0;
+            }
+
             portals = (u8*)MemArena_AllocMem( memArena, tileMap->info.portalCount * sizeof( TileMapPortal_t ) );
-            Platform_FileSeek( file, tilesOffset + tileCount * sizeof( Tile_t ), 0 );
+            Platform_FileSeek( file, portalsOffset, 0 );
             Platform_ReadFileBytes( file, portals, tileMap->info.portalCount * sizeof( TileMapPortal_t ) );
             tileMap->portals = (TileMapPortal_t*)portals;
+         }
+
+         // NPCs
+         npcsOffset = portalsOffset + tileMap->info.portalCount * sizeof( TileMapPortal_t );
+         if ( tileMap->info.npcCount > 0 )
+         {
+            if ( npcsOffset + (i32)( tileMap->info.npcCount * sizeof( NpcInfo_t ) ) > file->size )
+            {
+               Platform_FatalError( "game data file is too small to contain all the tile map NPCs." );
+               MemArena_FreeMem( memArena, tileMap );
+               return 0;
+            }
+
+            tileMap->npcs = (Npc_t*)MemArena_AllocMem( memArena, tileMap->info.npcCount * Npc_GetStructSize() );
+            npcOffset = npcsOffset;
+
+            for ( j = 0; j < tileMap->info.npcCount; j++ )
+            {
+               npc = (Npc_t*)( (u8*)tileMap->npcs + ( j * Npc_GetStructSize() ) );
+               Npc_LoadFromGameData( npc, memArena, gameData, npcOffset, activeSpriteTextureSet );
+               entity = Npc_GetEntity( npc );
+               TileMap_CenterEntityInTile( tileMap, entity, Entity_GetTileIndex( entity ) );
+               npcOffset += sizeof( NpcInfo_t );
+            }
          }
 
          TileMap_SetViewportInUnits( tileMap, (Vector4i32_t){ 0, 0, DISPLAY_WIDTH * WORLD_UNITS_PER_PIXEL, DISPLAY_HEIGHT * WORLD_UNITS_PER_PIXEL } );
@@ -162,10 +201,23 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t *memArena, GameData_t* gameDat
 
 void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena )
 {
+   u32 i;
+
    if ( tileMap->portals )
    {
       MemArena_FreeMem( memArena, tileMap->portals );
    }
+
+   if ( tileMap->info.npcCount > 0 )
+   {
+      for ( i = 0; i < tileMap->info.npcCount; i++ )
+      {
+         Npc_Free( (Npc_t*)( (u8*)tileMap->npcs + ( i * Npc_GetStructSize() ) ), memArena );
+      }
+
+      MemArena_FreeMem( memArena, tileMap->npcs );
+   }
+
    MemArena_FreeMem( memArena, tileMap->tiles );
    MemArena_FreeMem( memArena, tileMap );
 }
@@ -193,6 +245,16 @@ b32 TileMap_GetWraps( TileMap_t* tileMap )
 u32 TileMap_GetPortalCount( TileMap_t* tileMap )
 {
    return tileMap->info.portalCount;
+}
+
+u32 TileMap_GetNpcCount( TileMap_t* tileMap )
+{
+   return tileMap->info.npcCount;
+}
+
+Npc_t* TileMap_GetNpc( TileMap_t* tileMap, u32 npcIndex )
+{
+   return (Npc_t*)( (u8*)tileMap->npcs + ( npcIndex * Npc_GetStructSize() ) );
 }
 
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )

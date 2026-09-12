@@ -1,4 +1,5 @@
 #include "mocks/mock_entity.h"
+#include "mocks/mock_npc.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
 
@@ -19,10 +20,17 @@ Game_t;
 
 global Game_t g_game;
 global Entity_t g_entity;
+global Entity_t g_npcEntity;
+global Entity_t g_npcEntity2;
+global Npc_t g_npc;
+global Npc_t g_npc2;
+global u32 g_npcCount;
 global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
 global Tile_t g_tiles[80];
 global u32 g_clockFrameCount;
+global u32 g_gameOnPlayerTileIndexChangedCount;
+global u32 g_gameOnPlayerTileIndexChangedTileIndex;
 #if defined( _WIN32 )
 WinDebugFlags_t g_winDebugFlags;
 #endif
@@ -55,14 +63,53 @@ TileMap_t* Game_GetTileMap( Game_t* game )
    return game->tileMap;
 }
 
+u32 TileMap_GetNpcCount( TileMap_t* tileMap )
+{
+   UNUSED_PARAM( tileMap );
+   return g_npcCount;
+}
+
+Npc_t* TileMap_GetNpc( TileMap_t* tileMap, u32 npcIndex )
+{
+   UNUSED_PARAM( tileMap );
+   return npcIndex == 0 ? &g_npc : &g_npc2;
+}
+
+Entity_t* Npc_GetEntity( Npc_t* npc )
+{
+   return npc->entity;
+}
+
 TileTextureSet_t* Game_GetTileTextureSet( Game_t* game )
 {
    return game->tileTextureSet;
 }
 
+void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex )
+{
+   UNUSED_PARAM( game );
+   g_gameOnPlayerTileIndexChangedCount++;
+   g_gameOnPlayerTileIndexChangedTileIndex = newTileIndex;
+}
+
 Vector4i32_t Entity_GetRect( Entity_t* entity )
 {
    return entity->rect;
+}
+
+u32 Entity_GetTileIndex( Entity_t* entity )
+{
+   return entity->tileIndex;
+}
+
+i32 Entity_GetVelocityX( Entity_t* entity )
+{
+   return entity->velocity.x;
+}
+
+i32 Entity_GetVelocityY( Entity_t* entity )
+{
+   return entity->velocity.y;
 }
 
 Vector2i32_t Entity_GetVelocity( Entity_t* entity )
@@ -79,6 +126,16 @@ void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
 void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
 {
    entity->velocity.x = vx;
+   entity->velocity.y = vy;
+}
+
+void Entity_SetVelocityX( Entity_t* entity, i32 vx )
+{
+   entity->velocity.x = vx;
+}
+
+void Entity_SetVelocityY( Entity_t* entity, i32 vy )
+{
    entity->velocity.y = vy;
 }
 
@@ -152,12 +209,25 @@ void setUp( void )
    g_winDebugFlags.showHitBoxes = False;
 #endif
    g_clockFrameCount = 0;
+   g_npcCount = 0;
+   g_gameOnPlayerTileIndexChangedCount = 0;
+   g_gameOnPlayerTileIndexChangedTileIndex = 0;
    g_entity.rect.x = 20 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 30 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.w = 10 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.h = 12 * WORLD_UNITS_PER_PIXEL;
    g_entity.velocity.x = 3 * WORLD_UNITS_PER_PIXEL * 60;
    g_entity.velocity.y = 4 * WORLD_UNITS_PER_PIXEL * 60;
+   g_npc.entity = &g_npcEntity;
+   g_npcEntity.rect.x = 16 * WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.rect.y = 0;
+   g_npcEntity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_npc2.entity = &g_npcEntity2;
+   g_npcEntity2.rect.x = 17 * WORLD_UNITS_PER_PIXEL;
+   g_npcEntity2.rect.y = 0;
+   g_npcEntity2.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_npcEntity2.rect.h = WORLD_UNITS_PER_PIXEL;
    g_tileMap.info.tilesX = 10;
    g_tileMap.info.tilesY = 8;
    g_tileMap.info.wraps = False;
@@ -198,6 +268,53 @@ void test_Game_TicPhysics_StopsBeforeNonPassableTile( void )
    Game_TicPhysics( &g_game );
 
    TEST_ASSERT_EQUAL_INT( 31 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+}
+
+void test_Game_TicPhysics_StopsBeforeNpc( void )
+{
+   g_npcCount = 1;
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 30 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 15 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+}
+
+void test_Game_TicPhysics_MovesNpcWithoutNotifyingPlayerTileChange( void )
+{
+   g_npcCount = 1;
+   g_entity.tileIndex = 7;
+   g_gameOnPlayerTileIndexChangedCount = 0;
+   g_npcEntity.rect.x = 0;
+   g_npcEntity.rect.y = 0;
+   g_npcEntity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.velocity.x = 3 * WORLD_UNITS_PER_PIXEL * 60;
+   g_npcEntity.velocity.y = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 3 * WORLD_UNITS_PER_PIXEL, g_npcEntity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 3 * 60 * WORLD_UNITS_PER_PIXEL, g_npcEntity.velocity.x );
+   TEST_ASSERT_EQUAL_UINT( 0, g_gameOnPlayerTileIndexChangedCount );
+}
+
+void test_Game_TicPhysics_StopsNpcBeforeAnotherNpc( void )
+{
+   g_npcCount = 2;
+   g_entity.tileIndex = 7;
+   g_npcEntity.velocity.x = 0;
+   g_npcEntity2.velocity.x = -60 * WORLD_UNITS_PER_PIXEL * 60;
+   g_npcEntity2.velocity.y = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 17 * WORLD_UNITS_PER_PIXEL, g_npcEntity2.rect.x );
 }
 
 void test_Game_TicPhysics_DoesNotEnterNonPassableTile( void )
@@ -304,6 +421,25 @@ void test_Game_TicPhysics_UpdatesPlayerTileIndex( void )
    TEST_ASSERT_EQUAL_UINT( 7, g_entity.tileIndex );
 }
 
+void test_Game_TicPhysics_NotifiesWhenPlayerTileIndexChanges( void )
+{
+   g_entity.tileIndex = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_UINT( 1, g_gameOnPlayerTileIndexChangedCount );
+   TEST_ASSERT_EQUAL_UINT( 7, g_gameOnPlayerTileIndexChangedTileIndex );
+}
+
+void test_Game_TicPhysics_DoesNotNotifyWhenPlayerTileIndexIsUnchanged( void )
+{
+   g_entity.tileIndex = 7;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_UINT( 0, g_gameOnPlayerTileIndexChangedCount );
+}
+
 void test_Game_TicPhysics_ClampsOversizedPlayerToOrigin( void )
 {
    g_entity.rect.x = 5 * WORLD_UNITS_PER_PIXEL;
@@ -337,6 +473,9 @@ int main( void )
 
    RUN_TEST( test_Game_TicPhysics_MovesPlayerByVelocity );
    RUN_TEST( test_Game_TicPhysics_StopsBeforeNonPassableTile );
+   RUN_TEST( test_Game_TicPhysics_StopsBeforeNpc );
+   RUN_TEST( test_Game_TicPhysics_MovesNpcWithoutNotifyingPlayerTileChange );
+   RUN_TEST( test_Game_TicPhysics_StopsNpcBeforeAnotherNpc );
    RUN_TEST( test_Game_TicPhysics_DoesNotEnterNonPassableTile );
    RUN_TEST( test_Game_TicPhysics_MovesDiagonally );
    RUN_TEST( test_Game_TicPhysics_AllowsOtherAxisAfterCollision );
@@ -344,6 +483,8 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtUpperBounds );
    RUN_TEST( test_Game_TicPhysics_DoesNotClampWrappingMap );
    RUN_TEST( test_Game_TicPhysics_UpdatesPlayerTileIndex );
+   RUN_TEST( test_Game_TicPhysics_NotifiesWhenPlayerTileIndexChanges );
+   RUN_TEST( test_Game_TicPhysics_DoesNotNotifyWhenPlayerTileIndexIsUnchanged );
    RUN_TEST( test_Game_TicPhysics_ClampsOversizedPlayerToOrigin );
    RUN_TEST( test_Game_TicPhysics_WrapsPlayerAtLowerBounds );
 

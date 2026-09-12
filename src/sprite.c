@@ -24,9 +24,10 @@ ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSe
    ActiveSprite_t* sprite;
 
    sprite = (ActiveSprite_t*)MemArena_AllocMem( memArena, sizeof( ActiveSprite_t ) );
-   sprite->textureSet = textureSet;
    sprite->dir = 0;
    sprite->frameIndex = 0;
+   sprite->textureSet = textureSet;
+   sprite->textureIndex = 0;
 
    sprite->frameSec = 0.0f;
    sprite->frameDurationSec = ACTIVE_SPRITE_FRAME_DURATION_SEC_DEFAULT;

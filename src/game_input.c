@@ -1,3 +1,4 @@
+#include "clock.h"
 #include "entity.h"
 #include "game.h"
 #include "input.h"

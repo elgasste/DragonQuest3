@@ -37,10 +37,10 @@ TileMap_t* Game_GetTileMap( Game_t* game );
 AnimationChain_t* Game_GetAnimationChain( Game_t* game );
 Entity_t* Game_GetPlayerEntity( Game_t* game );
 
-void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect );
-
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
+void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect );
+void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex );
 
 // game_input.c
 void Game_HandleInput( Game_t* game );
