@@ -294,7 +294,7 @@ void test_Game_TicPhysics_MovesNpcWithoutNotifyingPlayerTileChange( void )
    Game_TicPhysics( &g_game );
 
    TEST_ASSERT_EQUAL_INT( 3 * WORLD_UNITS_PER_PIXEL, g_npcEntity.rect.x );
-   TEST_ASSERT_EQUAL_INT( 0, g_npcEntity.velocity.x );
+   TEST_ASSERT_EQUAL_INT( 3 * 60 * WORLD_UNITS_PER_PIXEL, g_npcEntity.velocity.x );
    TEST_ASSERT_EQUAL_UINT( 0, g_gameOnPlayerTileIndexChangedCount );
 }
 

@@ -134,7 +134,10 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
 
    Entity_SetPosition( entity, entityRect.x, entityRect.y );
    Entity_SetTileIndex( entity, TileMap_GetTileIndexForEntity( tileMap, entity ) );
-   Entity_SetVelocity( entity, 0, 0 );
+   if ( isPlayer )
+   {
+      Entity_SetVelocity( entity, 0, 0 );
+   }
 
    if ( isPlayer && prevTileIndex != Entity_GetTileIndex( entity ) )
    {
