@@ -179,6 +179,20 @@ void test_Entity_GetVelocity_ReturnsLatestVelocity( void )
    Entity_Free( entity, (MemArena_t*)1 );
 }
 
+void test_Entity_AxisVelocityAccessors_UpdateIndividualComponents( void )
+{
+   Entity_t* entity = Entity_Create( (MemArena_t*)1, 0 );
+
+   Entity_SetVelocity( entity, 3, 4 );
+   Entity_SetVelocityX( entity, -7 );
+   Entity_SetVelocityY( entity, 11 );
+
+   TEST_ASSERT_EQUAL_INT( -7, Entity_GetVelocityX( entity ) );
+   TEST_ASSERT_EQUAL_INT( 11, Entity_GetVelocityY( entity ) );
+
+   Entity_Free( entity, (MemArena_t*)1 );
+}
+
 #if defined( _WIN32 )
 void test_Entity_GetVelocity_MoveFastScalesNonZeroComponents( void )
 {
@@ -263,6 +277,7 @@ int main( void )
    RUN_TEST( test_Entity_SetVelocity_UpdatesVelocity );
 
    RUN_TEST( test_Entity_GetVelocity_ReturnsLatestVelocity );
+   RUN_TEST( test_Entity_AxisVelocityAccessors_UpdateIndividualComponents );
 #if defined( _WIN32 )
    RUN_TEST( test_Entity_GetVelocity_MoveFastScalesNonZeroComponents );
    RUN_TEST( test_Entity_GetVelocity_MoveFastLeavesZeroComponentsUnchanged );

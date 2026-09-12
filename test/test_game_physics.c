@@ -21,7 +21,9 @@ Game_t;
 global Game_t g_game;
 global Entity_t g_entity;
 global Entity_t g_npcEntity;
+global Entity_t g_npcEntity2;
 global Npc_t g_npc;
+global Npc_t g_npc2;
 global u32 g_npcCount;
 global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
@@ -70,8 +72,7 @@ u32 TileMap_GetNpcCount( TileMap_t* tileMap )
 Npc_t* TileMap_GetNpc( TileMap_t* tileMap, u32 npcIndex )
 {
    UNUSED_PARAM( tileMap );
-   UNUSED_PARAM( npcIndex );
-   return &g_npc;
+   return npcIndex == 0 ? &g_npc : &g_npc2;
 }
 
 Entity_t* Npc_GetEntity( Npc_t* npc )
@@ -222,6 +223,11 @@ void setUp( void )
    g_npcEntity.rect.y = 0;
    g_npcEntity.rect.w = WORLD_UNITS_PER_PIXEL;
    g_npcEntity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_npc2.entity = &g_npcEntity2;
+   g_npcEntity2.rect.x = 17 * WORLD_UNITS_PER_PIXEL;
+   g_npcEntity2.rect.y = 0;
+   g_npcEntity2.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_npcEntity2.rect.h = WORLD_UNITS_PER_PIXEL;
    g_tileMap.info.tilesX = 10;
    g_tileMap.info.tilesY = 8;
    g_tileMap.info.wraps = False;
@@ -296,6 +302,19 @@ void test_Game_TicPhysics_MovesNpcWithoutNotifyingPlayerTileChange( void )
    TEST_ASSERT_EQUAL_INT( 3 * WORLD_UNITS_PER_PIXEL, g_npcEntity.rect.x );
    TEST_ASSERT_EQUAL_INT( 3 * 60 * WORLD_UNITS_PER_PIXEL, g_npcEntity.velocity.x );
    TEST_ASSERT_EQUAL_UINT( 0, g_gameOnPlayerTileIndexChangedCount );
+}
+
+void test_Game_TicPhysics_StopsNpcBeforeAnotherNpc( void )
+{
+   g_npcCount = 2;
+   g_entity.tileIndex = 7;
+   g_npcEntity.velocity.x = 0;
+   g_npcEntity2.velocity.x = -60 * WORLD_UNITS_PER_PIXEL * 60;
+   g_npcEntity2.velocity.y = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 17 * WORLD_UNITS_PER_PIXEL, g_npcEntity2.rect.x );
 }
 
 void test_Game_TicPhysics_DoesNotEnterNonPassableTile( void )
@@ -456,6 +475,7 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_StopsBeforeNonPassableTile );
    RUN_TEST( test_Game_TicPhysics_StopsBeforeNpc );
    RUN_TEST( test_Game_TicPhysics_MovesNpcWithoutNotifyingPlayerTileChange );
+   RUN_TEST( test_Game_TicPhysics_StopsNpcBeforeAnotherNpc );
    RUN_TEST( test_Game_TicPhysics_DoesNotEnterNonPassableTile );
    RUN_TEST( test_Game_TicPhysics_MovesDiagonally );
    RUN_TEST( test_Game_TicPhysics_AllowsOtherAxisAfterCollision );
