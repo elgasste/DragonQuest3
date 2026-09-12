@@ -22,6 +22,24 @@ global u32 g_freeCount;
 WinDebugFlags_t g_winDebugFlags;
 #endif
 
+r32 Clock_GetFrameSec( Clock_t* clock )
+{
+	UNUSED_PARAM( clock );
+	return 1.0f / 60.0f;
+}
+
+u32 Platform_Rand_u32Ranged( u32 min, u32 max )
+{
+	UNUSED_PARAM( max );
+	return min;
+}
+
+i32 Platform_Rand_i32Ranged( i32 min, i32 max )
+{
+	UNUSED_PARAM( max );
+	return min;
+}
+
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
 	UNUSED_PARAM( arena );
@@ -71,6 +89,10 @@ internal GameData_t* CreateGameData( void )
 {
 	static GameData_t gameData;
 
+	if ( g_file.size == 0 )
+	{
+		g_file.size = sizeof( g_fileData );
+	}
 	gameData.file = &g_file;
 	return &gameData;
 }
@@ -80,6 +102,7 @@ internal void WriteNpcInfo( void )
 	NpcInfo_t info = { 23, 18, 20, -3, 4, Direction_Up, 7, True };
 
 	memcpy( g_fileData, &info, sizeof( info ) );
+	g_file.size = sizeof( g_fileData );
 }
 
 void setUp( void )
@@ -160,6 +183,43 @@ void test_Npc_SetWanders_UpdatesWandersState( void )
 	Npc_Free( &npc, (MemArena_t*)1 );
 }
 
+void test_Npc_Tic_PausesBrieflyAfterWandering( void )
+{
+	Npc_t npc;
+	Entity_t* entity;
+	Vector2i32_t velocity;
+	Clock_t* clock = (Clock_t*)1;
+	int i;
+
+	WriteNpcInfo();
+	Npc_LoadFromGameData( &npc, (MemArena_t*)1, CreateGameData(), 0, (ActiveSpriteTextureSet_t*)1 );
+	entity = Npc_GetEntity( &npc );
+
+	for ( i = 0; i < 61; i++ )
+	{
+		Npc_Tic( &npc, clock );
+	}
+	velocity = Entity_GetVelocity( entity );
+	TEST_ASSERT_NOT_EQUAL( 0, velocity.x );
+
+	for ( i = 0; i < 61; i++ )
+	{
+		Npc_Tic( &npc, clock );
+	}
+	velocity = Entity_GetVelocity( entity );
+	TEST_ASSERT_EQUAL_INT( 0, velocity.x );
+	TEST_ASSERT_EQUAL_INT( 0, velocity.y );
+
+	for ( i = 0; i < 16; i++ )
+	{
+		Npc_Tic( &npc, clock );
+	}
+	velocity = Entity_GetVelocity( entity );
+	TEST_ASSERT_NOT_EQUAL( 0, velocity.x );
+
+	Npc_Free( &npc, (MemArena_t*)1 );
+}
+
 int main( void )
 {
 	UNITY_BEGIN();
@@ -170,6 +230,7 @@ int main( void )
 	RUN_TEST( test_Npc_LoadFromGameData_RejectsTruncatedInfo );
    
 	RUN_TEST( test_Npc_SetWanders_UpdatesWandersState );
+	RUN_TEST( test_Npc_Tic_PausesBrieflyAfterWandering );
 
 	return UNITY_END();
 }

@@ -212,6 +212,11 @@ Entity_t* Npc_GetEntity( Npc_t* npc )
    return npc->entity;
 }
 
+void Npc_Tic( Npc_t* npc, Clock_t* clock )
+{
+   ActiveSprite_Tic( Entity_GetSprite( Npc_GetEntity( npc ) ), Clock_GetFrameSec( clock ) );
+}
+
 Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity )
 {
    return entity->spriteOffset;

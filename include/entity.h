@@ -14,6 +14,8 @@ void Entity_Free( Entity_t* entity, MemArena_t* memArena );
 
 Vector4i32_t Entity_GetRect( Entity_t* entity );
 Vector2i32_t Entity_GetVelocity( Entity_t* entity );
+i32 Entity_GetVelocityX( Entity_t* entity );
+i32 Entity_GetVelocityY( Entity_t* entity );
 u32 Entity_GetTileIndex( Entity_t* entity );
 ActiveSprite_t* Entity_GetSprite( Entity_t* entity );
 Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity );
@@ -21,6 +23,8 @@ Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity );
 void Entity_SetPosition( Entity_t* entity, i32 x, i32 y );
 void Entity_SetSize( Entity_t* entity, i32 w, i32 h );
 void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy );
+void Entity_SetVelocityX( Entity_t* entity, i32 vx );
+void Entity_SetVelocityY( Entity_t* entity, i32 vy );
 void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex );
 void Entity_SetSprite( Entity_t* entity, ActiveSprite_t* sprite );
 void Entity_SetSpriteOffset( Entity_t* entity, i32 offsetX, i32 offsetY );

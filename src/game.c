@@ -196,10 +196,10 @@ internal void Game_Tic( Game_t* game )
    else
    {
       Game_HandleInput( game );
-      Game_TicPhysics( game );
    }
 
    Game_TicEntities( game, deltaSec );
+   Game_TicPhysics( game );
 
    TileMap_AnchorViewportToEntity( game->tileMap, game->playerEntity );
 }
@@ -207,18 +207,12 @@ internal void Game_Tic( Game_t* game )
 internal void Game_TicEntities( Game_t* game, r32 deltaSec )
 {
    u32 i;
-   Npc_t* npc;
-   Entity_t* entity;
-   ActiveSprite_t* sprite;
 
    ActiveSprite_Tic( game->playerSprite, deltaSec );
 
    for ( i = 0; i < TileMap_GetNpcCount( game->tileMap ); i++ )
    {
-      npc = TileMap_GetNpc( game->tileMap, i );
-      entity = Npc_GetEntity( npc );
-      sprite = Entity_GetSprite( entity );
-      ActiveSprite_Tic( sprite, deltaSec );
+      Npc_Tic( TileMap_GetNpc( game->tileMap, i ), game->clock );
    }
 }
 

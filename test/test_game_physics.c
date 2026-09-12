@@ -101,6 +101,16 @@ u32 Entity_GetTileIndex( Entity_t* entity )
    return entity->tileIndex;
 }
 
+i32 Entity_GetVelocityX( Entity_t* entity )
+{
+   return entity->velocity.x;
+}
+
+i32 Entity_GetVelocityY( Entity_t* entity )
+{
+   return entity->velocity.y;
+}
+
 Vector2i32_t Entity_GetVelocity( Entity_t* entity )
 {
    return entity->velocity;
@@ -115,6 +125,16 @@ void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
 void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
 {
    entity->velocity.x = vx;
+   entity->velocity.y = vy;
+}
+
+void Entity_SetVelocityX( Entity_t* entity, i32 vx )
+{
+   entity->velocity.x = vx;
+}
+
+void Entity_SetVelocityY( Entity_t* entity, i32 vy )
+{
    entity->velocity.y = vy;
 }
 
@@ -257,6 +277,25 @@ void test_Game_TicPhysics_StopsBeforeNpc( void )
    Game_TicPhysics( &g_game );
 
    TEST_ASSERT_EQUAL_INT( 15 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+}
+
+void test_Game_TicPhysics_MovesNpcWithoutNotifyingPlayerTileChange( void )
+{
+   g_npcCount = 1;
+   g_entity.tileIndex = 7;
+   g_gameOnPlayerTileIndexChangedCount = 0;
+   g_npcEntity.rect.x = 0;
+   g_npcEntity.rect.y = 0;
+   g_npcEntity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.velocity.x = 3 * WORLD_UNITS_PER_PIXEL * 60;
+   g_npcEntity.velocity.y = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 3 * WORLD_UNITS_PER_PIXEL, g_npcEntity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 0, g_npcEntity.velocity.x );
+   TEST_ASSERT_EQUAL_UINT( 0, g_gameOnPlayerTileIndexChangedCount );
 }
 
 void test_Game_TicPhysics_DoesNotEnterNonPassableTile( void )
@@ -416,6 +455,7 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_MovesPlayerByVelocity );
    RUN_TEST( test_Game_TicPhysics_StopsBeforeNonPassableTile );
    RUN_TEST( test_Game_TicPhysics_StopsBeforeNpc );
+   RUN_TEST( test_Game_TicPhysics_MovesNpcWithoutNotifyingPlayerTileChange );
    RUN_TEST( test_Game_TicPhysics_DoesNotEnterNonPassableTile );
    RUN_TEST( test_Game_TicPhysics_MovesDiagonally );
    RUN_TEST( test_Game_TicPhysics_AllowsOtherAxisAfterCollision );

@@ -43,6 +43,7 @@ Vector4i32_t Entity_GetRect( Entity_t* entity )
 
 Vector2i32_t Entity_GetVelocity( Entity_t* entity )
 {
+// MUFFINS: this should only apply to the player, let's fix that
 #if defined( _WIN32 )
    if ( g_winDebugFlags.moveFast )
    {
@@ -58,6 +59,16 @@ Vector2i32_t Entity_GetVelocity( Entity_t* entity )
 #endif
 
    return entity->velocity;
+}
+
+i32 Entity_GetVelocityX( Entity_t* entity )
+{
+   return entity->velocity.x;
+}
+
+i32 Entity_GetVelocityY( Entity_t* entity )
+{
+   return entity->velocity.y;
 }
 
 u32 Entity_GetTileIndex( Entity_t* entity )
@@ -90,6 +101,16 @@ void Entity_SetSize( Entity_t* entity, i32 w, i32 h )
 void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
 {
    entity->velocity.x = vx;
+   entity->velocity.y = vy;
+}
+
+void Entity_SetVelocityX( Entity_t* entity, i32 vx )
+{
+   entity->velocity.x = vx;
+}
+
+void Entity_SetVelocityY( Entity_t* entity, i32 vy )
+{
    entity->velocity.y = vy;
 }
 

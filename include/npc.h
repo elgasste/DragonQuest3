@@ -5,7 +5,15 @@
 #include "direction.h"
 #include "platform.h"
 
+#define NPC_MIN_ACTION_SECONDS   1
+#define NPC_MAX_ACTION_SECONDS   4
+#define NPC_MIN_PAUSE_SECONDS    0.25f
+#define NPC_MAX_PAUSE_SECONDS    1.0f
+#define NPC_MIN_VELOCITY         ( 8 * WORLD_UNITS_PER_PIXEL )
+#define NPC_MAX_VELOCITY         ( 40 * WORLD_UNITS_PER_PIXEL )
+
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
+typedef struct Clock_t Clock_t;
 typedef struct Entity_t Entity_t;
 typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
@@ -34,5 +42,7 @@ Entity_t* Npc_GetEntity( Npc_t* npc );
 b32 Npc_GetWanders( Npc_t* npc );
 
 void Npc_SetWanders( Npc_t* npc, b32 wanders );
+
+void Npc_Tic( Npc_t* npc, Clock_t* clock );
 
 #endif // NPC_H

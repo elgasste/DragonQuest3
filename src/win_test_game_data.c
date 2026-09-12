@@ -446,7 +446,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->npcs[0].spriteOffsetY = -2;
    curTileMap->npcs[0].direction = Direction_Down;
    curTileMap->npcs[0].spriteTextureIndex = 0;
-   curTileMap->npcs[0].wanders = False;
+   curTileMap->npcs[0].wanders = True;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 

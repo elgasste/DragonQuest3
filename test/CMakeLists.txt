@@ -47,6 +47,7 @@ add_executable(Test_Game_Data
 
 add_executable(Test_Game_Physics
    ../src/game_physics.c
+   ../src/utility.c
    vendor/unity.c
    test_game_physics.c
 )
