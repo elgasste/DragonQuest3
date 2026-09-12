@@ -207,6 +207,7 @@ void setUp( void )
    g_winDebugFlags.showDiagnostics = False;
    g_winDebugFlags.noClip = False;
    g_winDebugFlags.showHitBoxes = False;
+   g_winDebugFlags.moveFast = False;
 #endif
    g_clockFrameCount = 0;
    g_npcCount = 0;

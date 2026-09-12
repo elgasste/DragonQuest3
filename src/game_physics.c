@@ -33,7 +33,7 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
    u32 tileSize, prevTileIndex;
    r32 frameSeconds;
    Vector4i32_t entityRect;
-   i32 velocityX, velocityY;
+   Vector2i32_t velocity;
    TileMap_t* tileMap;
    TileTextureSet_t* tileTextureSet;
 
@@ -41,20 +41,25 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
    tileMap = Game_GetTileMap( game );
    tileTextureSet = Game_GetTileTextureSet( game );
    entityRect = Entity_GetRect( entity );
-   if ( isPlayer )
+   velocity = Entity_GetVelocity( entity );
+
+#if defined( _WIN32 )
+   if ( isPlayer && g_winDebugFlags.moveFast )
    {
-      velocityX = Entity_GetVelocity( entity ).x;
-      velocityY = Entity_GetVelocity( entity ).y;
+      if ( velocity.x != 0 )
+      {
+         velocity.x = ( velocity.x < 0 ) ? -( 180 * WORLD_UNITS_PER_PIXEL ) : ( 180 * WORLD_UNITS_PER_PIXEL );
+      }
+      if ( velocity.y != 0 )
+      {
+         velocity.y = ( velocity.y < 0 ) ? -( 180 * WORLD_UNITS_PER_PIXEL ) : ( 180 * WORLD_UNITS_PER_PIXEL );
+      }
    }
-   else
-   {
-      velocityX = Entity_GetVelocityX( entity );
-      velocityY = Entity_GetVelocityY( entity );
-   }
+#endif
 
    tileSize = TileTextureSet_GetTileSize( tileTextureSet ) * WORLD_UNITS_PER_PIXEL;
-   moveX = GamePhysics_GetPixelMovement( velocityX, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
-   moveY = GamePhysics_GetPixelMovement( velocityY, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
+   moveX = GamePhysics_GetPixelMovement( velocity.x, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
+   moveY = GamePhysics_GetPixelMovement( velocity.y, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
    stepX = ( moveX < 0 ) ? -1 : 1;
    stepY = ( moveY < 0 ) ? -1 : 1;
    steps = ( abs( moveX ) > abs( moveY ) ) ? abs( moveX ) : abs( moveY );
