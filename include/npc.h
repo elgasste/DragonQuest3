@@ -10,7 +10,7 @@
 #define NPC_MIN_PAUSE_SECONDS    0.25f
 #define NPC_MAX_PAUSE_SECONDS    1.0f
 #define NPC_MIN_VELOCITY         ( 8 * WORLD_UNITS_PER_PIXEL )
-#define NPC_MAX_VELOCITY         ( 40 * WORLD_UNITS_PER_PIXEL )
+#define NPC_MAX_VELOCITY         ( 16 * WORLD_UNITS_PER_PIXEL )
 
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
 typedef struct Clock_t Clock_t;
