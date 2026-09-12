@@ -142,11 +142,13 @@ internal void Npc_StartWandering( Npc_t* npc )
 {
    i32 vx, vy;
    b32 movingLeft, movingUp, movingRight, movingDown;
+   Vector2i32_t velocity;
    ActiveSprite_t* sprite;
    Direction_t dir;
    Entity_t* entity;
 
    entity = Npc_GetEntity( npc );
+   velocity = Entity_GetVelocity( entity );
    sprite = Entity_GetSprite( entity );
    vx = Platform_Rand_i32Ranged( NPC_MIN_VELOCITY, NPC_MAX_VELOCITY );
    vy = Platform_Rand_i32Ranged( NPC_MIN_VELOCITY, NPC_MAX_VELOCITY );
@@ -158,15 +160,16 @@ internal void Npc_StartWandering( Npc_t* npc )
    if ( Platform_Rand_u32Ranged( 0, 1 ) == 0 )
    {
       Entity_SetVelocityX( entity, ( Platform_Rand_u32Ranged( 0, 1 ) == 0 ) ? -vx : vx );
-      movingLeft = Entity_GetVelocityX( entity ) < 0;
-      movingRight = Entity_GetVelocityX( entity ) > 0;
+      movingLeft = velocity.x < 0;
+      movingRight = velocity.x > 0;
    }
 
    if ( Platform_Rand_u32Ranged( 0, 1 ) == 0 )
    {
       Entity_SetVelocityY( entity, ( Platform_Rand_u32Ranged( 0, 1 ) == 0 ) ? -vy : vy );
-      movingUp = Entity_GetVelocityY( entity ) < 0;
-      movingDown = Entity_GetVelocityY( entity ) > 0;
+      velocity = Entity_GetVelocity( entity );
+      movingUp = velocity.y < 0;
+      movingDown = velocity.y > 0;
    }
 
    if ( movingLeft || movingUp || movingRight || movingDown )
