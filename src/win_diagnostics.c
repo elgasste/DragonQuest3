@@ -1,6 +1,13 @@
+#include <stdio.h>
+
+#include "clock.h"
+#include "entity.h"
+#include "game.h"
+#include "tile_map.h"
 #include "win_common.h"
 
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
+internal void UpdateDiagnosticsText( HWND hWnd );
 
 b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
 {
@@ -30,7 +37,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    WS_OVERLAPPED | WS_CAPTION | WS_VISIBLE,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
-                                                   300,
+                                                   340,
                                                    300,
                                                    g_winGlobals.hWndMain,
                                                    0,
@@ -48,18 +55,108 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
 
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )
 {
-   LRESULT result;
-
-   result = 0;
    switch ( uMsg )
    {
       case WM_CLOSE:
          // this window should stay open for the duration of the app
-         result = 0;
-         break;
-      default:
-         result = DefWindowProcA( hWnd, uMsg, wParam, lParam );
-   }
+         return 0;
+      case WM_ERASEBKGND:
+         return 1;
+      case WM_PAINT:
+         UpdateDiagnosticsText( hWnd );
+         return 0;
 
-   return result;
+      default:
+         return DefWindowProcA( hWnd, uMsg, wParam, lParam );
+   }
+}
+
+internal void UpdateDiagnosticsText( HWND hWnd )
+{
+   PAINTSTRUCT ps;
+   HDC dc, dcMem;
+   HBITMAP bmMem;
+   HANDLE hOld;
+   RECT r, clientRect;
+   HFONT oldFont;
+   Game_t* game;
+   Clock_t* clock;
+   Entity_t* playerEntity;
+   Vector4i32_t playerRect;
+   u32 gameSeconds, realSeconds, playerTileIndex, playerTileX, playerTileY;
+   char str[STRING_SIZE_DEFAULT];
+
+   dc = BeginPaint( hWnd, &ps );
+   game = g_winGlobals.game;
+   clock = Game_GetClock( game );
+   playerEntity = Game_GetPlayerEntity( game );
+   playerRect = Entity_GetRect( playerEntity );
+
+   GetClientRect( hWnd, &clientRect );
+
+   dcMem = CreateCompatibleDC( dc );
+   bmMem = CreateCompatibleBitmap( dc, clientRect.right, clientRect.bottom );
+   hOld = SelectObject( dcMem, bmMem );
+
+   FillRect( dcMem, &clientRect, (HBRUSH)GetStockObject( BLACK_BRUSH ) );
+
+   r.left = 10;
+   r.top = 10;
+   r.right = 0;
+   r.bottom = 0;
+
+   oldFont = (HFONT)SelectObject( dcMem, g_winGlobals.hFont );
+
+   SetTextColor( dcMem, RGB( 255, 255, 255 ) );
+   SetBkColor( dcMem, RGB( 0, 0, 0 ) );
+   SetBkMode( dcMem, TRANSPARENT );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "Target Frame Rate: %u", Clock_GetFps( clock ) );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "    Last Frame MS: %u", (u32)( Clock_GetLastFrameMicro( clock ) / 1000 ) );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "     Total Frames: %u", Clock_GetFrameCount( clock ) );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", Clock_GetLagFrameCount( clock ) );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "   Graphics Scale: %.1f", g_winGlobals.graphicsScale );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   gameSeconds = Clock_GetFrameCount( clock ) / Clock_GetFps( clock );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "    In-Game Timer: %u:%02u:%02u", gameSeconds / 3600, gameSeconds / 60, gameSeconds );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   realSeconds = (u32)( Clock_GetAbsoluteEndMicro( clock ) - Clock_GetAbsoluteStartMicro( clock ) ) / 1000000;
+   sprintf_s( str, STRING_SIZE_DEFAULT, " Real World Timer: %u:%02u:%02u", realSeconds / 3600, realSeconds / 60, realSeconds );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "  Player Position: (%d, %d)", playerRect.x, playerRect.y );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   playerTileIndex = Entity_GetTileIndex( Game_GetPlayerEntity( game ) );
+   playerTileX = playerTileIndex % TileMap_GetTilesX( Game_GetTileMap( game ) );
+   playerTileY = playerTileIndex / TileMap_GetTilesX( Game_GetTileMap( game ) );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u (%u, %u)", playerTileIndex, playerTileX, playerTileY );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   BitBlt( dc, 0, 0, clientRect.right, clientRect.bottom, dcMem, 0, 0, SRCCOPY );
+
+   SelectObject( dcMem, oldFont );
+   SelectObject( dcMem, hOld );
+   DeleteObject( bmMem );
+   DeleteDC( dcMem );
+   EndPaint( hWnd, &ps );
 }

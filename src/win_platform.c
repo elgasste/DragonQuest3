@@ -86,6 +86,7 @@ void Platform_RenderDisplayBuffer( Display_t* display )
    UNUSED_PARAM( display );
    
    InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
+   InvalidateRect( g_winGlobals.hWndDiagnostics, 0, FALSE );
 }
 
 void Platform_SleepMs( u32 ms )
