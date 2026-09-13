@@ -33,6 +33,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 {
    TIMECAPS timeCaps;
    UINT timerResolution;
+   RECT mainWindowRect;
    Display_t* display;
    char gameDataPath[MAX_PATH];
 
@@ -87,6 +88,19 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
       timeEndPeriod( timerResolution );
       MemArena_Free( g_winGlobals.memArena );
       return 1;
+   }
+
+   // move diagnostics out of the main window's way and give the main window focus
+   if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
+   {
+      SetWindowPos( g_winGlobals.hWndDiagnostics,
+                    HWND_TOP,
+                    mainWindowRect.right + 16,
+                    mainWindowRect.top,
+                    0,
+                    0,
+                    SWP_NOSIZE );
+      SetFocus( g_winGlobals.hWndMain );
    }
 
    SetCursor( LoadCursor( 0, IDC_ARROW ) );
