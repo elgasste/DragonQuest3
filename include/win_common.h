@@ -37,6 +37,9 @@ WinCornerPopup_t;
 typedef struct WinGlobalObjects_t
 {
    HWND hWndMain;
+   HWND hWndDiagnostics;
+   char mainWindowClassName[MAX_PATH];
+   char diagnosticsWindowClassName[MAX_PATH];
    LONG clientPaddingRight;
    LONG clientPaddingTop;
    HFONT hFont;

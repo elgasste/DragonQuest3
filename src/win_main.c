@@ -14,6 +14,8 @@
 internal void MemArena_DumpStats( MemArena_t* memArena );
 internal void SetExeDir( void );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
+internal b32 CreateDiagnosticsWindow( HINSTANCE hInstance );
+internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
@@ -77,6 +79,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    g_winGlobals.game = Game_Create( g_winGlobals.memArena, gameDataPath ); // does not transfer ownership of memory arena
 
+   strcpy_s( g_winGlobals.mainWindowClassName, MAX_PATH, "mainWindowClass" );
    mainWindowClass.cbClsExtra = 0;
    mainWindowClass.cbWndExtra = 0;
    mainWindowClass.hbrBackground = 0;
@@ -87,7 +90,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    mainWindowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
    mainWindowClass.lpfnWndProc = MainWindowProc;
    mainWindowClass.hInstance = hInstance;
-   mainWindowClass.lpszClassName = "mainWindowClass";
+   mainWindowClass.lpszClassName = g_winGlobals.mainWindowClassName;
 
    if ( !RegisterClassA( &mainWindowClass ) )
    {
@@ -123,7 +126,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    g_winGlobals.hWndMain = CreateWindowExA( 0,
                                             mainWindowClass.lpszClassName,
-                                            STR_WINDOW_TITLE,
+                                            STR_MAIN_WINDOW_TITLE,
                                             windowStyle,
                                             CW_USEDEFAULT,
                                             CW_USEDEFAULT,
@@ -134,9 +137,9 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             hInstance,
                                             0 );
 
-   if ( !g_winGlobals.hWndMain )
+   if ( !g_winGlobals.hWndMain || !CreateDiagnosticsWindow( hInstance ) )
    {
-      Platform_FatalError( "failed to create main window." );
+      Platform_FatalError( "failed to create main or diagnostics window." );
       timeEndPeriod( timerResolution );
       UnregisterClassA( mainWindowClass.lpszClassName, hInstance );
       MemArena_Free( g_winGlobals.memArena );
@@ -166,8 +169,10 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    DeleteObject( g_winGlobals.hFont );
    DestroyWindow( g_winGlobals.hWndMain );
+   DestroyWindow( g_winGlobals.hWndDiagnostics );
    timeEndPeriod( timerResolution );
-   UnregisterClassA( mainWindowClass.lpszClassName, hInstance );
+   UnregisterClassA( g_winGlobals.mainWindowClassName, hInstance );
+   UnregisterClassA( g_winGlobals.diagnosticsWindowClassName, hInstance );
 
    if ( !MemArena_IsEmpty( g_winGlobals.memArena ) )
    {
@@ -246,8 +251,9 @@ internal void SetExeDir( void )
 
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )
 {
-   LRESULT result = 0;
+   LRESULT result;
 
+   result = 0;
    switch ( uMsg )
    {
       case WM_QUIT:
@@ -263,6 +269,68 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
          break;
       case WM_PAINT:
          RenderScreen();
+         break;
+      default:
+         result = DefWindowProcA( hWnd, uMsg, wParam, lParam );
+   }
+
+   return result;
+}
+
+internal b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
+{
+   WNDCLASSA windowClass;
+
+   strcpy_s( g_winGlobals.diagnosticsWindowClassName, MAX_PATH, "diagnosticsWindowClass" );
+   windowClass.cbClsExtra = 0;
+   windowClass.cbWndExtra = 0;
+   windowClass.hbrBackground = 0;
+   windowClass.hCursor = 0;
+   windowClass.hIcon = 0;
+   windowClass.lpszMenuName = 0;
+
+   windowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+   windowClass.lpfnWndProc = DiagnosticsWindowProc;
+   windowClass.hInstance = hInstance;
+   windowClass.lpszClassName = g_winGlobals.diagnosticsWindowClassName;
+
+   if ( !RegisterClassA( &windowClass ) )
+   {
+      return False;
+   }
+
+   g_winGlobals.hWndDiagnostics = CreateWindowExA( WS_EX_TOOLWINDOW,
+                                                   windowClass.lpszClassName,
+                                                   STR_DIAGNOSTICS_WINDOW_TITLE,
+                                                   WS_OVERLAPPED | WS_CAPTION | WS_VISIBLE,
+                                                   CW_USEDEFAULT,
+                                                   CW_USEDEFAULT,
+                                                   300,
+                                                   300,
+                                                   g_winGlobals.hWndMain,
+                                                   0,
+                                                   hInstance,
+                                                   0 );
+
+   if ( !g_winGlobals.hWndDiagnostics )
+   {
+      UnregisterClassA( windowClass.lpszClassName, hInstance );
+      return False;
+   }
+
+   return True;
+}
+
+internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )
+{
+   LRESULT result;
+
+   result = 0;
+   switch ( uMsg )
+   {
+      case WM_CLOSE:
+         // this window should stay open for the duration of the app
+         result = 0;
          break;
       default:
          result = DefWindowProcA( hWnd, uMsg, wParam, lParam );

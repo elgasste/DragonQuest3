@@ -74,7 +74,7 @@ void Platform_HandleMessages( Game_t* game )
 
    UNUSED_PARAM( game );
 
-   while ( PeekMessageA( &msg, g_winGlobals.hWndMain, 0, 0, PM_REMOVE ) )
+   while ( PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ) )
    {
       TranslateMessage( &msg );
       DispatchMessageA( &msg );
