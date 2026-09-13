@@ -399,6 +399,7 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    r.top += 16;
 
    r.top += 16;
+   r.left = ( clientRect.right - 150 ) / 2;
 
    sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
    SetTextColor( dcMem, Input_GetButtonState( input, InputButton_Up )->down ? 0x00FFFFFF : 0x00777777 );
