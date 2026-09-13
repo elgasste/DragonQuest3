@@ -18,7 +18,6 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
 internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
-internal void ResizeScreen( b32 increase );
 
 WinDebugFlags_t g_winDebugFlags;
 WinGlobalObjects_t g_winGlobals;
@@ -363,19 +362,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 
          if ( keyIsDown )
          {
-            if ( GetKeyState( 0x53 ) & 0x8000 ) // "S" key: change the scale of the screen
-            {
-               switch ( keyCode )
-               {
-                  case VK_UP:
-                     ResizeScreen( True );
-                     break;
-                  case VK_DOWN:
-                     ResizeScreen( False );
-                     break;
-               }
-            }
-            else if ( GetKeyState( 0x4D ) & 0x8000 ) // "M" key: dump memory stats to the log file
+            if ( GetKeyState( 0x4D ) & 0x8000 ) // "M" key: dump memory stats to the log file
             {
                MemArena_DumpStats( g_winGlobals.memArena );
             }
@@ -417,32 +404,5 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             }
          }
       }
-   }
-}
-
-internal void ResizeScreen( b32 increase )
-{
-   b32 changed;
-
-   changed = False;
-   if ( increase && g_winGlobals.graphicsScale < MAX_GRAPHICS_SCALE )
-   {
-      g_winGlobals.graphicsScale += GRAPHICS_SCALE_STEP;
-      changed = True;
-   }
-   else if ( !increase && g_winGlobals.graphicsScale > MIN_GRAPHICS_SCALE )
-   {
-      g_winGlobals.graphicsScale -= GRAPHICS_SCALE_STEP;
-      changed = True;
-   }
-
-   if ( changed )
-   {
-      SetWindowPos( g_winGlobals.hWndMain,
-                    NULL, // No change in Z-order
-                    0, 0, // No change in position
-                    (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
-                    (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
-                    SWP_NOMOVE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS); 
    }
 }

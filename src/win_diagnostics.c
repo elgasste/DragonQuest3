@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "clock.h"
+#include "display.h"
 #include "entity.h"
 #include "game.h"
 #include "input.h"
@@ -13,6 +14,8 @@
 #define IDC_DIAGNOSTICS_FASTMOVE_BTN 1003
 #define IDC_DIAGNOSTICS_INCFPS_BTN 1004
 #define IDC_DIAGNOSTICS_DECFPS_BTN 1005
+#define IDC_DIAGNOSTICS_INCSCALE_BTN 1006
+#define IDC_DIAGNOSTICS_DECSCALE_BTN 1007
 
 internal HWND g_hWndResetFlagsBtn = NULL;
 internal HWND g_hWndNoClipBtn = NULL;
@@ -20,10 +23,13 @@ internal HWND g_hWndHitBoxesBtn = NULL;
 internal HWND g_hWndFastMoveBtn = NULL;
 internal HWND g_hWndIncFpsBtn = NULL;
 internal HWND g_hWndDecFpsBtn = NULL;
+internal HWND g_hWndIncScaleBtn = NULL;
+internal HWND g_hWndDecScaleBtn = NULL;
 
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void UpdateDiagnosticsText( HWND hWnd );
 internal void ChangeGameFps( b32 increase );
+internal void ResizeScreen( b32 increase );
 
 b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
 {
@@ -91,6 +97,32 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                       (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_DECFPS_BTN,
                                       hInstance,
                                       0 );
+
+   g_hWndIncScaleBtn = CreateWindowExA( 0,
+                                        "BUTTON",
+                                        "+",
+                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                        200,
+                                        71,
+                                        24,
+                                        20,
+                                        g_winGlobals.hWndDiagnostics,
+                                        (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_INCSCALE_BTN,
+                                        hInstance,
+                                        0 );
+
+   g_hWndDecScaleBtn = CreateWindowExA( 0,
+                                        "BUTTON",
+                                        "-",
+                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                        228,
+                                        71,
+                                        24,
+                                        20,
+                                        g_winGlobals.hWndDiagnostics,
+                                        (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_DECSCALE_BTN,
+                                        hInstance,
+                                        0 );
 
    g_hWndResetFlagsBtn = CreateWindowExA( 0,
                                           "BUTTON",
@@ -169,6 +201,16 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
+               case IDC_DIAGNOSTICS_INCSCALE_BTN:
+                  ResizeScreen( True );
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+
+               case IDC_DIAGNOSTICS_DECSCALE_BTN:
+                  ResizeScreen( False );
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+
                case IDC_DIAGNOSTICS_RESETFLAGS_BTN:
                   g_winDebugFlags.noClip = False;
                   g_winDebugFlags.showHitBoxes = False;
@@ -209,6 +251,8 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                case IDC_DIAGNOSTICS_RESETFLAGS_BTN:
                case IDC_DIAGNOSTICS_INCFPS_BTN:
                case IDC_DIAGNOSTICS_DECFPS_BTN:
+               case IDC_DIAGNOSTICS_INCSCALE_BTN:
+               case IDC_DIAGNOSTICS_DECSCALE_BTN:
                   isEnabled = False;
                   break;
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
@@ -438,5 +482,32 @@ internal void ChangeGameFps( b32 increase )
    else if ( !increase && fps > MIN_GAME_FPS )
    {
       Clock_SetFps( clock, fps - GAME_FPS_STEP );
+   }
+}
+
+internal void ResizeScreen( b32 increase )
+{
+   b32 changed;
+
+   changed = False;
+   if ( increase && g_winGlobals.graphicsScale < MAX_GRAPHICS_SCALE )
+   {
+      g_winGlobals.graphicsScale += GRAPHICS_SCALE_STEP;
+      changed = True;
+   }
+   else if ( !increase && g_winGlobals.graphicsScale > MIN_GRAPHICS_SCALE )
+   {
+      g_winGlobals.graphicsScale -= GRAPHICS_SCALE_STEP;
+      changed = True;
+   }
+
+   if ( changed )
+   {
+      SetWindowPos( g_winGlobals.hWndMain,
+                    NULL, // No change in Z-order
+                    0, 0, // No change in position
+                    (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
+                    (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
+                    SWP_NOMOVE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS); 
    }
 }
