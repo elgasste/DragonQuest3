@@ -344,6 +344,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 {
    b32 keyWasDown, keyIsDown;
    u32 i;
+   RECT mainWindowRect;
    Input_t* input;
 
    keyWasDown = ( flags & ( (LONG_PTR)1 << 30 ) ) != 0 ? True : False;
@@ -389,7 +390,28 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          {
             case VK_F8:
                TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
-               ShowWindow( g_winGlobals.hWndDiagnostics, g_winDebugFlags.showDiagnostics ? SW_SHOW : SW_HIDE );
+               if ( g_winDebugFlags.showDiagnostics )
+               {
+                  if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
+                  {
+                     SetWindowPos( g_winGlobals.hWndDiagnostics,
+                                   HWND_TOP,
+                                   mainWindowRect.right + 16,
+                                   mainWindowRect.top,
+                                   0,
+                                   0,
+                                   SWP_NOSIZE | SWP_SHOWWINDOW );
+                     SetFocus( g_winGlobals.hWndMain );
+                  }
+                  else
+                  {
+                     ShowWindow( g_winGlobals.hWndDiagnostics, SW_SHOW );
+                  }
+               }
+               else
+               {
+                  ShowWindow( g_winGlobals.hWndDiagnostics, SW_HIDE );
+               }
                break;
          }
       }
