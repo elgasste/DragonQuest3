@@ -62,7 +62,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    g_hWndNoClipBtn = CreateWindowExA( 0,
                                       "BUTTON",
                                       g_winDebugFlags.noClip ? "Disable No-Clip" : "Enable No-Clip",
-                                      WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+                                      WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                       10,
                                       234,
                                       180,
@@ -75,7 +75,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    g_hWndHitBoxesBtn = CreateWindowExA( 0,
                                         "BUTTON",
                                         g_winDebugFlags.showHitBoxes ? "Hide Hit Boxes" : "Show Hit Boxes",
-                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                         10,
                                         266,
                                         180,
@@ -88,7 +88,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    g_hWndFastMoveBtn = CreateWindowExA( 0,
                                         "BUTTON",
                                         g_winDebugFlags.moveFast ? "Disable Fast Movement" : "Enable Fast Movement",
-                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                         10,
                                         298,
                                         180,
@@ -130,6 +130,66 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
             }
          }
          break;
+      case WM_DRAWITEM:
+      {
+         LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lParam;
+         if ( dis->CtlType == ODT_BUTTON )
+         {
+            b32 isEnabled = False;
+            char text[STRING_SIZE_DEFAULT];
+            RECT btnRect = dis->rcItem;
+            UINT state = DFCS_BUTTONPUSH;
+            HFONT hFont, hOldFont;
+
+            switch ( dis->CtlID )
+            {
+               case IDC_DIAGNOSTICS_NOCLIP_BTN:
+                  isEnabled = g_winDebugFlags.noClip;
+                  break;
+               case IDC_DIAGNOSTICS_HITBOXES_BTN:
+                  isEnabled = g_winDebugFlags.showHitBoxes;
+                  break;
+               case IDC_DIAGNOSTICS_FASTMOVE_BTN:
+                  isEnabled = g_winDebugFlags.moveFast;
+                  break;
+            }
+
+            if ( dis->itemState & ODS_SELECTED )
+            {
+               state |= DFCS_PUSHED;
+            }
+
+            DrawFrameControl( dis->hDC, &btnRect, DFC_BUTTON, state );
+
+            SetTextColor( dis->hDC, isEnabled ? RGB( 0, 140, 0 ) : RGB( 40, 40, 40 ) );
+            SetBkMode( dis->hDC, TRANSPARENT );
+
+            GetWindowTextA( dis->hwndItem, text, sizeof( text ) );
+
+            if ( dis->itemState & ODS_SELECTED )
+            {
+               OffsetRect( &btnRect, 1, 1 );
+            }
+
+            hFont = (HFONT)GetStockObject( DEFAULT_GUI_FONT );
+            hOldFont = (HFONT)SelectObject( dis->hDC, hFont );
+            DrawTextA( dis->hDC, text, -1, &btnRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
+            if ( hOldFont )
+            {
+               SelectObject( dis->hDC, hOldFont );
+            }
+
+            if ( dis->itemState & ODS_FOCUS )
+            {
+               RECT focusRect = dis->rcItem;
+               InflateRect( &focusRect, -3, -3 );
+               DrawFocusRect( dis->hDC, &focusRect );
+            }
+
+            return TRUE;
+         }
+         break;
+      }
       case WM_ERASEBKGND:
          return 1;
       case WM_PAINT:
