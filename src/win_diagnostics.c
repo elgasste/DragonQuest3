@@ -28,6 +28,21 @@ internal HWND g_hWndIncScaleBtn = NULL;
 internal HWND g_hWndDecScaleBtn = NULL;
 internal HWND g_hWndDumpStatsBtn = NULL;
 
+typedef struct WinDiagnosticsStatus_t
+{
+   char msg[STRING_SIZE_DEFAULT];
+   u64 untilMicro;
+}
+WinDiagnosticsStatus_t;
+
+internal WinDiagnosticsStatus_t g_diagStatus = { 0 };
+
+internal void SetDiagnosticsStatus( const char* msg )
+{
+   strcpy_s( g_diagStatus.msg, STRING_SIZE_DEFAULT, msg );
+   g_diagStatus.untilMicro = Platform_GetMicros() + ( 3 * 1000000 );
+}
+
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void UpdateDiagnosticsText( HWND hWnd );
 internal void ChangeGameFps( b32 increase );
@@ -62,7 +77,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    336,
-                                                   450,
+                                                   486,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
@@ -208,21 +223,25 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
             {
                case IDC_DIAGNOSTICS_INCFPS_BTN:
                   ChangeGameFps( True );
+                  SetDiagnosticsStatus( "FPS increased" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_DECFPS_BTN:
                   ChangeGameFps( False );
+                  SetDiagnosticsStatus( "FPS decreased" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_INCSCALE_BTN:
                   ResizeScreen( True );
+                  SetDiagnosticsStatus( "Graphics scaled up" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_DECSCALE_BTN:
                   ResizeScreen( False );
+                  SetDiagnosticsStatus( "Graphics scaled down" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
@@ -230,27 +249,31 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                   g_winDebugFlags.noClip = False;
                   g_winDebugFlags.showHitBoxes = False;
                   g_winDebugFlags.moveFast = False;
+                  SetDiagnosticsStatus( "Debug flags reset" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.noClip );
+                  SetDiagnosticsStatus( g_winDebugFlags.noClip ? "No-clip mode enabled" : "No-clip mode disabled" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_HITBOXES_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
+                  SetDiagnosticsStatus( g_winDebugFlags.showHitBoxes ? "Showing hit boxes" : "Hiding hit boxes" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_FASTMOVE_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.moveFast );
+                  SetDiagnosticsStatus( g_winDebugFlags.moveFast ? "Fast movement enabled" : "Fast movement disabled" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_DUMPSTATS_BTN:
                   MemArena_DumpStats( g_winGlobals.memArena );
-                  MessageBoxA( hWnd, "Memory stats have been dumped to the log file.", "Memory Stats", MB_OK | MB_ICONINFORMATION );
+                  SetDiagnosticsStatus( "Memory stats dumped to log file" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
             }
@@ -478,6 +501,42 @@ internal void UpdateDiagnosticsText( HWND hWnd )
       {
          s_lastMoveFast = g_winDebugFlags.moveFast;
          SetWindowTextA( g_hWndFastMoveBtn, g_winDebugFlags.moveFast ? "Disable Fast Movement" : "Enable Fast Movement" );
+      }
+   }
+
+   {
+      RECT statusRect;
+      int statusBarHeight = 22;
+      statusRect.left = 0;
+      statusRect.top = clientRect.bottom - statusBarHeight;
+      statusRect.right = clientRect.right;
+      statusRect.bottom = clientRect.bottom;
+
+      FillRect( dcMem, &statusRect, (HBRUSH)GetStockObject( DKGRAY_BRUSH ) );
+      
+      HPEN pen = CreatePen( PS_SOLID, 1, RGB( 80, 80, 80 ) );
+      HPEN oldPen = (HPEN)SelectObject( dcMem, pen );
+      MoveToEx( dcMem, statusRect.left, statusRect.top, NULL );
+      LineTo( dcMem, statusRect.right, statusRect.top );
+      SelectObject( dcMem, oldPen );
+      DeleteObject( pen );
+
+      if ( g_diagStatus.untilMicro > 0 )
+      {
+         if ( Platform_GetMicros() < g_diagStatus.untilMicro )
+         {
+            RECT textRect = statusRect;
+            textRect.left += 6;
+            textRect.top += 3;
+            SetTextColor( dcMem, RGB( 255, 255, 255 ) );
+            SetBkMode( dcMem, TRANSPARENT );
+            DrawTextA( dcMem, g_diagStatus.msg, -1, &textRect, DT_SINGLELINE | DT_VCENTER );
+         }
+         else
+         {
+            g_diagStatus.untilMicro = 0;
+            g_diagStatus.msg[0] = '\0';
+         }
       }
    }
 
