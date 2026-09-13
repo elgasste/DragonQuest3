@@ -7,10 +7,12 @@
 #include "tile_map.h"
 #include "win_common.h"
 
+#define IDC_DIAGNOSTICS_RESETFLAGS_BTN 1000
 #define IDC_DIAGNOSTICS_NOCLIP_BTN 1001
 #define IDC_DIAGNOSTICS_HITBOXES_BTN 1002
 #define IDC_DIAGNOSTICS_FASTMOVE_BTN 1003
 
+internal HWND g_hWndResetFlagsBtn = NULL;
 internal HWND g_hWndNoClipBtn = NULL;
 internal HWND g_hWndHitBoxesBtn = NULL;
 internal HWND g_hWndFastMoveBtn = NULL;
@@ -47,7 +49,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    340,
-                                                   372,
+                                                   404,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
@@ -59,12 +61,25 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
       return False;
    }
 
+   g_hWndResetFlagsBtn = CreateWindowExA( 0,
+                                          "BUTTON",
+                                          "Reset Debug Flags",
+                                          WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                          10,
+                                          234,
+                                          180,
+                                          26,
+                                          g_winGlobals.hWndDiagnostics,
+                                          (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_RESETFLAGS_BTN,
+                                          hInstance,
+                                          0 );
+
    g_hWndNoClipBtn = CreateWindowExA( 0,
                                       "BUTTON",
                                       g_winDebugFlags.noClip ? "Disable No-Clip" : "Enable No-Clip",
                                       WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                       10,
-                                      234,
+                                      266,
                                       180,
                                       26,
                                       g_winGlobals.hWndDiagnostics,
@@ -77,7 +92,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         g_winDebugFlags.showHitBoxes ? "Hide Hit Boxes" : "Show Hit Boxes",
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                         10,
-                                        266,
+                                        298,
                                         180,
                                         26,
                                         g_winGlobals.hWndDiagnostics,
@@ -90,7 +105,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         g_winDebugFlags.moveFast ? "Disable Fast Movement" : "Enable Fast Movement",
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                         10,
-                                        298,
+                                        330,
                                         180,
                                         26,
                                         g_winGlobals.hWndDiagnostics,
@@ -113,6 +128,13 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
          {
             switch ( LOWORD( wParam ) )
             {
+               case IDC_DIAGNOSTICS_RESETFLAGS_BTN:
+                  g_winDebugFlags.noClip = False;
+                  g_winDebugFlags.showHitBoxes = False;
+                  g_winDebugFlags.moveFast = False;
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.noClip );
                   SetFocus( g_winGlobals.hWndMain );
@@ -143,6 +165,9 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
 
             switch ( dis->CtlID )
             {
+               case IDC_DIAGNOSTICS_RESETFLAGS_BTN:
+                  isEnabled = False;
+                  break;
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
                   isEnabled = g_winDebugFlags.noClip;
                   break;
