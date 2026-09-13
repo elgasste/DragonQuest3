@@ -7,6 +7,10 @@
 #include "tile_map.h"
 #include "win_common.h"
 
+#define IDC_DIAGNOSTICS_NOCLIP_BTN 1001
+
+internal HWND g_hWndNoClipBtn = NULL;
+
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void UpdateDiagnosticsText( HWND hWnd );
 
@@ -33,9 +37,9 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    }
 
    g_winGlobals.hWndDiagnostics = CreateWindowExA( WS_EX_TOOLWINDOW,
-                                                   windowClass.lpszClassName,
+                                                   g_winGlobals.diagnosticsWindowClassName,
                                                    STR_DIAGNOSTICS_WINDOW_TITLE,
-                                                   WS_OVERLAPPED | WS_CAPTION | WS_VISIBLE,
+                                                   WS_OVERLAPPED | WS_CAPTION | WS_VISIBLE | WS_CLIPCHILDREN,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    340,
@@ -51,6 +55,19 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
       return False;
    }
 
+   g_hWndNoClipBtn = CreateWindowExA( 0,
+                                      "BUTTON",
+                                      g_winDebugFlags.noClip ? "Disable No-Clip" : "Enable No-Clip",
+                                      WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+                                      10,
+                                      226,
+                                      130,
+                                      26,
+                                      g_winGlobals.hWndDiagnostics,
+                                      (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_NOCLIP_BTN,
+                                      hInstance,
+                                      0 );
+
    return True;
 }
 
@@ -61,6 +78,22 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
       case WM_CLOSE:
          // this window should stay open for the duration of the app
          return 0;
+      case WM_COMMAND:
+         if ( LOWORD( wParam ) == IDC_DIAGNOSTICS_NOCLIP_BTN && HIWORD( wParam ) == BN_CLICKED )
+         {
+            TOGGLE_BOOL( g_winDebugFlags.noClip );
+            if ( g_winDebugFlags.noClip )
+            {
+               StartCornerPopup( "No-clip mode enabled" );
+            }
+            else
+             {  
+                StartCornerPopup( "No-clip mode disabled" );
+             }
+             SetFocus( g_winGlobals.hWndMain );
+            return 0;
+         }
+         break;
       case WM_ERASEBKGND:
          return 1;
       case WM_PAINT:
@@ -70,6 +103,8 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
       default:
          return DefWindowProcA( hWnd, uMsg, wParam, lParam );
    }
+
+   return 0;
 }
 
 internal void UpdateDiagnosticsText( HWND hWnd )
@@ -191,6 +226,17 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    SetTextColor( dcMem, Input_GetButtonState( input, InputButton_Down )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
+
+   r.top += 16;
+
+   {
+      static b32 s_lastNoClip = (b32)-1;
+      if ( g_hWndNoClipBtn && s_lastNoClip != g_winDebugFlags.noClip )
+      {
+         s_lastNoClip = g_winDebugFlags.noClip;
+         SetWindowTextA( g_hWndNoClipBtn, g_winDebugFlags.noClip ? "Disable No-Clip" : "Enable No-Clip" );
+      }
+   }
 
    BitBlt( dc, 0, 0, clientRect.right, clientRect.bottom, dcMem, 0, 0, SRCCOPY );
 

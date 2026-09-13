@@ -19,7 +19,6 @@ internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 internal void DrawDiagnostics( HDC* dcMem );
-internal void StartCornerPopup( const char* msg );
 internal void DrawCornerPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight );
 internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha );
 internal void ResizeScreen( b32 increase );
@@ -600,7 +599,7 @@ internal void DrawDiagnostics( HDC* dcMem )
    SelectObject( *dcMem, oldFont );
 }
 
-internal void StartCornerPopup( const char* msg )
+void StartCornerPopup( const char* msg )
 {
    g_winCornerPopup.show = True;
    strncpy_s( g_winCornerPopup.msg, STRING_SIZE_DEFAULT, msg, STRING_SIZE_DEFAULT - 1 );

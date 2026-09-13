@@ -58,6 +58,8 @@ WinGlobalObjects_t;
 extern WinGlobalObjects_t g_winGlobals;
 extern WinCornerPopup_t g_winCornerPopup;
 
+void StartCornerPopup( const char* msg );
+
 // win_diagnostics.c
 b32 CreateDiagnosticsWindow( HINSTANCE hInstance );
 
