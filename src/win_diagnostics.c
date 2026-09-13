@@ -11,14 +11,19 @@
 #define IDC_DIAGNOSTICS_NOCLIP_BTN 1001
 #define IDC_DIAGNOSTICS_HITBOXES_BTN 1002
 #define IDC_DIAGNOSTICS_FASTMOVE_BTN 1003
+#define IDC_DIAGNOSTICS_INCFPS_BTN 1004
+#define IDC_DIAGNOSTICS_DECFPS_BTN 1005
 
 internal HWND g_hWndResetFlagsBtn = NULL;
 internal HWND g_hWndNoClipBtn = NULL;
 internal HWND g_hWndHitBoxesBtn = NULL;
 internal HWND g_hWndFastMoveBtn = NULL;
+internal HWND g_hWndIncFpsBtn = NULL;
+internal HWND g_hWndDecFpsBtn = NULL;
 
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void UpdateDiagnosticsText( HWND hWnd );
+internal void ChangeGameFps( b32 increase );
 
 b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
 {
@@ -60,6 +65,32 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
       UnregisterClassA( windowClass.lpszClassName, hInstance );
       return False;
    }
+
+   g_hWndIncFpsBtn = CreateWindowExA( 0,
+                                      "BUTTON",
+                                      "+",
+                                      WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                      200,
+                                      7,
+                                      24,
+                                      20,
+                                      g_winGlobals.hWndDiagnostics,
+                                      (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_INCFPS_BTN,
+                                      hInstance,
+                                      0 );
+
+   g_hWndDecFpsBtn = CreateWindowExA( 0,
+                                      "BUTTON",
+                                      "-",
+                                      WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                      228,
+                                      7,
+                                      24,
+                                      20,
+                                      g_winGlobals.hWndDiagnostics,
+                                      (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_DECFPS_BTN,
+                                      hInstance,
+                                      0 );
 
    g_hWndResetFlagsBtn = CreateWindowExA( 0,
                                           "BUTTON",
@@ -128,6 +159,16 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
          {
             switch ( LOWORD( wParam ) )
             {
+               case IDC_DIAGNOSTICS_INCFPS_BTN:
+                  ChangeGameFps( True );
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+
+               case IDC_DIAGNOSTICS_DECFPS_BTN:
+                  ChangeGameFps( False );
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+
                case IDC_DIAGNOSTICS_RESETFLAGS_BTN:
                   g_winDebugFlags.noClip = False;
                   g_winDebugFlags.showHitBoxes = False;
@@ -166,6 +207,8 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
             switch ( dis->CtlID )
             {
                case IDC_DIAGNOSTICS_RESETFLAGS_BTN:
+               case IDC_DIAGNOSTICS_INCFPS_BTN:
+               case IDC_DIAGNOSTICS_DECFPS_BTN:
                   isEnabled = False;
                   break;
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
@@ -378,4 +421,22 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    DeleteObject( bmMem );
    DeleteDC( dcMem );
    EndPaint( hWnd, &ps );
+}
+
+internal void ChangeGameFps( b32 increase )
+{
+   u32 fps;
+   Clock_t* clock;
+
+   clock = Game_GetClock( g_winGlobals.game );
+   fps = Clock_GetFps( clock );
+
+   if ( increase && fps < MAX_GAME_FPS )
+   {
+      Clock_SetFps( clock, fps + GAME_FPS_STEP );
+   }
+   else if ( !increase && fps > MIN_GAME_FPS )
+   {
+      Clock_SetFps( clock, fps - GAME_FPS_STEP );
+   }
 }

@@ -19,7 +19,6 @@ internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
 internal void ResizeScreen( b32 increase );
-internal void ChangeGameFps( b32 increase );
 
 WinDebugFlags_t g_winDebugFlags;
 WinGlobalObjects_t g_winGlobals;
@@ -376,18 +375,6 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
                      break;
                }
             }
-            else if ( GetKeyState( 0x46 ) & 0x8000 ) // "F" key: change the game's frame rate
-            {
-               switch ( keyCode )
-               {
-                  case VK_UP:
-                     ChangeGameFps( True );
-                     break;
-                  case VK_DOWN:
-                     ChangeGameFps( False );
-                     break;
-               }
-            }
             else if ( GetKeyState( 0x4D ) & 0x8000 ) // "M" key: dump memory stats to the log file
             {
                MemArena_DumpStats( g_winGlobals.memArena );
@@ -457,23 +444,5 @@ internal void ResizeScreen( b32 increase )
                     (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
                     (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
                     SWP_NOMOVE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS); 
-   }
-}
-
-internal void ChangeGameFps( b32 increase )
-{
-   u32 fps;
-   Clock_t* clock;
-
-   clock = Game_GetClock( g_winGlobals.game );
-   fps = Clock_GetFps( clock );
-
-   if ( increase && fps < MAX_GAME_FPS )
-   {
-      Clock_SetFps( clock, fps + GAME_FPS_STEP );
-   }
-   else if ( !increase && fps > MIN_GAME_FPS )
-   {
-      Clock_SetFps( clock, fps - GAME_FPS_STEP );
    }
 }
