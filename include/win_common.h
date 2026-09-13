@@ -48,6 +48,9 @@ extern WinGlobalObjects_t g_winGlobals;
 // win_diagnostics.c
 b32 CreateDiagnosticsWindow( HINSTANCE hInstance );
 
+// win_main.c
+void MemArena_DumpStats( MemArena_t* memArena );
+
 // win_test_game_data.c
 void WriteTestGameDataFile( const char *filePath );
 

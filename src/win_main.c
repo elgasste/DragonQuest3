@@ -11,7 +11,6 @@
 #include "tile_map.h"
 #include "win_common.h"
 
-internal void MemArena_DumpStats( MemArena_t* memArena );
 internal void SetExeDir( void );
 internal b32 CreateMainWindow( HINSTANCE hInstance );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
@@ -126,7 +125,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    if ( !MemArena_IsEmpty( g_winGlobals.memArena ) )
    {
-      Platform_Log( "WARNING: possible leak in memory arena, not all memory was freed on close." );
+      Platform_Log( "WARNING: possible leak in memory arena, not all memory was freed on close. view the log file for details." );
       MemArena_DumpStats( g_winGlobals.memArena );
    }
 
@@ -135,7 +134,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    return 0;
 }
 
-internal void MemArena_DumpStats( MemArena_t* memArena )
+void MemArena_DumpStats( MemArena_t* memArena )
 {
    MemArenaStats_t stats;
    char msg[STRING_SIZE_DEFAULT];

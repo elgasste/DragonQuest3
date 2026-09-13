@@ -16,6 +16,7 @@
 #define IDC_DIAGNOSTICS_DECFPS_BTN 1005
 #define IDC_DIAGNOSTICS_INCSCALE_BTN 1006
 #define IDC_DIAGNOSTICS_DECSCALE_BTN 1007
+#define IDC_DIAGNOSTICS_DUMPSTATS_BTN 1008
 
 internal HWND g_hWndResetFlagsBtn = NULL;
 internal HWND g_hWndNoClipBtn = NULL;
@@ -25,6 +26,7 @@ internal HWND g_hWndIncFpsBtn = NULL;
 internal HWND g_hWndDecFpsBtn = NULL;
 internal HWND g_hWndIncScaleBtn = NULL;
 internal HWND g_hWndDecScaleBtn = NULL;
+internal HWND g_hWndDumpStatsBtn = NULL;
 
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void UpdateDiagnosticsText( HWND hWnd );
@@ -59,8 +61,8 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    WS_OVERLAPPED | WS_CAPTION | WS_VISIBLE | WS_CLIPCHILDREN,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
-                                                   340,
-                                                   404,
+                                                   336,
+                                                   450,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
@@ -176,6 +178,19 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         hInstance,
                                         0 );
 
+   g_hWndDumpStatsBtn = CreateWindowExA( 0,
+                                         "BUTTON",
+                                         "Dump Memory Stats",
+                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                         10,
+                                         378,
+                                         180,
+                                         26,
+                                         g_winGlobals.hWndDiagnostics,
+                                         (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_DUMPSTATS_BTN,
+                                         hInstance,
+                                         0 );
+
    return True;
 }
 
@@ -232,6 +247,12 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                   TOGGLE_BOOL( g_winDebugFlags.moveFast );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
+
+               case IDC_DIAGNOSTICS_DUMPSTATS_BTN:
+                  MemArena_DumpStats( g_winGlobals.memArena );
+                  MessageBoxA( hWnd, "Memory stats have been dumped to the log file.", "Memory Stats", MB_OK | MB_ICONINFORMATION );
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
             }
          }
          break;
@@ -253,6 +274,7 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                case IDC_DIAGNOSTICS_DECFPS_BTN:
                case IDC_DIAGNOSTICS_INCSCALE_BTN:
                case IDC_DIAGNOSTICS_DECSCALE_BTN:
+               case IDC_DIAGNOSTICS_DUMPSTATS_BTN:
                   isEnabled = False;
                   break;
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
