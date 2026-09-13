@@ -389,6 +389,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          {
             case VK_F8:
                TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
+               ShowWindow( g_winGlobals.hWndDiagnostics, g_winDebugFlags.showDiagnostics ? SW_SHOW : SW_HIDE );
                break;
          }
       }

@@ -58,7 +58,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    g_winGlobals.hWndDiagnostics = CreateWindowExA( WS_EX_TOOLWINDOW,
                                                    g_winGlobals.diagnosticsWindowClassName,
                                                    STR_DIAGNOSTICS_WINDOW_TITLE,
-                                                   WS_OVERLAPPED | WS_CAPTION | WS_VISIBLE | WS_CLIPCHILDREN,
+                                                   WS_OVERLAPPED | WS_CAPTION | WS_CLIPCHILDREN,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    336,
