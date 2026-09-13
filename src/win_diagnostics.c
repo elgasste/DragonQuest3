@@ -8,8 +8,12 @@
 #include "win_common.h"
 
 #define IDC_DIAGNOSTICS_NOCLIP_BTN 1001
+#define IDC_DIAGNOSTICS_HITBOXES_BTN 1002
+#define IDC_DIAGNOSTICS_FASTMOVE_BTN 1003
 
 internal HWND g_hWndNoClipBtn = NULL;
+internal HWND g_hWndHitBoxesBtn = NULL;
+internal HWND g_hWndFastMoveBtn = NULL;
 
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void UpdateDiagnosticsText( HWND hWnd );
@@ -43,7 +47,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    340,
-                                                   300,
+                                                   400,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
@@ -60,13 +64,39 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                       g_winDebugFlags.noClip ? "Disable No-Clip" : "Enable No-Clip",
                                       WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
                                       10,
-                                      226,
-                                      130,
+                                      234,
+                                      160,
                                       26,
                                       g_winGlobals.hWndDiagnostics,
                                       (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_NOCLIP_BTN,
                                       hInstance,
                                       0 );
+
+   g_hWndHitBoxesBtn = CreateWindowExA( 0,
+                                        "BUTTON",
+                                        g_winDebugFlags.showHitBoxes ? "Hide Hit Boxes" : "Show Hit Boxes",
+                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+                                        10,
+                                        266,
+                                        160,
+                                        26,
+                                        g_winGlobals.hWndDiagnostics,
+                                        (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_HITBOXES_BTN,
+                                        hInstance,
+                                        0 );
+
+   g_hWndFastMoveBtn = CreateWindowExA( 0,
+                                        "BUTTON",
+                                        g_winDebugFlags.moveFast ? "Disable Fast Movement" : "Enable Fast Movement",
+                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+                                        10,
+                                        298,
+                                        160,
+                                        26,
+                                        g_winGlobals.hWndDiagnostics,
+                                        (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_FASTMOVE_BTN,
+                                        hInstance,
+                                        0 );
 
    return True;
 }
@@ -79,19 +109,49 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
          // this window should stay open for the duration of the app
          return 0;
       case WM_COMMAND:
-         if ( LOWORD( wParam ) == IDC_DIAGNOSTICS_NOCLIP_BTN && HIWORD( wParam ) == BN_CLICKED )
+         if ( HIWORD( wParam ) == BN_CLICKED )
          {
-            TOGGLE_BOOL( g_winDebugFlags.noClip );
-            if ( g_winDebugFlags.noClip )
+            switch ( LOWORD( wParam ) )
             {
-               StartCornerPopup( "No-clip mode enabled" );
+               case IDC_DIAGNOSTICS_NOCLIP_BTN:
+                  TOGGLE_BOOL( g_winDebugFlags.noClip );
+                  if ( g_winDebugFlags.noClip )
+                  {
+                     StartCornerPopup( "No-clip mode enabled" );
+                  }
+                  else
+                  {
+                     StartCornerPopup( "No-clip mode disabled" );
+                  }
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+
+               case IDC_DIAGNOSTICS_HITBOXES_BTN:
+                  TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
+                  if ( g_winDebugFlags.showHitBoxes )
+                  {
+                     StartCornerPopup( "Showing hit boxes" );
+                  }
+                  else
+                  {
+                     StartCornerPopup( "Hiding hit boxes" );
+                  }
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+
+               case IDC_DIAGNOSTICS_FASTMOVE_BTN:
+                  TOGGLE_BOOL( g_winDebugFlags.moveFast );
+                  if ( g_winDebugFlags.moveFast )
+                  {
+                     StartCornerPopup( "Moving fast" );
+                  }
+                  else
+                  {
+                     StartCornerPopup( "Moving normal speed" );
+                  }
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
             }
-            else
-             {  
-                StartCornerPopup( "No-clip mode disabled" );
-             }
-             SetFocus( g_winGlobals.hWndMain );
-            return 0;
          }
          break;
       case WM_ERASEBKGND:
@@ -227,14 +287,26 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   r.top += 16;
-
    {
       static b32 s_lastNoClip = (b32)-1;
       if ( g_hWndNoClipBtn && s_lastNoClip != g_winDebugFlags.noClip )
       {
          s_lastNoClip = g_winDebugFlags.noClip;
          SetWindowTextA( g_hWndNoClipBtn, g_winDebugFlags.noClip ? "Disable No-Clip" : "Enable No-Clip" );
+      }
+
+      static b32 s_lastShowHitBoxes = (b32)-1;
+      if ( g_hWndHitBoxesBtn && s_lastShowHitBoxes != g_winDebugFlags.showHitBoxes )
+      {
+         s_lastShowHitBoxes = g_winDebugFlags.showHitBoxes;
+         SetWindowTextA( g_hWndHitBoxesBtn, g_winDebugFlags.showHitBoxes ? "Hide Hit Boxes" : "Show Hit Boxes" );
+      }
+
+      static b32 s_lastMoveFast = (b32)-1;
+      if ( g_hWndFastMoveBtn && s_lastMoveFast != g_winDebugFlags.moveFast )
+      {
+         s_lastMoveFast = g_winDebugFlags.moveFast;
+         SetWindowTextA( g_hWndFastMoveBtn, g_winDebugFlags.moveFast ? "Disable Fast Movement" : "Enable Fast Movement" );
       }
    }
 
