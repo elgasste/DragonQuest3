@@ -47,7 +47,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    340,
-                                                   400,
+                                                   372,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
@@ -65,7 +65,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                       WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
                                       10,
                                       234,
-                                      160,
+                                      180,
                                       26,
                                       g_winGlobals.hWndDiagnostics,
                                       (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_NOCLIP_BTN,
@@ -78,7 +78,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
                                         10,
                                         266,
-                                        160,
+                                        180,
                                         26,
                                         g_winGlobals.hWndDiagnostics,
                                         (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_HITBOXES_BTN,
@@ -91,7 +91,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
                                         10,
                                         298,
-                                        160,
+                                        180,
                                         26,
                                         g_winGlobals.hWndDiagnostics,
                                         (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_FASTMOVE_BTN,
@@ -115,40 +115,16 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
             {
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.noClip );
-                  if ( g_winDebugFlags.noClip )
-                  {
-                     StartCornerPopup( "No-clip mode enabled" );
-                  }
-                  else
-                  {
-                     StartCornerPopup( "No-clip mode disabled" );
-                  }
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_HITBOXES_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
-                  if ( g_winDebugFlags.showHitBoxes )
-                  {
-                     StartCornerPopup( "Showing hit boxes" );
-                  }
-                  else
-                  {
-                     StartCornerPopup( "Hiding hit boxes" );
-                  }
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_FASTMOVE_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.moveFast );
-                  if ( g_winDebugFlags.moveFast )
-                  {
-                     StartCornerPopup( "Moving fast" );
-                  }
-                  else
-                  {
-                     StartCornerPopup( "Moving normal speed" );
-                  }
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
             }

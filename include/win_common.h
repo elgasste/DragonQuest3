@@ -19,20 +19,8 @@
 #define LOG_FILENAME             "dw3.log"
 #define GAME_DATA_FILENAME       "data.dw3d"
 
-#define VK_NOCLIP                49    // 1
-#define VK_SHOWHITBOXES          50    // 2
-#define VK_MOVEFAST              51    // 3
-
 typedef struct MemArena_t MemArena_t;
 typedef struct Game_t Game_t;
-
-typedef struct WinCornerPopup_t
-{
-   b32 show;
-   char msg[STRING_SIZE_DEFAULT];
-   u64 untilMs;
-}
-WinCornerPopup_t;
 
 typedef struct WinGlobalObjects_t
 {
@@ -56,9 +44,6 @@ typedef struct WinGlobalObjects_t
 WinGlobalObjects_t;
 
 extern WinGlobalObjects_t g_winGlobals;
-extern WinCornerPopup_t g_winCornerPopup;
-
-void StartCornerPopup( const char* msg );
 
 // win_diagnostics.c
 b32 CreateDiagnosticsWindow( HINSTANCE hInstance );

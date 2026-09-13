@@ -18,15 +18,11 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
 internal void RenderScreen( void );
 internal void InitButtonMap( void );
 internal void HandleKeyboardInput( u32 keyCode, LPARAM flags );
-internal void DrawDiagnostics( HDC* dcMem );
-internal void DrawCornerPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight );
-internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha );
 internal void ResizeScreen( b32 increase );
 internal void ChangeGameFps( b32 increase );
 
 WinDebugFlags_t g_winDebugFlags;
 WinGlobalObjects_t g_winGlobals;
-WinCornerPopup_t g_winCornerPopup;
 
 int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
 {
@@ -293,7 +289,6 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
    return result;
 }
 
-// the double-buffering part of this came from Stack Overflow
 internal void RenderScreen( void )
 {
    HDC dc, dcMem;
@@ -326,16 +321,6 @@ internal void RenderScreen( void )
                   pixels,
                   &( g_winGlobals.bmpInfo ),
                   DIB_RGB_COLORS, SRCCOPY );
-
-   if ( g_winDebugFlags.showDiagnostics )
-   {
-      DrawDiagnostics( &dcMem );
-   }
-
-   if ( g_winCornerPopup.show )
-   {
-      DrawCornerPopup( g_winCornerPopup.msg, &dcMem, winWidth, winHeight );
-   }
 
    // transfer the off-screen DC to the screen
    BitBlt( dc, 0, 0, winWidth, winHeight, dcMem, 0, 0, SRCCOPY );
@@ -406,7 +391,6 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             else if ( GetKeyState( 0x4D ) & 0x8000 ) // "M" key: dump memory stats to the log file
             {
                MemArena_DumpStats( g_winGlobals.memArena );
-               StartCornerPopup( "Memory stats dumped to log" );
             }
          }
       }
@@ -433,27 +417,6 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
             case VK_F8:
                TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
                break;
-            case VK_NOCLIP:
-               TOGGLE_BOOL( g_winDebugFlags.noClip );
-               if ( g_winDebugFlags.noClip )
-                  StartCornerPopup( "No-clip mode enabled" );
-               else
-                  StartCornerPopup( "No-clip mode disabled" );
-               break;
-            case VK_SHOWHITBOXES:
-               TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
-               if ( g_winDebugFlags.showHitBoxes )
-                  StartCornerPopup( "Showing hit boxes" );
-               else
-                  StartCornerPopup( "Hiding hit boxes" );
-               break;
-            case VK_MOVEFAST:
-               TOGGLE_BOOL( g_winDebugFlags.moveFast );
-               if ( g_winDebugFlags.moveFast )
-                  StartCornerPopup( "Moving fast" );
-               else
-                  StartCornerPopup( "Moving normal speed" );
-               break;
          }
       }
       else
@@ -468,212 +431,6 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          }
       }
    }
-}
-
-internal void DrawDiagnostics( HDC* dcMem )
-{
-   u32 gameSeconds, realSeconds, playerTileIndex, playerTileX, playerTileY;
-   RECT r;
-   HFONT oldFont;
-   Game_t* game;
-   Clock_t* clock;
-   Input_t* input;
-   Entity_t* playerEntity;
-   Vector4i32_t playerRect;
-   char str[STRING_SIZE_DEFAULT];
-
-   game = g_winGlobals.game;
-   clock = Game_GetClock( game );
-   input = Game_GetInput( game );
-   playerEntity = Game_GetPlayerEntity( game );
-   playerRect = Entity_GetRect( playerEntity );
-
-   r.left = 10;
-   r.top = 10;
-   r.right = 0;
-   r.bottom = 0;
-
-   // backdrop
-   DrawTranslucentRectangle( *dcMem, 0, 0, 314, 292, RGB( 0, 0, 128 ), 200 );
-
-   oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
-
-   SetTextColor( *dcMem, 0x00FFFFFF );
-   SetBkMode( *dcMem, TRANSPARENT );
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "Target Frame Rate: %u", Clock_GetFps( clock ) );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "    Last Frame MS: %u", (u32)( Clock_GetLastFrameMicro( clock ) / 1000 ) );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "     Total Frames: %u", Clock_GetFrameCount( clock ) );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "       Lag Frames: %u", Clock_GetLagFrameCount( clock ) );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "   Graphics Scale: %.1f", g_winGlobals.graphicsScale );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   gameSeconds = Clock_GetFrameCount( clock ) / Clock_GetFps( clock );
-   sprintf_s( str, STRING_SIZE_DEFAULT, "    In-Game Timer: %u:%02u:%02u", gameSeconds / 3600, gameSeconds / 60, gameSeconds );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   realSeconds = (u32)( Clock_GetAbsoluteEndMicro( clock ) - Clock_GetAbsoluteStartMicro( clock ) ) / 1000000;
-   sprintf_s( str, STRING_SIZE_DEFAULT, " Real World Timer: %u:%02u:%02u", realSeconds / 3600, realSeconds / 60, realSeconds );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "  Player Position: (%d, %d)", playerRect.x, playerRect.y );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   playerTileIndex = Entity_GetTileIndex( Game_GetPlayerEntity( game ) );
-   playerTileX = playerTileIndex % TileMap_GetTilesX( Game_GetTileMap( game ) );
-   playerTileY = playerTileIndex / TileMap_GetTilesX( Game_GetTileMap( game ) );
-   sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u (%u, %u)", playerTileIndex, playerTileX, playerTileY );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
-   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Up )->down ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "--" );
-   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Left )->down ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "   --" );
-   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Right )->down ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "      SEL" );
-   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Select )->down ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "          STA" );
-   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Start )->down ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "              B" );
-   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_B )->down ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "                A" );
-   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_A )->down ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
-   SetTextColor( *dcMem, Input_GetButtonState( input, InputButton_Down )->down ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "1 - No-Clip Mode" );
-   SetTextColor( *dcMem, g_winDebugFlags.noClip  ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "2 - Show Hit Boxes" );
-   SetTextColor( *dcMem, g_winDebugFlags.showHitBoxes ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   sprintf_s( str, STRING_SIZE_DEFAULT, "3 - Move Fast" );
-   SetTextColor( *dcMem, g_winDebugFlags.moveFast ? 0x00FFFFFF : 0x00777777 );
-   DrawTextA( *dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   r.top += 16;
-
-   SelectObject( *dcMem, oldFont );
-}
-
-void StartCornerPopup( const char* msg )
-{
-   g_winCornerPopup.show = True;
-   strncpy_s( g_winCornerPopup.msg, STRING_SIZE_DEFAULT, msg, STRING_SIZE_DEFAULT - 1 );
-   g_winCornerPopup.untilMs = GetTickCount64() + 3000;
-}
-
-internal void DrawCornerPopup( const char* msg, HDC* dcMem, int winWidth, int winHeight )
-{
-   RECT r;
-   SIZE textSize;
-   HFONT oldFont;
-   int boxWidth, boxHeight, boxX, boxY;
-
-   if ( GetTickCount64() > g_winCornerPopup.untilMs )
-   {
-      g_winCornerPopup.show = False;
-      return;
-   }
-
-   oldFont = (HFONT)SelectObject( *dcMem, g_winGlobals.hFont );
-
-   if ( !GetTextExtentPoint32A( *dcMem, msg, lstrlenA( msg ), &textSize ) )
-   {
-      textSize.cx = 320;
-      textSize.cy = 16;
-   }
-
-   boxWidth = textSize.cx + 20;
-   if ( boxWidth < 120 )
-   {
-      boxWidth = 120;
-   }
-
-   boxHeight = textSize.cy + 12;
-   boxX = winWidth - boxWidth - 12;
-   boxY = winHeight - boxHeight - 12;
-
-   DrawTranslucentRectangle( *dcMem, boxX, boxY, boxWidth, boxHeight, RGB( 0, 128, 0 ), 210 );
-
-   r.left = boxX + 10;
-   r.top = boxY + 6;
-   r.right = boxX + boxWidth;
-   r.bottom = boxY + boxHeight;
-
-   SetTextColor( *dcMem, 0x00FFFFFF );
-   SetBkMode( *dcMem, TRANSPARENT );
-   DrawTextA( *dcMem, msg, -1, &r, DT_SINGLELINE | DT_NOCLIP );
-   SelectObject( *dcMem, oldFont );
-}
-
-internal void DrawTranslucentRectangle( HDC hdc, int x, int y, int w, int h, COLORREF color, BYTE alpha )
-{
-   HDC hdcMem = CreateCompatibleDC( hdc );
-   HBITMAP bitmap = CreateCompatibleBitmap( hdc, w, h );
-   HBITMAP oldBitmap = (HBITMAP)SelectObject( hdcMem, bitmap );
-
-   HBRUSH blueBrush = CreateSolidBrush( color );
-   HBRUSH oldBrush = (HBRUSH)SelectObject( hdcMem, blueBrush );
-
-   Rectangle( hdcMem, 0, 0, w, h );
-
-   BLENDFUNCTION bf;
-   bf.BlendOp = AC_SRC_OVER;
-   bf.BlendFlags = 0;
-   bf.SourceConstantAlpha = alpha;
-   bf.AlphaFormat = 0;
-
-   AlphaBlend( hdc, x, y, w, h, hdcMem, 0, 0, w, h, bf );
-
-   SelectObject( hdcMem, oldBrush );
-   DeleteObject( blueBrush );
-   SelectObject( hdcMem, oldBitmap );
-   DeleteObject( bitmap );
-   DeleteDC( hdcMem );
 }
 
 internal void ResizeScreen( b32 increase )
