@@ -3,6 +3,7 @@
 #include "clock.h"
 #include "entity.h"
 #include "game.h"
+#include "input.h"
 #include "tile_map.h"
 #include "win_common.h"
 
@@ -81,6 +82,7 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    HFONT oldFont;
    Game_t* game;
    Clock_t* clock;
+   Input_t* input;
    Entity_t* playerEntity;
    Vector4i32_t playerRect;
    u32 gameSeconds, realSeconds, playerTileIndex, playerTileX, playerTileY;
@@ -89,6 +91,7 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    dc = BeginPaint( hWnd, &ps );
    game = g_winGlobals.game;
    clock = Game_GetClock( game );
+   input = Game_GetInput( game );
    playerEntity = Game_GetPlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
 
@@ -149,6 +152,43 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    playerTileX = playerTileIndex % TileMap_GetTilesX( Game_GetTileMap( game ) );
    playerTileY = playerTileIndex / TileMap_GetTilesX( Game_GetTileMap( game ) );
    sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u (%u, %u)", playerTileIndex, playerTileX, playerTileY );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
+   SetTextColor( dcMem, Input_GetButtonState( input, InputButton_Up )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "--" );
+   SetTextColor( dcMem, Input_GetButtonState( input, InputButton_Left )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "   --" );
+   SetTextColor( dcMem, Input_GetButtonState( input, InputButton_Right )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "      SEL" );
+   SetTextColor( dcMem, Input_GetButtonState( input, InputButton_Select )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "          STA" );
+   SetTextColor( dcMem, Input_GetButtonState( input, InputButton_Start )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "              B" );
+   SetTextColor( dcMem, Input_GetButtonState( input, InputButton_B )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "                A" );
+   SetTextColor( dcMem, Input_GetButtonState( input, InputButton_A )->down ? 0x00FFFFFF : 0x00777777 );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "  |" );
+   SetTextColor( dcMem, Input_GetButtonState( input, InputButton_Down )->down ? 0x00FFFFFF : 0x00777777 );
    DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
