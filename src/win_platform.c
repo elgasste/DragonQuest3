@@ -74,7 +74,7 @@ void Platform_HandleMessages( Game_t* game )
 
    UNUSED_PARAM( game );
 
-   while ( PeekMessageA( &msg, g_winGlobals.hWndMain, 0, 0, PM_REMOVE ) )
+   while ( PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ) )
    {
       TranslateMessage( &msg );
       DispatchMessageA( &msg );
@@ -86,6 +86,10 @@ void Platform_RenderDisplayBuffer( Display_t* display )
    UNUSED_PARAM( display );
    
    InvalidateRect( g_winGlobals.hWndMain, 0, FALSE );
+   if ( g_winDebugFlags.showDiagnostics )
+   {
+      InvalidateRect( g_winGlobals.hWndDiagnostics, 0, FALSE );
+   }
 }
 
 void Platform_SleepMs( u32 ms )
