@@ -30,6 +30,7 @@ set_property(TARGET DragonQuest3 PROPERTY COMPILE_WARNING_AS_ERROR ON)
 
 if(WIN32)
    target_sources(DragonQuest3 PRIVATE
+      src/win_diagnostics.c
       src/win_main.c
       src/win_platform.c
       src/win_test_game_data.c)

@@ -58,6 +58,9 @@ WinGlobalObjects_t;
 extern WinGlobalObjects_t g_winGlobals;
 extern WinCornerPopup_t g_winCornerPopup;
 
+// win_diagnostics.c
+b32 CreateDiagnosticsWindow( HINSTANCE hInstance );
+
 // win_test_game_data.c
 void WriteTestGameDataFile( const char *filePath );
 
