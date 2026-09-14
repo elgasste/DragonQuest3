@@ -141,56 +141,42 @@ internal void Npc_SetPauseSeconds( Npc_t* npc )
 internal void Npc_StartWandering( Npc_t* npc )
 {
    i32 vx, vy;
-   b32 movingLeft, movingUp, movingRight, movingDown;
    Vector2i32_t velocity;
    ActiveSprite_t* sprite;
-   Direction_t dir;
    Entity_t* entity;
 
    entity = Npc_GetEntity( npc );
-   velocity = Entity_GetVelocity( entity );
    sprite = Entity_GetSprite( entity );
    vx = Platform_Rand_i32Ranged( NPC_MIN_VELOCITY, NPC_MAX_VELOCITY );
    vy = Platform_Rand_i32Ranged( NPC_MIN_VELOCITY, NPC_MAX_VELOCITY );
-   movingUp = False;
-   movingDown = False;
-   movingLeft = False;
-   movingRight = False;
 
    if ( Platform_Rand_u32Ranged( 0, 1 ) == 0 )
    {
       Entity_SetVelocityX( entity, ( Platform_Rand_u32Ranged( 0, 1 ) == 0 ) ? -vx : vx );
-      movingLeft = velocity.x < 0;
-      movingRight = velocity.x > 0;
    }
 
    if ( Platform_Rand_u32Ranged( 0, 1 ) == 0 )
    {
       Entity_SetVelocityY( entity, ( Platform_Rand_u32Ranged( 0, 1 ) == 0 ) ? -vy : vy );
-      velocity = Entity_GetVelocity( entity );
-      movingUp = velocity.y < 0;
-      movingDown = velocity.y > 0;
    }
 
-   if ( movingLeft || movingUp || movingRight || movingDown )
+   velocity = Entity_GetVelocity( entity );
+
+   if ( velocity.x < 0 )
    {
-      dir = ActiveSprite_GetDirection( sprite );
-      if ( dir == Direction_Left && !movingLeft )
-      {
-         ActiveSprite_SetDirection( sprite, movingUp ? Direction_Up : movingRight ? Direction_Right : Direction_Down );
-      }
-      else if ( dir == Direction_Up && !movingUp )
-      {
-         ActiveSprite_SetDirection( sprite, movingRight ? Direction_Right : movingDown ? Direction_Down : Direction_Left );
-      }
-      else if ( dir == Direction_Right && !movingRight )
-      {
-         ActiveSprite_SetDirection( sprite, movingDown ? Direction_Down : movingLeft ? Direction_Left : Direction_Up );
-      }
-      else if ( dir == Direction_Down && !movingDown )
-      {
-         ActiveSprite_SetDirection( sprite, movingLeft ? Direction_Left : movingUp ? Direction_Up : Direction_Right );
-      }
+      ActiveSprite_SetDirection( sprite, Direction_Left );
+   }
+   else if ( velocity.x > 0 )
+   {
+      ActiveSprite_SetDirection( sprite, Direction_Right );
+   }
+   else if ( velocity.y < 0 )
+   {
+      ActiveSprite_SetDirection( sprite, Direction_Up );
+   }
+   else if ( velocity.y > 0 )
+   {
+      ActiveSprite_SetDirection( sprite, Direction_Down );
    }
 
    npc->isWandering = True;
