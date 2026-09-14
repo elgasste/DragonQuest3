@@ -28,9 +28,20 @@ r32 Clock_GetFrameSec( Clock_t* clock )
 	return 1.0f / 60.0f;
 }
 
+global u32 g_randU32Sequence[64];
+global size_t g_randU32Index;
+global size_t g_randU32Count;
+global b32 g_useRandSequence;
+
 u32 Platform_Rand_u32Ranged( u32 min, u32 max )
 {
 	UNUSED_PARAM( max );
+	if ( g_useRandSequence && g_randU32Count > 0 )
+	{
+		u32 val = g_randU32Sequence[g_randU32Index % g_randU32Count];
+		g_randU32Index++;
+		return val;
+	}
 	return min;
 }
 
@@ -114,6 +125,9 @@ void setUp( void )
 	g_fatalErrorCount = 0;
 	g_allocCount = 0;
 	g_freeCount = 0;
+	g_useRandSequence = False;
+	g_randU32Index = 0;
+	g_randU32Count = 0;
 }
 
 void tearDown( void ) {}
@@ -220,6 +234,100 @@ void test_Npc_Tic_PausesBrieflyAfterWandering( void )
 	Npc_Free( &npc, (MemArena_t*)1 );
 }
 
+void test_Npc_Tic_UpdatesSpriteDirectionMatchingVelocity( void )
+{
+	Npc_t npc;
+	Entity_t* entity;
+	ActiveSprite_t* sprite;
+	Clock_t* clock = (Clock_t*)1;
+	int i;
+
+	// Test moving Left:
+	// In Npc_LoadFromGameData: rand(0,1) for isWandering -> 0 (False), rand for actionSeconds -> 1000ms
+	// Advance 61 frames (>1000ms) -> triggers transition from not wandering to Npc_StartWandering
+	// In Npc_StartWandering:
+	//   rand(0,1) for choose X -> 0
+	//   rand(0,1) for sign X -> 0 (-vx, moving left)
+	//   rand(0,1) for choose Y -> 1 (no Y)
+	//   rand for actionSeconds -> 1000ms
+	g_useRandSequence = True;
+	g_randU32Sequence[0] = 0;       // Npc_LoadFromGameData: isWandering = False
+	g_randU32Sequence[1] = 1000;    // Npc_LoadFromGameData: actionSeconds
+	g_randU32Sequence[2] = 0;       // Npc_StartWandering: choose X
+	g_randU32Sequence[3] = 0;       // Npc_StartWandering: -vx (left)
+	g_randU32Sequence[4] = 1;       // Npc_StartWandering: skip Y
+	g_randU32Sequence[5] = 1000;    // Npc_StartWandering: actionSeconds
+	g_randU32Count = 6;
+	g_randU32Index = 0;
+
+	WriteNpcInfo(); // Initial direction is Up
+	Npc_LoadFromGameData( &npc, (MemArena_t*)1, CreateGameData(), 0, (ActiveSpriteTextureSet_t*)1 );
+	entity = Npc_GetEntity( &npc );
+	sprite = Entity_GetSprite( entity );
+
+	TEST_ASSERT_EQUAL_INT( Direction_Up, ActiveSprite_GetDirection( sprite ) );
+
+	for ( i = 0; i < 61; i++ )
+	{
+		Npc_Tic( &npc, clock );
+	}
+
+	TEST_ASSERT_LESS_THAN_INT32( 0, Entity_GetVelocity( entity ).x );
+	TEST_ASSERT_EQUAL_INT( Direction_Left, ActiveSprite_GetDirection( sprite ) );
+
+	Npc_Free( &npc, (MemArena_t*)1 );
+
+	// Test moving Right:
+	g_randU32Sequence[0] = 0;       // Npc_LoadFromGameData: isWandering = False
+	g_randU32Sequence[1] = 1000;    // Npc_LoadFromGameData: actionSeconds
+	g_randU32Sequence[2] = 0;       // Npc_StartWandering: choose X
+	g_randU32Sequence[3] = 1;       // Npc_StartWandering: +vx (right)
+	g_randU32Sequence[4] = 1;       // Npc_StartWandering: skip Y
+	g_randU32Sequence[5] = 1000;    // Npc_StartWandering: actionSeconds
+	g_randU32Count = 6;
+	g_randU32Index = 0;
+
+	WriteNpcInfo();
+	Npc_LoadFromGameData( &npc, (MemArena_t*)1, CreateGameData(), 0, (ActiveSpriteTextureSet_t*)1 );
+	entity = Npc_GetEntity( &npc );
+	sprite = Entity_GetSprite( entity );
+
+	for ( i = 0; i < 61; i++ )
+	{
+		Npc_Tic( &npc, clock );
+	}
+
+	TEST_ASSERT_GREATER_THAN_INT32( 0, Entity_GetVelocity( entity ).x );
+	TEST_ASSERT_EQUAL_INT( Direction_Right, ActiveSprite_GetDirection( sprite ) );
+
+	Npc_Free( &npc, (MemArena_t*)1 );
+
+	// Test moving Down:
+	g_randU32Sequence[0] = 0;       // Npc_LoadFromGameData: isWandering = False
+	g_randU32Sequence[1] = 1000;    // Npc_LoadFromGameData: actionSeconds
+	g_randU32Sequence[2] = 1;       // Npc_StartWandering: skip X
+	g_randU32Sequence[3] = 0;       // Npc_StartWandering: choose Y
+	g_randU32Sequence[4] = 1;       // Npc_StartWandering: +vy (down)
+	g_randU32Sequence[5] = 1000;    // Npc_StartWandering: actionSeconds
+	g_randU32Count = 6;
+	g_randU32Index = 0;
+
+	WriteNpcInfo();
+	Npc_LoadFromGameData( &npc, (MemArena_t*)1, CreateGameData(), 0, (ActiveSpriteTextureSet_t*)1 );
+	entity = Npc_GetEntity( &npc );
+	sprite = Entity_GetSprite( entity );
+
+	for ( i = 0; i < 61; i++ )
+	{
+		Npc_Tic( &npc, clock );
+	}
+
+	TEST_ASSERT_GREATER_THAN_INT32( 0, Entity_GetVelocity( entity ).y );
+	TEST_ASSERT_EQUAL_INT( Direction_Down, ActiveSprite_GetDirection( sprite ) );
+
+	Npc_Free( &npc, (MemArena_t*)1 );
+}
+
 int main( void )
 {
 	UNITY_BEGIN();
@@ -231,6 +339,7 @@ int main( void )
    
 	RUN_TEST( test_Npc_SetWanders_UpdatesWandersState );
 	RUN_TEST( test_Npc_Tic_PausesBrieflyAfterWandering );
+	RUN_TEST( test_Npc_Tic_UpdatesSpriteDirectionMatchingVelocity );
 
 	return UNITY_END();
 }
