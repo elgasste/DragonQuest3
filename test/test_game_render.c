@@ -461,6 +461,20 @@ void test_Game_Render_DoesNotDrawNpcOutsideViewport( void )
    TEST_ASSERT_EQUAL_INT( 1, g_displayDrawBufferCall.callCount );
 }
 
+void test_Game_Render_AccountsForSpriteOffsetWhenDeterminingVisibility( void )
+{
+   // Viewport: x: 10, w: 320 -> viewport right is 330.
+   // With spriteOffset.x = 0 and rect.x = 330:
+   //   rect.x + rect.w = 346 > 330, but rect.x is not < 330 (330 < 330 is False).
+   // With spriteOffset.x = -5, shifted visual rect.x is 325 < 330, so sprite is partly visible in viewport.
+   g_npcEntity.rect.x = 330 * WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.spriteOffset.x = -5;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_INT( 2, g_displayDrawBufferCall.callCount );
+}
+
 void test_Game_Render_PresentsDisplayBuffer( void )
 {
    Game_Render( (Game_t*)4 );
@@ -531,6 +545,7 @@ int main( void )
    RUN_TEST( test_Game_Render_DrawsVisibleNpcRelativeToViewport );
    RUN_TEST( test_Game_Render_DrawsEntitiesInVerticalOrder );
    RUN_TEST( test_Game_Render_DoesNotDrawNpcOutsideViewport );
+   RUN_TEST( test_Game_Render_AccountsForSpriteOffsetWhenDeterminingVisibility );
    RUN_TEST( test_Game_Render_PresentsDisplayBuffer );
    RUN_TEST( test_Game_Render_AppliesFadeOut );
    RUN_TEST( test_Game_Render_AppliesFadeIn );

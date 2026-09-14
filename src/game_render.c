@@ -56,6 +56,7 @@ internal void GameRender_DrawEntities( Game_t* game )
    i32 selectedY, selectedOrder, lastY, lastOrder;
    b32 hasSelection, hasPrevious, playerDrawn;
    Vector4i32_t viewportInPixels, entityRect;
+   Vector2i32_t spriteOffset;
    TileMap_t* tileMap;
    Entity_t *playerEntity, *npcEntity, *selectedEntity;
 
@@ -93,11 +94,12 @@ internal void GameRender_DrawEntities( Game_t* game )
       {
          npcEntity = Npc_GetEntity( TileMap_GetNpc( tileMap, i ) );
          entityRect = Entity_GetRect( npcEntity );
+         spriteOffset = Entity_GetSpriteOffset( npcEntity );
          
-         if ( entityRect.x + entityRect.w > viewportInPixels.x * WORLD_UNITS_PER_PIXEL &&
-              entityRect.x < ( viewportInPixels.x + viewportInPixels.w ) * WORLD_UNITS_PER_PIXEL &&
-              entityRect.y + entityRect.h > viewportInPixels.y * WORLD_UNITS_PER_PIXEL &&
-              entityRect.y < ( viewportInPixels.y + viewportInPixels.h ) * WORLD_UNITS_PER_PIXEL &&
+         if ( entityRect.x + entityRect.w + ( spriteOffset.x * WORLD_UNITS_PER_PIXEL ) > viewportInPixels.x * WORLD_UNITS_PER_PIXEL &&
+              entityRect.x + ( spriteOffset.x * WORLD_UNITS_PER_PIXEL ) < ( viewportInPixels.x + viewportInPixels.w ) * WORLD_UNITS_PER_PIXEL &&
+              entityRect.y + entityRect.h + ( spriteOffset.y * WORLD_UNITS_PER_PIXEL ) > viewportInPixels.y * WORLD_UNITS_PER_PIXEL &&
+              entityRect.y + ( spriteOffset.y * WORLD_UNITS_PER_PIXEL ) < ( viewportInPixels.y + viewportInPixels.h ) * WORLD_UNITS_PER_PIXEL &&
               ( !hasPrevious || entityRect.y > lastY || ( entityRect.y == lastY && (i32)( i + 1 ) > lastOrder ) ) &&
               ( !hasSelection || entityRect.y < selectedY || ( entityRect.y == selectedY && (i32)( i + 1 ) < selectedOrder ) ) )
          {
