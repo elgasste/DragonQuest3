@@ -585,11 +585,26 @@ internal void ResizeScreen( b32 increase )
 
    if ( changed )
    {
+      RECT mainWindowRect;
+      int newWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight;
+      int newHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop;
+
       SetWindowPos( g_winGlobals.hWndMain,
                     NULL, // No change in Z-order
                     0, 0, // No change in position
-                    (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight, 
-                    (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop,
-                    SWP_NOMOVE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS); 
+                    newWidth, 
+                    newHeight,
+                    SWP_NOMOVE | SWP_NOZORDER );
+
+      if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
+      {
+         SetWindowPos( g_winGlobals.hWndDiagnostics,
+                       HWND_TOP,
+                       mainWindowRect.left + newWidth + 16,
+                       mainWindowRect.top,
+                       0,
+                       0,
+                       SWP_NOSIZE | SWP_NOACTIVATE );
+      }
    }
 }
