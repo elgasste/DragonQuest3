@@ -76,6 +76,12 @@ add_executable(Test_PixelBuffer
    test_pixel_buffer.c
 )
 
+add_executable(Test_Player
+   ../src/player.c
+   vendor/unity.c
+   test_player.c
+)
+
 add_executable(Test_Sprite
    ../src/sprite.c
    vendor/unity.c
@@ -119,6 +125,7 @@ set_property(TARGET Test_Game_Render PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Input PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_MemArena PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_PixelBuffer PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Player PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Sprite PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Sprite_Texture_Set PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_TileMap PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -139,6 +146,7 @@ if(MSVC)
    target_compile_options(Test_Input PRIVATE /W4)
    target_compile_options(Test_MemArena PRIVATE /W4)
    target_compile_options(Test_PixelBuffer PRIVATE /W4)
+   target_compile_options(Test_Player PRIVATE /W4)
    target_compile_options(Test_Sprite PRIVATE /W4)
    target_compile_options(Test_Sprite_Texture_Set PRIVATE /W4)
    target_compile_options(Test_TileMap PRIVATE /W4)
@@ -199,6 +207,10 @@ target_include_directories(Test_PixelBuffer PRIVATE vendor)
 target_include_directories(Test_PixelBuffer PRIVATE ../include)
 target_include_directories(Test_PixelBuffer PRIVATE ../src)
 
+target_include_directories(Test_Player PRIVATE vendor)
+target_include_directories(Test_Player PRIVATE ../include)
+target_include_directories(Test_Player PRIVATE ../src)
+
 target_include_directories(Test_Sprite PRIVATE vendor)
 target_include_directories(Test_Sprite PRIVATE ../include)
 target_include_directories(Test_Sprite PRIVATE ../src)
@@ -233,6 +245,7 @@ add_test( NAME Unity_Input_Tests COMMAND Test_Input)
 add_test( NAME Unity_MemArena_Tests COMMAND Test_MemArena)
 add_test( NAME Unity_Npc_Tests COMMAND Test_Npc)
 add_test( NAME Unity_PixelBuffer_Tests COMMAND Test_PixelBuffer)
+add_test( NAME Unity_Player_Tests COMMAND Test_Player)
 add_test( NAME Unity_Sprite_Tests COMMAND Test_Sprite)
 add_test( NAME Unity_Sprite_Texture_Set_Tests COMMAND Test_Sprite_Texture_Set)
 add_test( NAME Unity_TileMap_Tests COMMAND Test_TileMap)

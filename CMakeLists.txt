@@ -19,6 +19,7 @@ add_executable(DragonQuest3
    src/mem_arena.c
    src/npc.c
    src/pixel_buffer.c
+   src/player.c
    src/sprite.c
    src/sprite_texture_set.c
    src/tile_map.c
