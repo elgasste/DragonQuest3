@@ -17,6 +17,7 @@
 #define IDC_DIAGNOSTICS_INCSCALE_BTN 1006
 #define IDC_DIAGNOSTICS_DECSCALE_BTN 1007
 #define IDC_DIAGNOSTICS_DUMPSTATS_BTN 1008
+#define IDC_DIAGNOSTICS_CLEARLOG_BTN 1009
 
 internal HWND g_hWndResetFlagsBtn = NULL;
 internal HWND g_hWndNoClipBtn = NULL;
@@ -27,6 +28,7 @@ internal HWND g_hWndDecFpsBtn = NULL;
 internal HWND g_hWndIncScaleBtn = NULL;
 internal HWND g_hWndDecScaleBtn = NULL;
 internal HWND g_hWndDumpStatsBtn = NULL;
+internal HWND g_hWndClearLogBtn = NULL;
 
 typedef struct WinDiagnosticsStatus_t
 {
@@ -78,7 +80,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    336,
-                                                   486,
+                                                   508,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
@@ -208,6 +210,19 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                          hInstance,
                                          0 );
 
+   g_hWndClearLogBtn = CreateWindowExA( 0,
+                                        "BUTTON",
+                                        "Clear Log File",
+                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                        224,
+                                        416,
+                                        90,
+                                        26,
+                                        g_winGlobals.hWndDiagnostics,
+                                        (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_CLEARLOG_BTN,
+                                        hInstance,
+                                        0 );
+
    return True;
 }
 
@@ -278,6 +293,28 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                   SetDiagnosticsStatus( "Memory stats dumped to log file" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
+
+               case IDC_DIAGNOSTICS_CLEARLOG_BTN:
+               {
+                  HANDLE logFile = CreateFileA( g_winGlobals.logFilePath,
+                                                GENERIC_WRITE,
+                                                FILE_SHARE_READ,
+                                                NULL,
+                                                CREATE_ALWAYS,
+                                                FILE_ATTRIBUTE_NORMAL,
+                                                NULL );
+                  if ( logFile == INVALID_HANDLE_VALUE )
+                  {
+                     SetDiagnosticsStatus( "Failed to clear log file" );
+                  }
+                  else
+                  {
+                     CloseHandle( logFile );
+                     SetDiagnosticsStatus( "Log file cleared" );
+                  }
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+               }
             }
          }
          break;
@@ -300,6 +337,7 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                case IDC_DIAGNOSTICS_INCSCALE_BTN:
                case IDC_DIAGNOSTICS_DECSCALE_BTN:
                case IDC_DIAGNOSTICS_DUMPSTATS_BTN:
+               case IDC_DIAGNOSTICS_CLEARLOG_BTN:
                   isEnabled = False;
                   break;
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
