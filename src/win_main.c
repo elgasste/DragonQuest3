@@ -311,6 +311,7 @@ internal b32 CreateMainWindow( HINSTANCE hInstance )
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )
 {
    LRESULT result;
+   RECT mainWindowRect;
 
    result = 0;
    switch ( uMsg )
@@ -319,6 +320,18 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
       case WM_CLOSE:
       case WM_DESTROY:
          Game_Stop( g_winGlobals.game );
+         break;
+      case WM_MOVE:
+         if ( g_winGlobals.hWndDiagnostics && GetWindowRect( hWnd, &mainWindowRect ) )
+         {
+            SetWindowPos( g_winGlobals.hWndDiagnostics,
+                          NULL,
+                          mainWindowRect.right + 16,
+                          mainWindowRect.top,
+                          0,
+                          0,
+                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+         }
          break;
       case WM_KEYDOWN:
       case WM_KEYUP:
