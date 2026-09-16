@@ -1,10 +1,11 @@
 #include <stdlib.h>
 
+#include "mocks/mock_entity.h"
+#include "mocks/mock_sprite.h"
+
 #include "mem_arena.h"
 #include "platform.h"
 #include "player.h"
-#include "entity.h"
-#include "sprite.h"
 #include "unity.h"
 
 global u32 g_allocCount;
@@ -36,6 +37,80 @@ u32 ActiveSpriteTextureSet_GetFrameCount( ActiveSpriteTextureSet_t* textureSet )
 	UNUSED_PARAM( textureSet );
 	return 1;
 }
+
+ActiveSprite_t* ActiveSprite_Create( MemArena_t* arena, ActiveSpriteTextureSet_t* textureSet )
+{
+	ActiveSprite_t* sprite = (ActiveSprite_t*)MemArena_AllocMem( arena, sizeof( ActiveSprite_t ) );
+	sprite->textureSet = textureSet;
+	sprite->dir = Direction_Down;
+	sprite->textureIndex = 0;
+	return sprite;
+}
+
+void ActiveSprite_Free( ActiveSprite_t* sprite, MemArena_t* arena )
+{
+	MemArena_FreeMem( arena, sprite );
+}
+
+ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* sprite )
+{
+	return sprite->textureSet;
+}
+
+void ActiveSprite_SetTextureIndex( ActiveSprite_t* sprite, u32 textureIndex )
+{
+	sprite->textureIndex = textureIndex;
+}
+
+Entity_t* Entity_Create( MemArena_t* arena, ActiveSprite_t* sprite )
+{
+	Entity_t* entity = (Entity_t*)MemArena_AllocMem( arena, sizeof( Entity_t ) );
+	entity->sprite = sprite;
+	entity->tileIndex = 0;
+	entity->rect = (Vector4i32_t){ 0, 0, 0, 0 };
+	entity->velocity = (Vector2i32_t){ 0, 0 };
+	entity->spriteOffset = (Vector2i32_t){ 0, 0 };
+	return entity;
+}
+
+void Entity_Free( Entity_t* entity, MemArena_t* arena )
+{
+	ActiveSprite_Free( entity->sprite, arena );
+	MemArena_FreeMem( arena, entity );
+}
+
+void Entity_SetPosition( Entity_t* entity, i32 x, i32 y )
+{
+	entity->rect.x = x;
+	entity->rect.y = y;
+}
+
+void Entity_SetSize( Entity_t* entity, i32 w, i32 h )
+{
+	entity->rect.w = w;
+	entity->rect.h = h;
+}
+
+void Entity_SetVelocity( Entity_t* entity, i32 vx, i32 vy )
+{
+	entity->velocity = (Vector2i32_t){ vx, vy };
+}
+
+void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
+{
+	entity->tileIndex = tileIndex;
+}
+
+void Entity_SetSpriteOffset( Entity_t* entity, i32 offsetX, i32 offsetY )
+{
+	entity->spriteOffset = (Vector2i32_t){ offsetX, offsetY };
+}
+
+Vector4i32_t Entity_GetRect( Entity_t* entity ) { return entity->rect; }
+Vector2i32_t Entity_GetVelocity( Entity_t* entity ) { return entity->velocity; }
+u32 Entity_GetTileIndex( Entity_t* entity ) { return entity->tileIndex; }
+ActiveSprite_t* Entity_GetSprite( Entity_t* entity ) { return entity->sprite; }
+Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity ) { return entity->spriteOffset; }
 
 void setUp( void )
 {

@@ -3,8 +3,11 @@
 
 #include "../../include/player.h"
 
+typedef struct Entity_t Entity_t;
+
 typedef struct Player_t
 {
+   Entity_t* entity;
    char name[PLAYER_NAME_BUFFER_SIZE];
 }
 Player_t;

@@ -20,9 +20,7 @@ add_executable(Test_Entity
 )
 
 add_executable(Test_Npc
-   ../src/entity.c
    ../src/npc.c
-   ../src/sprite.c
    vendor/unity.c
    test_npc.c
 )
@@ -78,8 +76,6 @@ add_executable(Test_PixelBuffer
 
 add_executable(Test_Player
    ../src/player.c
-   ../src/entity.c
-   ../src/sprite.c
    vendor/unity.c
    test_player.c
 )
