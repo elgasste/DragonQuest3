@@ -78,6 +78,8 @@ add_executable(Test_PixelBuffer
 
 add_executable(Test_Player
    ../src/player.c
+   ../src/entity.c
+   ../src/sprite.c
    vendor/unity.c
    test_player.c
 )
