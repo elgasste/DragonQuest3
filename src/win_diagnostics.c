@@ -70,6 +70,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
       return False;
    }
 
+   g_winGlobals.movingDiagnosticsWindow = True;
    g_winGlobals.hWndDiagnostics = CreateWindowExA( WS_EX_TOOLWINDOW,
                                                    g_winGlobals.diagnosticsWindowClassName,
                                                    STR_DIAGNOSTICS_WINDOW_TITLE,
@@ -82,6 +83,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    0,
                                                    hInstance,
                                                    0 );
+   g_winGlobals.movingDiagnosticsWindow = False;
 
    if ( !g_winGlobals.hWndDiagnostics )
    {
@@ -353,8 +355,11 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
          UpdateDiagnosticsText( hWnd );
          return 0;
       case WM_MOVE:
-         DefWindowProcA( hWnd, uMsg, wParam, lParam );
-         break;
+         if ( !g_winGlobals.movingDiagnosticsWindow )
+         {
+            g_winGlobals.anchorDiagnosticsWindow = False;
+         }
+         return DefWindowProcA( hWnd, uMsg, wParam, lParam );
 
       default:
          return DefWindowProcA( hWnd, uMsg, wParam, lParam );
@@ -605,6 +610,7 @@ internal void ResizeScreen( b32 increase )
 
       if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
       {
+         g_winGlobals.movingDiagnosticsWindow = True;
          SetWindowPos( g_winGlobals.hWndDiagnostics,
                        HWND_TOP,
                        mainWindowRect.left + newWidth + 16,
@@ -612,6 +618,7 @@ internal void ResizeScreen( b32 increase )
                        0,
                        0,
                        SWP_NOSIZE | SWP_NOACTIVATE );
+         g_winGlobals.movingDiagnosticsWindow = False;
       }
 
       SaveWinDebugConfig( Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );

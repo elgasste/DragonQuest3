@@ -70,6 +70,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
    g_winDebugFlags.showDiagnostics = False;
    g_winGlobals.anchorDiagnosticsWindow = True;
+   g_winGlobals.movingDiagnosticsWindow = False;
    g_winDebugFlags.noClip = False;
    g_winDebugFlags.showHitBoxes = False;
    g_winDebugFlags.moveFast = False;
@@ -93,6 +94,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    // move diagnostics out of the main window's way and give the main window focus
    if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
    {
+      g_winGlobals.movingDiagnosticsWindow = True;
       SetWindowPos( g_winGlobals.hWndDiagnostics,
                     HWND_TOP,
                     mainWindowRect.right + 16,
@@ -100,7 +102,9 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                     0,
                     0,
                     SWP_NOSIZE );
+            g_winGlobals.movingDiagnosticsWindow = False;
       ShowWindow( g_winGlobals.hWndDiagnostics, g_winDebugFlags.showDiagnostics ? SW_SHOW : SW_HIDE );
+      g_winGlobals.anchorDiagnosticsWindow = True;
       SetFocus( g_winGlobals.hWndMain );
    }
 
@@ -325,6 +329,7 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
       case WM_MOVE:
          if ( g_winGlobals.anchorDiagnosticsWindow && g_winGlobals.hWndDiagnostics && GetWindowRect( hWnd, &mainWindowRect ) )
          {
+            g_winGlobals.movingDiagnosticsWindow = True;
             SetWindowPos( g_winGlobals.hWndDiagnostics,
                           NULL,
                           mainWindowRect.right + 16,
@@ -332,6 +337,7 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
                           0,
                           0,
                           SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            g_winGlobals.movingDiagnosticsWindow = False;
          }
          break;
       case WM_KEYDOWN:
@@ -459,6 +465,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
                {
                   if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
                   {
+                     g_winGlobals.movingDiagnosticsWindow = True;
                      SetWindowPos( g_winGlobals.hWndDiagnostics,
                                    HWND_TOP,
                                    mainWindowRect.right + 16,
@@ -466,6 +473,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
                                    0,
                                    0,
                                    SWP_NOSIZE | SWP_SHOWWINDOW );
+                     g_winGlobals.movingDiagnosticsWindow = False;
                      SetFocus( g_winGlobals.hWndMain );
                   }
                   else
