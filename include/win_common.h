@@ -18,6 +18,7 @@
 
 #define LOG_FILENAME             "dw3.log"
 #define GAME_DATA_FILENAME       "data.dw3d"
+#define WIN_DEBUG_CONFIG_FILENAME "win_debug.cfg"
 
 typedef struct MemArena_t MemArena_t;
 typedef struct Game_t Game_t;

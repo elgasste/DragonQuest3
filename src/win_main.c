@@ -1,3 +1,4 @@
+#include <math.h>
 #include <shlwapi.h>
 #include <stdio.h>
 
@@ -12,6 +13,8 @@
 #include "win_common.h"
 
 internal void SetExeDir( void );
+internal void LoadWinDebugConfig( const char* filePath, u32* targetFps );
+internal void SaveWinDebugConfig( const char* filePath, u32 targetFps );
 internal b32 CreateMainWindow( HINSTANCE hInstance );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void RenderScreen( void );
@@ -28,6 +31,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    RECT mainWindowRect;
    Display_t* display;
    char gameDataPath[MAX_PATH];
+   char debugConfigPath[MAX_PATH];
+   u32 targetFps;
 
    UNUSED_PARAM( hPrevInstance );
    UNUSED_PARAM( lpCmdLine );
@@ -36,6 +41,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    SetExeDir();
    snprintf( g_winGlobals.logFilePath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, LOG_FILENAME );
    snprintf( gameDataPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, GAME_DATA_FILENAME );
+   snprintf( debugConfigPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, WIN_DEBUG_CONFIG_FILENAME );
 
    Platform_Log( "----------------- LAUNCH -----------------" );
 
@@ -68,11 +74,14 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winDebugFlags.noClip = False;
    g_winDebugFlags.showHitBoxes = False;
    g_winDebugFlags.moveFast = False;
+   targetFps = GAME_DEFAULT_FPS;
+   LoadWinDebugConfig( debugConfigPath, &targetFps );
 
    g_winGlobals.buttonMap = (u32*)MemArena_AllocMem( g_winGlobals.memArena, sizeof( u32 ) * InputButton_Count );
    InitButtonMap();
 
    g_winGlobals.game = Game_Create( g_winGlobals.memArena, gameDataPath ); // does not transfer ownership of memory arena
+   Clock_SetFps( Game_GetClock( g_winGlobals.game ), targetFps );
 
    if ( !CreateMainWindow( hInstance ) || !CreateDiagnosticsWindow( hInstance ) )
    {
@@ -92,6 +101,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                     0,
                     0,
                     SWP_NOSIZE );
+      ShowWindow( g_winGlobals.hWndDiagnostics, g_winDebugFlags.showDiagnostics ? SW_SHOW : SW_HIDE );
       SetFocus( g_winGlobals.hWndMain );
    }
 
@@ -112,6 +122,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
 
    Game_Run( g_winGlobals.game );
+
+   SaveWinDebugConfig( debugConfigPath, Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
    
    Game_Free( g_winGlobals.game, g_winGlobals.memArena );
    MemArena_FreeMem( g_winGlobals.memArena, g_winGlobals.buttonMap );
@@ -196,6 +208,46 @@ internal void SetExeDir( void )
    }
 
    strcpy_s( g_winGlobals.exeDir, MAX_PATH, exePath );
+}
+
+internal void LoadWinDebugConfig( const char* filePath, u32* targetFps )
+{
+   char scaleText[STRING_SIZE_DEFAULT];
+   r32 scale;
+   u32 savedFps;
+   int savedDiagnostics;
+
+   savedFps = (u32)GetPrivateProfileIntA( "Windows", "TargetFps", (int)*targetFps, filePath );
+   if ( savedFps >= MIN_GAME_FPS && savedFps <= MAX_GAME_FPS && savedFps % GAME_FPS_STEP == 0 )
+   {
+      *targetFps = savedFps;
+   }
+
+   savedDiagnostics = GetPrivateProfileIntA( "Windows", "ShowDiagnostics", g_winDebugFlags.showDiagnostics, filePath );
+   g_winDebugFlags.showDiagnostics = savedDiagnostics == 1 ? True : False;
+
+   GetPrivateProfileStringA( "Windows", "GraphicsScale", "", scaleText, sizeof( scaleText ), filePath );
+   if ( sscanf_s( scaleText, "%f", &scale ) == 1 )
+   {
+      if ( scale >= MIN_GRAPHICS_SCALE && scale <= MAX_GRAPHICS_SCALE && fmodf( scale, GRAPHICS_SCALE_STEP ) == 0 )
+      {
+         g_winGlobals.graphicsScale = scale;
+      }
+   }
+}
+
+internal void SaveWinDebugConfig( const char* filePath, u32 targetFps )
+{
+   char value[STRING_SIZE_DEFAULT];
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%u", targetFps );
+   WritePrivateProfileStringA( "Windows", "TargetFps", value, filePath );
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%u", g_winDebugFlags.showDiagnostics );
+   WritePrivateProfileStringA( "Windows", "ShowDiagnostics", value, filePath );
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%.1f", g_winGlobals.graphicsScale );
+   WritePrivateProfileStringA( "Windows", "GraphicsScale", value, filePath );
 }
 
 internal b32 CreateMainWindow( HINSTANCE hInstance )
