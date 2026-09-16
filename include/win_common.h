@@ -38,6 +38,7 @@ typedef struct WinGlobalObjects_t
    r32 graphicsScale;
    char exeDir[MAX_PATH];
    char logFilePath[MAX_PATH];
+   char debugConfigPath[MAX_PATH];
 
    MemArena_t* memArena;
    Game_t* game;
@@ -51,6 +52,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance );
 
 // win_main.c
 void MemArena_DumpStats( MemArena_t* memArena );
+void SaveWinDebugConfig( u32 targetFps );
 
 // win_test_game_data.c
 void WriteTestGameDataFile( const char *filePath );

@@ -560,10 +560,12 @@ internal void ChangeGameFps( b32 increase )
    if ( increase && fps < MAX_GAME_FPS )
    {
       Clock_SetFps( clock, fps + GAME_FPS_STEP );
+      SaveWinDebugConfig( fps + GAME_FPS_STEP );
    }
    else if ( !increase && fps > MIN_GAME_FPS )
    {
       Clock_SetFps( clock, fps - GAME_FPS_STEP );
+      SaveWinDebugConfig( fps - GAME_FPS_STEP );
    }
 }
 
@@ -606,5 +608,7 @@ internal void ResizeScreen( b32 increase )
                        0,
                        SWP_NOSIZE | SWP_NOACTIVATE );
       }
+
+      SaveWinDebugConfig( Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
    }
 }

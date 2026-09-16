@@ -14,7 +14,6 @@
 
 internal void SetExeDir( void );
 internal void LoadWinDebugConfig( const char* filePath, u32* targetFps );
-internal void SaveWinDebugConfig( const char* filePath, u32 targetFps );
 internal b32 CreateMainWindow( HINSTANCE hInstance );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void RenderScreen( void );
@@ -31,7 +30,6 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    RECT mainWindowRect;
    Display_t* display;
    char gameDataPath[MAX_PATH];
-   char debugConfigPath[MAX_PATH];
    u32 targetFps;
 
    UNUSED_PARAM( hPrevInstance );
@@ -41,7 +39,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    SetExeDir();
    snprintf( g_winGlobals.logFilePath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, LOG_FILENAME );
    snprintf( gameDataPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, GAME_DATA_FILENAME );
-   snprintf( debugConfigPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, WIN_DEBUG_CONFIG_FILENAME );
+   snprintf( g_winGlobals.debugConfigPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, WIN_DEBUG_CONFIG_FILENAME );
 
    Platform_Log( "----------------- LAUNCH -----------------" );
 
@@ -75,7 +73,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winDebugFlags.showHitBoxes = False;
    g_winDebugFlags.moveFast = False;
    targetFps = GAME_DEFAULT_FPS;
-   LoadWinDebugConfig( debugConfigPath, &targetFps );
+   LoadWinDebugConfig( g_winGlobals.debugConfigPath, &targetFps );
 
    g_winGlobals.buttonMap = (u32*)MemArena_AllocMem( g_winGlobals.memArena, sizeof( u32 ) * InputButton_Count );
    InitButtonMap();
@@ -123,7 +121,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    Game_Run( g_winGlobals.game );
 
-   SaveWinDebugConfig( debugConfigPath, Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
+   SaveWinDebugConfig( Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
    
    Game_Free( g_winGlobals.game, g_winGlobals.memArena );
    MemArena_FreeMem( g_winGlobals.memArena, g_winGlobals.buttonMap );
@@ -189,6 +187,20 @@ void MemArena_DumpStats( MemArena_t* memArena )
    Platform_Log( msg );
 }
 
+void SaveWinDebugConfig( u32 targetFps )
+{
+   char value[STRING_SIZE_DEFAULT];
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%u", targetFps );
+   WritePrivateProfileStringA( "Windows", "TargetFps", value, g_winGlobals.debugConfigPath );
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%u", g_winDebugFlags.showDiagnostics );
+   WritePrivateProfileStringA( "Windows", "ShowDiagnostics", value, g_winGlobals.debugConfigPath );
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%.1f", g_winGlobals.graphicsScale );
+   WritePrivateProfileStringA( "Windows", "GraphicsScale", value, g_winGlobals.debugConfigPath );
+}
+
 internal void SetExeDir( void )
 {
    char exePath[MAX_PATH];
@@ -234,20 +246,6 @@ internal void LoadWinDebugConfig( const char* filePath, u32* targetFps )
          g_winGlobals.graphicsScale = scale;
       }
    }
-}
-
-internal void SaveWinDebugConfig( const char* filePath, u32 targetFps )
-{
-   char value[STRING_SIZE_DEFAULT];
-
-   snprintf( value, STRING_SIZE_DEFAULT, "%u", targetFps );
-   WritePrivateProfileStringA( "Windows", "TargetFps", value, filePath );
-
-   snprintf( value, STRING_SIZE_DEFAULT, "%u", g_winDebugFlags.showDiagnostics );
-   WritePrivateProfileStringA( "Windows", "ShowDiagnostics", value, filePath );
-
-   snprintf( value, STRING_SIZE_DEFAULT, "%.1f", g_winGlobals.graphicsScale );
-   WritePrivateProfileStringA( "Windows", "GraphicsScale", value, filePath );
 }
 
 internal b32 CreateMainWindow( HINSTANCE hInstance )
@@ -442,6 +440,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
          {
             case VK_F8:
                TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
+               SaveWinDebugConfig( Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
                if ( g_winDebugFlags.showDiagnostics )
                {
                   if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
