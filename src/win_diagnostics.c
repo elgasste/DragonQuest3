@@ -352,6 +352,9 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
       case WM_PAINT:
          UpdateDiagnosticsText( hWnd );
          return 0;
+      case WM_MOVE:
+         DefWindowProcA( hWnd, uMsg, wParam, lParam );
+         break;
 
       default:
          return DefWindowProcA( hWnd, uMsg, wParam, lParam );
@@ -572,6 +575,8 @@ internal void ChangeGameFps( b32 increase )
 internal void ResizeScreen( b32 increase )
 {
    b32 changed;
+   RECT mainWindowRect;
+   int newWidth, newHeight;
 
    changed = False;
    if ( increase && g_winGlobals.graphicsScale < MAX_GRAPHICS_SCALE )
@@ -587,9 +592,9 @@ internal void ResizeScreen( b32 increase )
 
    if ( changed )
    {
-      RECT mainWindowRect;
-      int newWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight;
-      int newHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop;
+      g_winGlobals.anchorDiagnosticsWindow = True;
+      newWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight;
+      newHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop;
 
       SetWindowPos( g_winGlobals.hWndMain,
                     NULL, // No change in Z-order

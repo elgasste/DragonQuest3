@@ -69,6 +69,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
    g_winDebugFlags.showDiagnostics = False;
+   g_winGlobals.anchorDiagnosticsWindow = True;
    g_winDebugFlags.noClip = False;
    g_winDebugFlags.showHitBoxes = False;
    g_winDebugFlags.moveFast = False;
@@ -322,7 +323,7 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
          Game_Stop( g_winGlobals.game );
          break;
       case WM_MOVE:
-         if ( g_winGlobals.hWndDiagnostics && GetWindowRect( hWnd, &mainWindowRect ) )
+         if ( g_winGlobals.anchorDiagnosticsWindow && g_winGlobals.hWndDiagnostics && GetWindowRect( hWnd, &mainWindowRect ) )
          {
             SetWindowPos( g_winGlobals.hWndDiagnostics,
                           NULL,

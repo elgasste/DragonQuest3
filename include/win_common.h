@@ -29,6 +29,7 @@ typedef struct WinGlobalObjects_t
    char mainWindowClassName[MAX_PATH];
    HWND hWndDiagnostics;
    char diagnosticsWindowClassName[MAX_PATH];
+   b32 anchorDiagnosticsWindow;
    LONG clientPaddingRight;
    LONG clientPaddingTop;
    HFONT hFont;
