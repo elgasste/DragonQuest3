@@ -6,6 +6,7 @@
 #include "mocks/mock_input.h"
 #include "mocks/mock_mem_arena.h"
 #include "mocks/mock_npc.h"
+#include "mocks/mock_player.h"
 #include "mocks/mock_sprite_texture_set.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
@@ -52,6 +53,7 @@ global u32 g_npcCount;
 global ActiveSpriteTextureSet_t* g_playerSpriteTextureSet;
 global u32 g_playerSpriteTextureIndex;
 global Direction_t g_playerSpriteDirection;
+global Player_t* g_player;
 global TileMap_t* g_tileMap;
 global Entity_t* g_playerEntity;
 global Vector4i32_t g_tileMapViewportInUnits;
@@ -152,6 +154,30 @@ void Entity_Free( Entity_t* entity, MemArena_t* memArena )
    ActiveSprite_Free( entity->sprite, memArena );
    MemArena_FreeMem( memArena, entity );
    g_entityFreeCount++;
+}
+
+Player_t* Player_Create( MemArena_t* arena,
+                         ActiveSpriteTextureSet_t* textureSet,
+                         Vector2i32_t size,
+                         Vector2i32_t spriteOffset )
+{
+   g_player = (Player_t*)MemArena_AllocMem( arena, sizeof( Player_t ) );
+   g_player->entity = Entity_Create( arena, ActiveSprite_Create( arena, textureSet ) );
+   ActiveSprite_SetTextureIndex( Entity_GetSprite( g_player->entity ), 1 );
+   Entity_SetSize( g_player->entity, size.x, size.y );
+   Entity_SetSpriteOffset( g_player->entity, spriteOffset.x, spriteOffset.y );
+   return g_player;
+}
+
+void Player_Free( MemArena_t* arena, Player_t* player )
+{
+   Entity_Free( player->entity, arena );
+   MemArena_FreeMem( arena, player );
+}
+
+Entity_t* Player_GetEntity( const Player_t* player )
+{
+   return player->entity;
 }
 
 Vector4i32_t Entity_GetRect( Entity_t* entity )
@@ -667,7 +693,7 @@ void test_Game_Free_ReleasesAllDependencies( void )
    TEST_ASSERT_EQUAL_UINT( 1, g_activeSpriteTextureSetFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_entityFreeCount );
    TEST_ASSERT_EQUAL_UINT( 1, g_animationChainFreeCount );
-   TEST_ASSERT_EQUAL_UINT( 12, g_freeCount );
+   TEST_ASSERT_EQUAL_UINT( 13, g_freeCount );
 }
 
 void test_Game_OnPlayerTileIndexChanged_DoesNothingWhenNoPortal( void )
