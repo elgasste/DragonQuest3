@@ -37,7 +37,7 @@ if(WIN32)
       src/win_test_game_data.c)
    set_target_properties(DragonQuest3 PROPERTIES WIN32_EXECUTABLE TRUE)
    target_compile_options(DragonQuest3 PRIVATE /W4)
-   target_link_libraries(DragonQuest3 PRIVATE winmm msimg32 shlwapi)
+   target_link_libraries(DragonQuest3 PRIVATE winmm msimg32 shlwapi shell32)
 endif()
 
 target_include_directories(DragonQuest3 PRIVATE include)

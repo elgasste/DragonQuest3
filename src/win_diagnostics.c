@@ -7,6 +7,7 @@
 #include "input.h"
 #include "tile_map.h"
 #include "win_common.h"
+#include <shellapi.h>
 
 #define IDC_DIAGNOSTICS_RESETFLAGS_BTN 1000
 #define IDC_DIAGNOSTICS_NOCLIP_BTN 1001
@@ -18,6 +19,7 @@
 #define IDC_DIAGNOSTICS_DECSCALE_BTN 1007
 #define IDC_DIAGNOSTICS_DUMPSTATS_BTN 1008
 #define IDC_DIAGNOSTICS_CLEARLOG_BTN 1009
+#define IDC_DIAGNOSTICS_OPENLOG_BTN 1010
 
 internal HWND g_hWndResetFlagsBtn = NULL;
 internal HWND g_hWndNoClipBtn = NULL;
@@ -29,6 +31,7 @@ internal HWND g_hWndIncScaleBtn = NULL;
 internal HWND g_hWndDecScaleBtn = NULL;
 internal HWND g_hWndDumpStatsBtn = NULL;
 internal HWND g_hWndClearLogBtn = NULL;
+internal HWND g_hWndOpenLogBtn = NULL;
 
 typedef struct WinDiagnosticsStatus_t
 {
@@ -80,7 +83,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    336,
-                                                   508,
+                                                   540,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
@@ -215,13 +218,26 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         "Clear Log File",
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                         224,
-                                        416,
+                                        448,
                                         90,
                                         26,
                                         g_winGlobals.hWndDiagnostics,
                                         (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_CLEARLOG_BTN,
                                         hInstance,
                                         0 );
+
+   g_hWndOpenLogBtn = CreateWindowExA( 0,
+                                       "BUTTON",
+                                       "Open Log File",
+                                       WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                       224,
+                                       416,
+                                       90,
+                                       26,
+                                       g_winGlobals.hWndDiagnostics,
+                                       (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_OPENLOG_BTN,
+                                       hInstance,
+                                       0 );
 
    return True;
 }
@@ -315,6 +331,12 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
                }
+
+               case IDC_DIAGNOSTICS_OPENLOG_BTN:
+                  ShellExecuteA( hWnd, "open", g_winGlobals.logFilePath, NULL, NULL, SW_SHOWNORMAL );
+                  SetDiagnosticsStatus( "Opening log file" );
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
             }
          }
          break;
@@ -338,6 +360,7 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                case IDC_DIAGNOSTICS_DECSCALE_BTN:
                case IDC_DIAGNOSTICS_DUMPSTATS_BTN:
                case IDC_DIAGNOSTICS_CLEARLOG_BTN:
+               case IDC_DIAGNOSTICS_OPENLOG_BTN:
                   isEnabled = False;
                   break;
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
