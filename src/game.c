@@ -28,6 +28,8 @@ struct Game_t
    TileMap_t *tileMap;
    AnimationChain_t* animationChain;
 
+   // TODO: okay, so we have one player. we're gonna need to be able to
+   // have a maximum of 4 players in the party.
    Player_t* player;
 
    b32 shutdown;

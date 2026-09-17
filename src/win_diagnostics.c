@@ -42,12 +42,6 @@ WinDiagnosticsStatus_t;
 
 internal WinDiagnosticsStatus_t g_diagStatus = { 0 };
 
-internal void SetDiagnosticsStatus( const char* msg )
-{
-   strcpy_s( g_diagStatus.msg, STRING_SIZE_DEFAULT, msg );
-   g_diagStatus.untilMicro = Platform_GetMicros() + ( 3 * 1000000 );
-}
-
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void UpdateDiagnosticsText( HWND hWnd );
 internal void ChangeGameFps( b32 increase );
@@ -78,7 +72,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    g_winGlobals.movingDiagnosticsWindow = True;
    g_winGlobals.hWndDiagnostics = CreateWindowExA( WS_EX_TOOLWINDOW,
                                                    g_winGlobals.diagnosticsWindowClassName,
-                                                   STR_DIAGNOSTICS_WINDOW_TITLE,
+                                                   STR_WIN_DIAGNOSTICS_WINDOW_TITLE,
                                                    WS_OVERLAPPED | WS_CAPTION | WS_CLIPCHILDREN,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
@@ -242,6 +236,12 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    return True;
 }
 
+void SetDiagnosticsStatus( const char* msg )
+{
+   strcpy_s( g_diagStatus.msg, STRING_SIZE_DEFAULT, msg );
+   g_diagStatus.untilMicro = Platform_GetMicros() + ( 3 * 1000000 );
+}
+
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )
 {
    switch ( uMsg )
@@ -288,19 +288,19 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
 
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.noClip );
-                  SetDiagnosticsStatus( g_winDebugFlags.noClip ? "No-clip mode enabled" : "No-clip mode disabled" );
+                  SetDiagnosticsStatus( g_winDebugFlags.noClip ? STR_WIN_DIAGNOSTICS_NOCLIP_ENABLED : STR_WIN_DIAGNOSTICS_NOCLIP_DISABLED );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_HITBOXES_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
-                  SetDiagnosticsStatus( g_winDebugFlags.showHitBoxes ? "Showing hit boxes" : "Hiding hit boxes" );
+                  SetDiagnosticsStatus( g_winDebugFlags.showHitBoxes ? STR_WIN_DIAGNOSTICS_HITBOXES_ENABLED : STR_WIN_DIAGNOSTICS_HITBOXES_DISABLED );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_FASTMOVE_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.moveFast );
-                  SetDiagnosticsStatus( g_winDebugFlags.moveFast ? "Fast movement enabled" : "Fast movement disabled" );
+                  SetDiagnosticsStatus( g_winDebugFlags.moveFast ? STR_WIN_DIAGNOSTICS_FASTMOVE_ENABLED : STR_WIN_DIAGNOSTICS_FASTMOVE_DISABLED );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 

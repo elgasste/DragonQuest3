@@ -7,18 +7,18 @@
 
 #include "common.h"
 
-#define DEFAULT_GRAPHICS_SCALE   2.0f
-#define MIN_GRAPHICS_SCALE       1.0f
-#define MAX_GRAPHICS_SCALE       4.0f
-#define GRAPHICS_SCALE_STEP      0.5f
+#define DEFAULT_GRAPHICS_SCALE      2.0f
+#define MIN_GRAPHICS_SCALE          1.0f
+#define MAX_GRAPHICS_SCALE          4.0f
+#define GRAPHICS_SCALE_STEP         0.5f
 
-#define MIN_GAME_FPS             30
-#define MAX_GAME_FPS             120
-#define GAME_FPS_STEP            30
+#define MIN_GAME_FPS                30
+#define MAX_GAME_FPS                120
+#define GAME_FPS_STEP               30
 
-#define LOG_FILENAME             "dw3.log"
-#define GAME_DATA_FILENAME       "data.dw3d"
-#define WIN_DEBUG_CONFIG_FILENAME "win_debug.cfg"
+#define LOG_FILENAME                "dw3.log"
+#define GAME_DATA_FILENAME          "data.dw3d"
+#define WIN_DEBUG_CONFIG_FILENAME   "win_debug.cfg"
 
 typedef struct MemArena_t MemArena_t;
 typedef struct Game_t Game_t;
@@ -51,6 +51,7 @@ extern WinGlobalObjects_t g_winGlobals;
 
 // win_diagnostics.c
 b32 CreateDiagnosticsWindow( HINSTANCE hInstance );
+void SetDiagnosticsStatus( const char* msg );
 
 // win_main.c
 void MemArena_DumpStats( MemArena_t* memArena );

@@ -458,6 +458,21 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 
          switch ( keyCode )
          {
+            case '1':
+            case VK_NUMPAD1:
+               TOGGLE_BOOL( g_winDebugFlags.noClip );
+               SetDiagnosticsStatus( g_winDebugFlags.noClip ? STR_WIN_DIAGNOSTICS_NOCLIP_ENABLED : STR_WIN_DIAGNOSTICS_NOCLIP_DISABLED );
+               break;
+            case '2':
+            case VK_NUMPAD2:
+               TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
+               SetDiagnosticsStatus( g_winDebugFlags.showHitBoxes ? STR_WIN_DIAGNOSTICS_HITBOXES_ENABLED : STR_WIN_DIAGNOSTICS_HITBOXES_DISABLED );
+               break;
+            case '3':
+            case VK_NUMPAD3:
+               TOGGLE_BOOL( g_winDebugFlags.moveFast );
+               SetDiagnosticsStatus( g_winDebugFlags.moveFast ? STR_WIN_DIAGNOSTICS_FASTMOVE_ENABLED : STR_WIN_DIAGNOSTICS_FASTMOVE_DISABLED );
+               break;
             case VK_F8:
                TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
                SaveWinDebugConfig( Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
