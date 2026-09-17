@@ -1,3 +1,4 @@
+#include <math.h>
 #include <shlwapi.h>
 #include <stdio.h>
 
@@ -12,6 +13,7 @@
 #include "win_common.h"
 
 internal void SetExeDir( void );
+internal void LoadWinDebugConfig( const char* filePath, u32* targetFps );
 internal b32 CreateMainWindow( HINSTANCE hInstance );
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void RenderScreen( void );
@@ -28,6 +30,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    RECT mainWindowRect;
    Display_t* display;
    char gameDataPath[MAX_PATH];
+   u32 targetFps;
 
    UNUSED_PARAM( hPrevInstance );
    UNUSED_PARAM( lpCmdLine );
@@ -36,6 +39,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    SetExeDir();
    snprintf( g_winGlobals.logFilePath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, LOG_FILENAME );
    snprintf( gameDataPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, GAME_DATA_FILENAME );
+   snprintf( g_winGlobals.debugConfigPath, MAX_PATH, "%s\\%s", g_winGlobals.exeDir, WIN_DEBUG_CONFIG_FILENAME );
 
    Platform_Log( "----------------- LAUNCH -----------------" );
 
@@ -65,14 +69,19 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
    g_winGlobals.graphicsScale = DEFAULT_GRAPHICS_SCALE;
    g_winDebugFlags.showDiagnostics = False;
+   g_winGlobals.anchorDiagnosticsWindow = True;
+   g_winGlobals.movingDiagnosticsWindow = False;
    g_winDebugFlags.noClip = False;
    g_winDebugFlags.showHitBoxes = False;
    g_winDebugFlags.moveFast = False;
+   targetFps = GAME_DEFAULT_FPS;
+   LoadWinDebugConfig( g_winGlobals.debugConfigPath, &targetFps );
 
    g_winGlobals.buttonMap = (u32*)MemArena_AllocMem( g_winGlobals.memArena, sizeof( u32 ) * InputButton_Count );
    InitButtonMap();
 
    g_winGlobals.game = Game_Create( g_winGlobals.memArena, gameDataPath ); // does not transfer ownership of memory arena
+   Clock_SetFps( Game_GetClock( g_winGlobals.game ), targetFps );
 
    if ( !CreateMainWindow( hInstance ) || !CreateDiagnosticsWindow( hInstance ) )
    {
@@ -85,6 +94,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    // move diagnostics out of the main window's way and give the main window focus
    if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
    {
+      g_winGlobals.movingDiagnosticsWindow = True;
       SetWindowPos( g_winGlobals.hWndDiagnostics,
                     HWND_TOP,
                     mainWindowRect.right + 16,
@@ -92,6 +102,9 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                     0,
                     0,
                     SWP_NOSIZE );
+            g_winGlobals.movingDiagnosticsWindow = False;
+      ShowWindow( g_winGlobals.hWndDiagnostics, g_winDebugFlags.showDiagnostics ? SW_SHOW : SW_HIDE );
+      g_winGlobals.anchorDiagnosticsWindow = True;
       SetFocus( g_winGlobals.hWndMain );
    }
 
@@ -112,6 +125,8 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    g_winGlobals.bmpInfo.bmiHeader.biCompression = BI_RGB;
 
    Game_Run( g_winGlobals.game );
+
+   SaveWinDebugConfig( Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
    
    Game_Free( g_winGlobals.game, g_winGlobals.memArena );
    MemArena_FreeMem( g_winGlobals.memArena, g_winGlobals.buttonMap );
@@ -177,6 +192,20 @@ void MemArena_DumpStats( MemArena_t* memArena )
    Platform_Log( msg );
 }
 
+void SaveWinDebugConfig( u32 targetFps )
+{
+   char value[STRING_SIZE_DEFAULT];
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%u", targetFps );
+   WritePrivateProfileStringA( "Windows", "TargetFps", value, g_winGlobals.debugConfigPath );
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%u", g_winDebugFlags.showDiagnostics );
+   WritePrivateProfileStringA( "Windows", "ShowDiagnostics", value, g_winGlobals.debugConfigPath );
+
+   snprintf( value, STRING_SIZE_DEFAULT, "%.1f", g_winGlobals.graphicsScale );
+   WritePrivateProfileStringA( "Windows", "GraphicsScale", value, g_winGlobals.debugConfigPath );
+}
+
 internal void SetExeDir( void )
 {
    char exePath[MAX_PATH];
@@ -196,6 +225,32 @@ internal void SetExeDir( void )
    }
 
    strcpy_s( g_winGlobals.exeDir, MAX_PATH, exePath );
+}
+
+internal void LoadWinDebugConfig( const char* filePath, u32* targetFps )
+{
+   char scaleText[STRING_SIZE_DEFAULT];
+   r32 scale;
+   u32 savedFps;
+   int savedDiagnostics;
+
+   savedFps = (u32)GetPrivateProfileIntA( "Windows", "TargetFps", (int)*targetFps, filePath );
+   if ( savedFps >= MIN_GAME_FPS && savedFps <= MAX_GAME_FPS && savedFps % GAME_FPS_STEP == 0 )
+   {
+      *targetFps = savedFps;
+   }
+
+   savedDiagnostics = GetPrivateProfileIntA( "Windows", "ShowDiagnostics", g_winDebugFlags.showDiagnostics, filePath );
+   g_winDebugFlags.showDiagnostics = savedDiagnostics == 1 ? True : False;
+
+   GetPrivateProfileStringA( "Windows", "GraphicsScale", "", scaleText, sizeof( scaleText ), filePath );
+   if ( sscanf_s( scaleText, "%f", &scale ) == 1 )
+   {
+      if ( scale >= MIN_GRAPHICS_SCALE && scale <= MAX_GRAPHICS_SCALE && fmodf( scale, GRAPHICS_SCALE_STEP ) == 0 )
+      {
+         g_winGlobals.graphicsScale = scale;
+      }
+   }
 }
 
 internal b32 CreateMainWindow( HINSTANCE hInstance )
@@ -261,6 +316,7 @@ internal b32 CreateMainWindow( HINSTANCE hInstance )
 internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )
 {
    LRESULT result;
+   RECT mainWindowRect;
 
    result = 0;
    switch ( uMsg )
@@ -269,6 +325,20 @@ internal LRESULT CALLBACK MainWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ W
       case WM_CLOSE:
       case WM_DESTROY:
          Game_Stop( g_winGlobals.game );
+         break;
+      case WM_MOVE:
+         if ( g_winGlobals.anchorDiagnosticsWindow && g_winGlobals.hWndDiagnostics && GetWindowRect( hWnd, &mainWindowRect ) )
+         {
+            g_winGlobals.movingDiagnosticsWindow = True;
+            SetWindowPos( g_winGlobals.hWndDiagnostics,
+                          NULL,
+                          mainWindowRect.right + 16,
+                          mainWindowRect.top,
+                          0,
+                          0,
+                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            g_winGlobals.movingDiagnosticsWindow = False;
+         }
          break;
       case WM_KEYDOWN:
       case WM_KEYUP:
@@ -388,12 +458,29 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
 
          switch ( keyCode )
          {
+            case '1':
+            case VK_NUMPAD1:
+               TOGGLE_BOOL( g_winDebugFlags.noClip );
+               SetDiagnosticsStatus( g_winDebugFlags.noClip ? STR_WIN_DIAGNOSTICS_NOCLIP_ENABLED : STR_WIN_DIAGNOSTICS_NOCLIP_DISABLED );
+               break;
+            case '2':
+            case VK_NUMPAD2:
+               TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
+               SetDiagnosticsStatus( g_winDebugFlags.showHitBoxes ? STR_WIN_DIAGNOSTICS_HITBOXES_ENABLED : STR_WIN_DIAGNOSTICS_HITBOXES_DISABLED );
+               break;
+            case '3':
+            case VK_NUMPAD3:
+               TOGGLE_BOOL( g_winDebugFlags.moveFast );
+               SetDiagnosticsStatus( g_winDebugFlags.moveFast ? STR_WIN_DIAGNOSTICS_FASTMOVE_ENABLED : STR_WIN_DIAGNOSTICS_FASTMOVE_DISABLED );
+               break;
             case VK_F8:
                TOGGLE_BOOL( g_winDebugFlags.showDiagnostics );
+               SaveWinDebugConfig( Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
                if ( g_winDebugFlags.showDiagnostics )
                {
                   if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
                   {
+                     g_winGlobals.movingDiagnosticsWindow = True;
                      SetWindowPos( g_winGlobals.hWndDiagnostics,
                                    HWND_TOP,
                                    mainWindowRect.right + 16,
@@ -401,6 +488,7 @@ internal void HandleKeyboardInput( u32 keyCode, LPARAM flags )
                                    0,
                                    0,
                                    SWP_NOSIZE | SWP_SHOWWINDOW );
+                     g_winGlobals.movingDiagnosticsWindow = False;
                      SetFocus( g_winGlobals.hWndMain );
                   }
                   else

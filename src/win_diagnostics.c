@@ -7,6 +7,7 @@
 #include "input.h"
 #include "tile_map.h"
 #include "win_common.h"
+#include <shellapi.h>
 
 #define IDC_DIAGNOSTICS_RESETFLAGS_BTN 1000
 #define IDC_DIAGNOSTICS_NOCLIP_BTN 1001
@@ -17,6 +18,8 @@
 #define IDC_DIAGNOSTICS_INCSCALE_BTN 1006
 #define IDC_DIAGNOSTICS_DECSCALE_BTN 1007
 #define IDC_DIAGNOSTICS_DUMPSTATS_BTN 1008
+#define IDC_DIAGNOSTICS_CLEARLOG_BTN 1009
+#define IDC_DIAGNOSTICS_OPENLOG_BTN 1010
 
 internal HWND g_hWndResetFlagsBtn = NULL;
 internal HWND g_hWndNoClipBtn = NULL;
@@ -27,6 +30,8 @@ internal HWND g_hWndDecFpsBtn = NULL;
 internal HWND g_hWndIncScaleBtn = NULL;
 internal HWND g_hWndDecScaleBtn = NULL;
 internal HWND g_hWndDumpStatsBtn = NULL;
+internal HWND g_hWndClearLogBtn = NULL;
+internal HWND g_hWndOpenLogBtn = NULL;
 
 typedef struct WinDiagnosticsStatus_t
 {
@@ -36,12 +41,6 @@ typedef struct WinDiagnosticsStatus_t
 WinDiagnosticsStatus_t;
 
 internal WinDiagnosticsStatus_t g_diagStatus = { 0 };
-
-internal void SetDiagnosticsStatus( const char* msg )
-{
-   strcpy_s( g_diagStatus.msg, STRING_SIZE_DEFAULT, msg );
-   g_diagStatus.untilMicro = Platform_GetMicros() + ( 3 * 1000000 );
-}
 
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
 internal void UpdateDiagnosticsText( HWND hWnd );
@@ -70,18 +69,20 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
       return False;
    }
 
+   g_winGlobals.movingDiagnosticsWindow = True;
    g_winGlobals.hWndDiagnostics = CreateWindowExA( WS_EX_TOOLWINDOW,
                                                    g_winGlobals.diagnosticsWindowClassName,
-                                                   STR_DIAGNOSTICS_WINDOW_TITLE,
+                                                   STR_WIN_DIAGNOSTICS_WINDOW_TITLE,
                                                    WS_OVERLAPPED | WS_CAPTION | WS_CLIPCHILDREN,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    336,
-                                                   486,
+                                                   540,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
                                                    0 );
+   g_winGlobals.movingDiagnosticsWindow = False;
 
    if ( !g_winGlobals.hWndDiagnostics )
    {
@@ -206,7 +207,39 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                          hInstance,
                                          0 );
 
+   g_hWndClearLogBtn = CreateWindowExA( 0,
+                                        "BUTTON",
+                                        "Clear Log File",
+                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                        224,
+                                        448,
+                                        90,
+                                        26,
+                                        g_winGlobals.hWndDiagnostics,
+                                        (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_CLEARLOG_BTN,
+                                        hInstance,
+                                        0 );
+
+   g_hWndOpenLogBtn = CreateWindowExA( 0,
+                                       "BUTTON",
+                                       "Open Log File",
+                                       WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+                                       224,
+                                       416,
+                                       90,
+                                       26,
+                                       g_winGlobals.hWndDiagnostics,
+                                       (HMENU)(UINT_PTR)IDC_DIAGNOSTICS_OPENLOG_BTN,
+                                       hInstance,
+                                       0 );
+
    return True;
+}
+
+void SetDiagnosticsStatus( const char* msg )
+{
+   strcpy_s( g_diagStatus.msg, STRING_SIZE_DEFAULT, msg );
+   g_diagStatus.untilMicro = Platform_GetMicros() + ( 3 * 1000000 );
 }
 
 internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam )
@@ -255,25 +288,53 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
 
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.noClip );
-                  SetDiagnosticsStatus( g_winDebugFlags.noClip ? "No-clip mode enabled" : "No-clip mode disabled" );
+                  SetDiagnosticsStatus( g_winDebugFlags.noClip ? STR_WIN_DIAGNOSTICS_NOCLIP_ENABLED : STR_WIN_DIAGNOSTICS_NOCLIP_DISABLED );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_HITBOXES_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.showHitBoxes );
-                  SetDiagnosticsStatus( g_winDebugFlags.showHitBoxes ? "Showing hit boxes" : "Hiding hit boxes" );
+                  SetDiagnosticsStatus( g_winDebugFlags.showHitBoxes ? STR_WIN_DIAGNOSTICS_HITBOXES_ENABLED : STR_WIN_DIAGNOSTICS_HITBOXES_DISABLED );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_FASTMOVE_BTN:
                   TOGGLE_BOOL( g_winDebugFlags.moveFast );
-                  SetDiagnosticsStatus( g_winDebugFlags.moveFast ? "Fast movement enabled" : "Fast movement disabled" );
+                  SetDiagnosticsStatus( g_winDebugFlags.moveFast ? STR_WIN_DIAGNOSTICS_FASTMOVE_ENABLED : STR_WIN_DIAGNOSTICS_FASTMOVE_DISABLED );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
 
                case IDC_DIAGNOSTICS_DUMPSTATS_BTN:
                   MemArena_DumpStats( g_winGlobals.memArena );
                   SetDiagnosticsStatus( "Memory stats dumped to log file" );
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+
+               case IDC_DIAGNOSTICS_CLEARLOG_BTN:
+               {
+                  HANDLE logFile = CreateFileA( g_winGlobals.logFilePath,
+                                                GENERIC_WRITE,
+                                                FILE_SHARE_READ,
+                                                NULL,
+                                                CREATE_ALWAYS,
+                                                FILE_ATTRIBUTE_NORMAL,
+                                                NULL );
+                  if ( logFile == INVALID_HANDLE_VALUE )
+                  {
+                     SetDiagnosticsStatus( "Failed to clear log file" );
+                  }
+                  else
+                  {
+                     CloseHandle( logFile );
+                     SetDiagnosticsStatus( "Log file cleared" );
+                  }
+                  SetFocus( g_winGlobals.hWndMain );
+                  return 0;
+               }
+
+               case IDC_DIAGNOSTICS_OPENLOG_BTN:
+                  ShellExecuteA( hWnd, "open", g_winGlobals.logFilePath, NULL, NULL, SW_SHOWNORMAL );
+                  SetDiagnosticsStatus( "Opening log file" );
                   SetFocus( g_winGlobals.hWndMain );
                   return 0;
             }
@@ -298,6 +359,8 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
                case IDC_DIAGNOSTICS_INCSCALE_BTN:
                case IDC_DIAGNOSTICS_DECSCALE_BTN:
                case IDC_DIAGNOSTICS_DUMPSTATS_BTN:
+               case IDC_DIAGNOSTICS_CLEARLOG_BTN:
+               case IDC_DIAGNOSTICS_OPENLOG_BTN:
                   isEnabled = False;
                   break;
                case IDC_DIAGNOSTICS_NOCLIP_BTN:
@@ -352,6 +415,12 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
       case WM_PAINT:
          UpdateDiagnosticsText( hWnd );
          return 0;
+      case WM_MOVE:
+         if ( !g_winGlobals.movingDiagnosticsWindow )
+         {
+            g_winGlobals.anchorDiagnosticsWindow = False;
+         }
+         return DefWindowProcA( hWnd, uMsg, wParam, lParam );
 
       default:
          return DefWindowProcA( hWnd, uMsg, wParam, lParam );
@@ -560,16 +629,20 @@ internal void ChangeGameFps( b32 increase )
    if ( increase && fps < MAX_GAME_FPS )
    {
       Clock_SetFps( clock, fps + GAME_FPS_STEP );
+      SaveWinDebugConfig( fps + GAME_FPS_STEP );
    }
    else if ( !increase && fps > MIN_GAME_FPS )
    {
       Clock_SetFps( clock, fps - GAME_FPS_STEP );
+      SaveWinDebugConfig( fps - GAME_FPS_STEP );
    }
 }
 
 internal void ResizeScreen( b32 increase )
 {
    b32 changed;
+   RECT mainWindowRect;
+   int newWidth, newHeight;
 
    changed = False;
    if ( increase && g_winGlobals.graphicsScale < MAX_GRAPHICS_SCALE )
@@ -585,9 +658,9 @@ internal void ResizeScreen( b32 increase )
 
    if ( changed )
    {
-      RECT mainWindowRect;
-      int newWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight;
-      int newHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop;
+      g_winGlobals.anchorDiagnosticsWindow = True;
+      newWidth = (int)( DISPLAY_WIDTH * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingRight;
+      newHeight = (int)( DISPLAY_HEIGHT * g_winGlobals.graphicsScale ) + g_winGlobals.clientPaddingTop;
 
       SetWindowPos( g_winGlobals.hWndMain,
                     NULL, // No change in Z-order
@@ -598,6 +671,7 @@ internal void ResizeScreen( b32 increase )
 
       if ( GetWindowRect( g_winGlobals.hWndMain, &mainWindowRect ) )
       {
+         g_winGlobals.movingDiagnosticsWindow = True;
          SetWindowPos( g_winGlobals.hWndDiagnostics,
                        HWND_TOP,
                        mainWindowRect.left + newWidth + 16,
@@ -605,6 +679,9 @@ internal void ResizeScreen( b32 increase )
                        0,
                        0,
                        SWP_NOSIZE | SWP_NOACTIVATE );
+         g_winGlobals.movingDiagnosticsWindow = False;
       }
+
+      SaveWinDebugConfig( Clock_GetFps( Game_GetClock( g_winGlobals.game ) ) );
    }
 }

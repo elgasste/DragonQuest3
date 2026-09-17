@@ -19,6 +19,7 @@ add_executable(DragonQuest3
    src/mem_arena.c
    src/npc.c
    src/pixel_buffer.c
+   src/player.c
    src/sprite.c
    src/sprite_texture_set.c
    src/tile_map.c
@@ -36,7 +37,7 @@ if(WIN32)
       src/win_test_game_data.c)
    set_target_properties(DragonQuest3 PROPERTIES WIN32_EXECUTABLE TRUE)
    target_compile_options(DragonQuest3 PRIVATE /W4)
-   target_link_libraries(DragonQuest3 PRIVATE winmm msimg32 shlwapi)
+   target_link_libraries(DragonQuest3 PRIVATE winmm msimg32 shlwapi shell32)
 endif()
 
 target_include_directories(DragonQuest3 PRIVATE include)
