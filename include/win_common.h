@@ -56,6 +56,7 @@ void SetDiagnosticsStatus( const char* msg );
 // win_main.c
 void MemArena_DumpStats( MemArena_t* memArena );
 void SaveWinDebugConfig( u32 targetFps );
+void ToggleDiagnosticsWindow( void );
 
 // win_test_game_data.c
 void WriteTestGameDataFile( const char *filePath );

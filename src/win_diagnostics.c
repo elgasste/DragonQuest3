@@ -73,7 +73,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    g_winGlobals.hWndDiagnostics = CreateWindowExA( WS_EX_TOOLWINDOW,
                                                    g_winGlobals.diagnosticsWindowClassName,
                                                    STR_WIN_DIAGNOSTICS_WINDOW_TITLE,
-                                                   WS_OVERLAPPED | WS_CAPTION | WS_CLIPCHILDREN,
+                                                   WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    336,
@@ -247,7 +247,7 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
    switch ( uMsg )
    {
       case WM_CLOSE:
-         // this window should stay open for the duration of the app
+         ToggleDiagnosticsWindow();
          return 0;
       case WM_COMMAND:
          if ( HIWORD( wParam ) == BN_CLICKED )
