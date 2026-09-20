@@ -19,7 +19,7 @@ void Game_TicPhysics( Game_t* game )
    TileMap_t* tileMap;
 
    tileMap = Game_GetTileMap( game );
-   GamePhysics_TicEntity( game, Game_GetPlayerEntity( game ), True );
+   GamePhysics_TicEntity( game, Game_GetActivePlayerEntity( game ), True );
 
    for ( i = 0; i < TileMap_GetNpcCount( tileMap ); i++ )
    {
@@ -74,7 +74,7 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
          entityRect.x += stepX * WORLD_UNITS_PER_PIXEL;
          if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, entityRect, tileSize ) ||
               GamePhysics_RectCollidesWithNpc( tileMap, entity, entityRect ) ||
-              ( !isPlayer && Utility_RectsOverlap( entityRect, Entity_GetRect( Game_GetPlayerEntity( game ) ) ) ) )
+              ( !isPlayer && Utility_RectsOverlap( entityRect, Entity_GetRect( Game_GetActivePlayerEntity( game ) ) ) ) )
          {
             entityRect.x -= stepX * WORLD_UNITS_PER_PIXEL;
          }
@@ -85,7 +85,7 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
          entityRect.y += stepY * WORLD_UNITS_PER_PIXEL;
          if ( GamePhysics_RectCollidesWithNonPassableTile( tileMap, entityRect, tileSize ) ||
               GamePhysics_RectCollidesWithNpc( tileMap, entity, entityRect ) ||
-              ( !isPlayer && Utility_RectsOverlap( entityRect, Entity_GetRect( Game_GetPlayerEntity( game ) ) ) ) )
+              ( !isPlayer && Utility_RectsOverlap( entityRect, Entity_GetRect( Game_GetActivePlayerEntity( game ) ) ) ) )
          {
             entityRect.y -= stepY * WORLD_UNITS_PER_PIXEL;
          }

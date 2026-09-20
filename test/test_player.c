@@ -123,10 +123,19 @@ void tearDown( void ) {}
 
 internal Player_t* CreateTestPlayer( void )
 {
-	return Player_Create( (MemArena_t*)1,
-	                      (ActiveSpriteTextureSet_t*)2,
-	                      (Vector2i32_t){ 12, 14 },
-	                      (Vector2i32_t){ -2, 3 } );
+	Player_t* player = (Player_t*)MemArena_AllocMem( (MemArena_t*)1, Player_GetStructSize() );
+	Player_Init( player,
+	             (MemArena_t*)1,
+	             (ActiveSpriteTextureSet_t*)2,
+	             (Vector2i32_t){ 12, 14 },
+	             (Vector2i32_t){ -2, 3 } );
+	return player;
+}
+
+internal void DestroyTestPlayer( Player_t* player )
+{
+	Player_Free( (MemArena_t*)1, player );
+	MemArena_FreeMem( (MemArena_t*)1, player );
 }
 
 void test_Player_GetStructSize_ReturnsNonZeroSize( void )
@@ -141,7 +150,7 @@ void test_Player_Create_InitializesDefaultName( void )
 	TEST_ASSERT_EQUAL_STRING( "JDoe", Player_GetName( player ) );
 	TEST_ASSERT_EQUAL_UINT( 3, g_allocCount );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_Create_InitializesEntityState( void )
@@ -165,7 +174,7 @@ void test_Player_Create_InitializesEntityState( void )
 	TEST_ASSERT_EQUAL_PTR( (ActiveSpriteTextureSet_t*)2,
 	                       ActiveSprite_GetTextureSet( Entity_GetSprite( entity ) ) );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_SetName_UpdatesName( void )
@@ -177,7 +186,7 @@ void test_Player_SetName_UpdatesName( void )
 	TEST_ASSERT_EQUAL_STRING( "Hero", Player_GetName( player ) );
 	TEST_ASSERT_EQUAL_UINT( 0, g_fatalErrorCount );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_SetName_AcceptsMaximumLengthName( void )
@@ -189,7 +198,7 @@ void test_Player_SetName_AcceptsMaximumLengthName( void )
 	TEST_ASSERT_EQUAL_STRING( "12345678", Player_GetName( player ) );
 	TEST_ASSERT_EQUAL_UINT( 0, g_fatalErrorCount );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_SetName_RejectsNameLongerThanMaximum( void )
@@ -201,14 +210,14 @@ void test_Player_SetName_RejectsNameLongerThanMaximum( void )
 	TEST_ASSERT_EQUAL_STRING( "JDoe", Player_GetName( player ) );
 	TEST_ASSERT_EQUAL_UINT( 1, g_fatalErrorCount );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_Free_ReleasesPlayer( void )
 {
 	Player_t* player = CreateTestPlayer();
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 
 	TEST_ASSERT_EQUAL_UINT( 3, g_freeCount );
 }
@@ -222,7 +231,7 @@ int main( void )
 	RUN_TEST( test_Player_Create_InitializesDefaultName );
 	RUN_TEST( test_Player_Create_InitializesEntityState );
 
-   RUN_TEST( test_Player_Free_ReleasesPlayer );
+    RUN_TEST( test_Player_Free_ReleasesPlayer );
 
 	RUN_TEST( test_Player_SetName_UpdatesName );
 	RUN_TEST( test_Player_SetName_AcceptsMaximumLengthName );

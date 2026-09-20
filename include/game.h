@@ -35,11 +35,13 @@ TileTextureSet_t* Game_GetTileTextureSet( Game_t* game );
 ActiveSpriteTextureSet_t* Game_GetActiveSpriteTextureSet( Game_t* game );
 TileMap_t* Game_GetTileMap( Game_t* game );
 AnimationChain_t* Game_GetAnimationChain( Game_t* game );
-Entity_t* Game_GetPlayerEntity( Game_t* game );
+u32 Game_GetPlayerCount( Game_t* game );
+Entity_t* Game_GetPlayerEntity( Game_t* game, u32 playerIndex );
+Entity_t* Game_GetActivePlayerEntity( Game_t* game );
 
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
-void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect );
+void Game_SetPlayerRect( Game_t* game, u32 playerIndex, Vector4i32_t playerRect );
 void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex );
 
 // game_input.c

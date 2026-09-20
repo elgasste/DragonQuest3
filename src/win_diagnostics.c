@@ -449,7 +449,7 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    game = g_winGlobals.game;
    clock = Game_GetClock( game );
    input = Game_GetInput( game );
-   playerEntity = Game_GetPlayerEntity( game );
+   playerEntity = Game_GetActivePlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
 
    GetClientRect( hWnd, &clientRect );
@@ -505,7 +505,7 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   playerTileIndex = Entity_GetTileIndex( Game_GetPlayerEntity( game ) );
+   playerTileIndex = Entity_GetTileIndex( Game_GetActivePlayerEntity( game ) );
    playerTileX = playerTileIndex % TileMap_GetTilesX( Game_GetTileMap( game ) );
    playerTileY = playerTileIndex / TileMap_GetTilesX( Game_GetTileMap( game ) );
    sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u (%u, %u)", playerTileIndex, playerTileX, playerTileY );

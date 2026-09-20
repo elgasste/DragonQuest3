@@ -84,6 +84,7 @@ static TileMap_t* g_tileMap;
 static TileTextureSet_t* g_tileTextureSet;
 static ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
 static Entity_t g_playerEntity;
+static Entity_t g_additionalPlayerEntities[3];
 static ActiveSprite_t g_playerSprite;
 static Entity_t g_npcEntity;
 static ActiveSprite_t g_npcSprite;
@@ -92,7 +93,8 @@ static AnimationChain_t g_animationChain;
 static Animation_t g_animation;
 static u32 g_playerTexture[1];
 static u32 g_npcTexture[1];
-static DisplayDrawBufferCall_t g_displayDrawBufferCalls[2];
+static DisplayDrawBufferCall_t g_displayDrawBufferCalls[8];
+static u32 g_playerCount;
 static Vector4i32_t g_viewportInPixels;
 static Vector4i32_t g_playerRect;
 static DisplayFillCall_t g_displayFillCall;
@@ -135,6 +137,8 @@ void setUp( void )
    g_playerEntity.sprite = &g_playerSprite;
    g_playerEntity.spriteOffset.x = -2;
    g_playerEntity.spriteOffset.y = 3;
+   memset( g_additionalPlayerEntities, 0, sizeof( g_additionalPlayerEntities ) );
+   g_playerCount = 1;
    g_npcEntity.rect.x = 80 * WORLD_UNITS_PER_PIXEL;
    g_npcEntity.rect.y = 100 * WORLD_UNITS_PER_PIXEL;
    g_npcEntity.rect.w = 16 * WORLD_UNITS_PER_PIXEL;
@@ -263,10 +267,16 @@ Vector4i32_t TileMap_GetViewportInPixels( TileMap_t* tileMap )
    return g_viewportInPixels;
 }
 
-Entity_t* Game_GetPlayerEntity( Game_t* game )
+u32 Game_GetPlayerCount( Game_t* game )
 {
    UNUSED_PARAM( game );
-   return &g_playerEntity;
+   return g_playerCount;
+}
+
+Entity_t* Game_GetPlayerEntity( Game_t* game, u32 playerIndex )
+{
+   UNUSED_PARAM( game );
+   return playerIndex == 0 ? &g_playerEntity : &g_additionalPlayerEntities[playerIndex - 1];
 }
 
 Vector4i32_t Entity_GetRect( Entity_t* entity )
@@ -351,7 +361,7 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
    g_displayDrawBufferCall.displayX = displayX;
    g_displayDrawBufferCall.displayY = displayY;
    g_displayDrawBufferCall.callCount++;
-   if ( g_displayDrawBufferCall.callCount <= 2 )
+   if ( g_displayDrawBufferCall.callCount <= 8 )
    {
       g_displayDrawBufferCalls[g_displayDrawBufferCall.callCount - 1] = g_displayDrawBufferCall;
    }
@@ -452,6 +462,24 @@ void test_Game_Render_DrawsEntitiesInVerticalOrder( void )
    TEST_ASSERT_EQUAL_INT( 43, g_displayDrawBufferCalls[1].displayY );
 }
 
+void test_Game_Render_DrawsAllPlayersInVerticalOrder( void )
+{
+   g_playerCount = 3;
+   g_additionalPlayerEntities[0] = g_playerEntity;
+   g_additionalPlayerEntities[1] = g_playerEntity;
+   g_additionalPlayerEntities[0].rect.y = 40 * WORLD_UNITS_PER_PIXEL;
+   g_additionalPlayerEntities[1].rect.y = 80 * WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.rect.y = 120 * WORLD_UNITS_PER_PIXEL;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_INT( 4, g_displayDrawBufferCall.callCount );
+   TEST_ASSERT_EQUAL_INT( 23, g_displayDrawBufferCalls[0].displayY );
+   TEST_ASSERT_EQUAL_INT( 43, g_displayDrawBufferCalls[1].displayY );
+   TEST_ASSERT_EQUAL_INT( 63, g_displayDrawBufferCalls[2].displayY );
+   TEST_ASSERT_EQUAL_INT( 99, g_displayDrawBufferCalls[3].displayY );
+}
+
 void test_Game_Render_DoesNotDrawNpcOutsideViewport( void )
 {
    g_npcEntity.rect.x = 400 * WORLD_UNITS_PER_PIXEL;
@@ -544,6 +572,7 @@ int main( void )
    RUN_TEST( test_Game_Render_DrawsPlayerRelativeToViewport );
    RUN_TEST( test_Game_Render_DrawsVisibleNpcRelativeToViewport );
    RUN_TEST( test_Game_Render_DrawsEntitiesInVerticalOrder );
+   RUN_TEST( test_Game_Render_DrawsAllPlayersInVerticalOrder );
    RUN_TEST( test_Game_Render_DoesNotDrawNpcOutsideViewport );
    RUN_TEST( test_Game_Render_AccountsForSpriteOffsetWhenDeterminingVisibility );
    RUN_TEST( test_Game_Render_PresentsDisplayBuffer );

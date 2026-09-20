@@ -53,7 +53,7 @@ Clock_t* Game_GetClock( Game_t* game )
    return (Clock_t*)1;
 }
 
-Entity_t* Game_GetPlayerEntity( Game_t* game )
+Entity_t* Game_GetActivePlayerEntity( Game_t* game )
 {
    return game->playerEntity;
 }
