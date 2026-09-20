@@ -327,12 +327,18 @@ internal u32* CreateArrowTileTexture( u32 tileSize, u32 color, Direction_t dir )
 internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void )
 {
    u32 spriteIndex, color1, color2;
+   u32 colors[16][3] = {
+      { 255, 0, 0 }, { 0, 255, 0 }, { 0, 0, 255 }, { 255, 255, 0 },
+      { 255, 0, 255 }, { 0, 255, 255 }, { 255, 128, 0 }, { 128, 0, 255 },
+      { 128, 64, 0 }, { 255, 128, 192 }, { 128, 128, 128 }, { 255, 255, 255 },
+      { 0, 128, 0 }, { 0, 128, 128 }, { 128, 0, 0 }, { 64, 64, 64 }
+   };
    u32 *spriteTexture, *arrowTexture1, *arrowTexture2;
    Direction_t dir;
    ActiveSpriteTextureSetMock_t* textureSet;
 
    textureSet = (ActiveSpriteTextureSetMock_t*)malloc( sizeof( ActiveSpriteTextureSetMock_t ) );
-   textureSet->info.count = 2;
+   textureSet->info.count = 16;
    textureSet->info.frameSize = 16;
    textureSet->info.frameCount = 2;
    textureSet->textures = (u32*)malloc( textureSet->info.count * textureSet->info.frameSize * textureSet->info.frameSize * textureSet->info.frameCount * Direction_Count * sizeof( u32 ) );
@@ -341,12 +347,10 @@ internal ActiveSpriteTextureSetMock_t* CreateTestActiveSpriteTextureSet( void )
    {
       spriteTexture = &textureSet->textures[spriteIndex * textureSet->info.frameSize * textureSet->info.frameSize * textureSet->info.frameCount * Direction_Count];
 
-      switch( spriteIndex )
-      {
-         case 0: color1 = 0xFF000000u | RGB( 255, 0, 0 ); color2 = 0xFF000000u | RGB( 200, 0, 0 ); break;
-         case 1: color1 = 0xFF000000u | RGB( 0, 255, 0 ); color2 = 0xFF000000u | RGB( 0, 200, 0 ); break;
-         default: color1 = 0xFF000000u | RGB( 255, 255, 255 ); color2 = 0xFF000000u | RGB( 200, 200, 200 ); break;
-      }
+      color1 = 0xFF000000u | RGB( colors[spriteIndex][0], colors[spriteIndex][1], colors[spriteIndex][2] );
+      color2 = 0xFF000000u | RGB( colors[spriteIndex][0] * 4 / 5,
+                                  colors[spriteIndex][1] * 4 / 5,
+                                  colors[spriteIndex][2] * 4 / 5 );
 
       for ( dir = 0; dir < Direction_Count; dir++ )
       {
