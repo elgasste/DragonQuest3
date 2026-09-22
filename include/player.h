@@ -7,8 +7,7 @@
 
 #define PLAYER_NAME_BUFFER_SIZE     9
 #define PLAYER_NAME_MAX_LENGTH      ( PLAYER_NAME_BUFFER_SIZE - 1 )
-#define PLAYER_CHAIN_CONSTANT       3.75f
-#define PLAYER_MOVE_HISTORY_SIZE    ( (u32)( CLOCK_MAX_FPS / PLAYER_CHAIN_CONSTANT ) )
+#define PLAYER_MOVE_HISTORY_SIZE    17
 
 typedef struct PlayerMovement_t
 {

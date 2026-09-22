@@ -86,7 +86,8 @@ void Player_SetName( Player_t* player, const char* name )
 
 void Player_SetMoveHistoryCountFromFps( Player_t* player, u32 fps )
 {
-   player->moveHistoryCount = (u32)( fps / PLAYER_CHAIN_CONSTANT );
+   UNUSED_PARAM( fps );
+   player->moveHistoryCount = PLAYER_MOVE_HISTORY_SIZE;
    Player_ResetChaining( player );
 }
 
