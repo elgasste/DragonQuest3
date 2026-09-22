@@ -82,10 +82,10 @@ void MemArena_FreeMem( MemArena_t* arena, void* mem )
    free( mem );
 }
 
-Clock_t* Clock_Create( MemArena_t* memArena )
+Clock_t* Clock_Create( MemArena_t* memArena, u32 fps )
 {
    g_clock = (Clock_t*)MemArena_AllocMem( memArena, sizeof( Clock_t ) );
-   g_clock->fps = GAME_DEFAULT_FPS;
+   g_clock->fps = fps;
    return g_clock;
 }
 
@@ -110,6 +110,11 @@ r32 Clock_GetFrameSec( Clock_t* clock )
 {
    UNUSED_PARAM( clock );
    return g_frameSec;
+}
+
+u32 Clock_GetFps( Clock_t* clock )
+{
+   return clock->fps;
 }
 
 Input_t* Input_Create( MemArena_t* memArena )
@@ -161,8 +166,10 @@ void Player_Init( Player_t* player,
                   MemArena_t* arena,
                   ActiveSpriteTextureSet_t* textureSet,
                   Vector2i32_t size,
-                  Vector2i32_t spriteOffset )
+                  Vector2i32_t spriteOffset,
+                  u32 fps )
 {
+	UNUSED_PARAM( fps );
    player->entity = Entity_Create( arena, ActiveSprite_Create( arena, textureSet ) );
    ActiveSprite_SetTextureIndex( Entity_GetSprite( player->entity ), 1 );
    Entity_SetSize( player->entity, size.x, size.y );
@@ -177,6 +184,11 @@ size_t Player_GetStructSize( void )
 void Player_Free( MemArena_t* arena, Player_t* player )
 {
    Entity_Free( player->entity, arena );
+}
+
+void Player_ResetChaining( Player_t* player )
+{
+   UNUSED_PARAM( player );
 }
 
 Entity_t* Player_GetEntity( const Player_t* player )
@@ -613,6 +625,19 @@ void test_Game_GetActivePlayerEntity_UsesPlayerOrder( void )
    Game_Free( game, (MemArena_t*)1 );
 }
 
+void test_Game_Create_InitializesPlayerOrder( void )
+{
+   Game_t* game = CreateGame();
+
+   TEST_ASSERT_EQUAL_UINT( GAME_MAX_PLAYERS, Game_GetPlayerCount( game ) );
+   for ( u32 i = 0; i < GAME_MAX_PLAYERS; i++ )
+   {
+      TEST_ASSERT_EQUAL_UINT( i, Game_GetPlayerOrder( game )[i] );
+   }
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
 void test_Game_Create_InitializesDependenciesAndDefaultState( void )
 {
    Vector4i32_t viewportInUnits;
@@ -807,7 +832,8 @@ int main( void )
    RUN_TEST( test_Game_GetPlayerEntity_ReturnsRequestedEntity );
    
    RUN_TEST( test_Game_GetActivePlayerEntity_UsesPlayerOrder );
-
+   
+   RUN_TEST( test_Game_Create_InitializesPlayerOrder );
    RUN_TEST( test_Game_Create_InitializesDependenciesAndDefaultState );
 
    RUN_TEST( test_Game_SetPlayerRect_UpdatesPlayerRectangle );

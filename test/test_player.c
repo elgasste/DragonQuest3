@@ -128,7 +128,8 @@ internal Player_t* CreateTestPlayer( void )
 	             (MemArena_t*)1,
 	             (ActiveSpriteTextureSet_t*)2,
 	             (Vector2i32_t){ 12, 14 },
-	             (Vector2i32_t){ -2, 3 } );
+	             (Vector2i32_t){ -2, 3 },
+	             60 );
 	return player;
 }
 
@@ -222,6 +223,53 @@ void test_Player_Free_ReleasesPlayer( void )
 	TEST_ASSERT_EQUAL_UINT( 3, g_freeCount );
 }
 
+void test_Player_AddMovement_StoresMovementAndAdvancesChainIndex( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 24, 36 }, Direction_Right };
+
+	Player_AddMovement( player, movement );
+
+	TEST_ASSERT_EQUAL_INT( 24, Player_GetMovement( player, 0 ).newPos.x );
+	TEST_ASSERT_EQUAL_INT( 36, Player_GetMovement( player, 0 ).newPos.y );
+	TEST_ASSERT_EQUAL_INT( Direction_Right, Player_GetMovement( player, 0 ).newDir );
+	TEST_ASSERT_EQUAL_UINT( 1, Player_GetMovementChainIndex( player ) );
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+
+	DestroyTestPlayer( player );
+}
+
+void test_Player_AddMovement_SetsChainNextPlayerWhenHistoryWraps( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 24, 36 }, Direction_Down };
+
+	for ( u32 i = 0; i < PLAYER_MOVE_HISTORY_SIZE; i++ )
+	{
+		Player_AddMovement( player, movement );
+	}
+
+	TEST_ASSERT_TRUE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
+
+	DestroyTestPlayer( player );
+}
+
+void test_Player_ResetChaining_ClearsChainState( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 24, 36 }, Direction_Up };
+
+	Player_AddMovement( player, movement );
+	Player_SetChainNextPlayer( player, True );
+	Player_ResetChaining( player );
+
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
+
+	DestroyTestPlayer( player );
+}
+
 int main( void )
 {
 	UNITY_BEGIN();
@@ -236,6 +284,11 @@ int main( void )
 	RUN_TEST( test_Player_SetName_UpdatesName );
 	RUN_TEST( test_Player_SetName_AcceptsMaximumLengthName );
 	RUN_TEST( test_Player_SetName_RejectsNameLongerThanMaximum );
+
+	RUN_TEST( test_Player_AddMovement_StoresMovementAndAdvancesChainIndex );
+	RUN_TEST( test_Player_AddMovement_SetsChainNextPlayerWhenHistoryWraps );
+	
+	RUN_TEST( test_Player_ResetChaining_ClearsChainState );
 
 	return UNITY_END();
 }

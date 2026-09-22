@@ -2,6 +2,9 @@
 #define CLOCK_H
 
 #include "common.h"
+
+#define CLOCK_MAX_FPS      120
+
 typedef struct MemArena_t MemArena_t;
 
 typedef struct Clock_t Clock_t;

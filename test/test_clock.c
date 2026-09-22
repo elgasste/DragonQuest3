@@ -74,6 +74,19 @@ void test_Clock_SetFps_UpdatesFrameRateValues( void )
    Clock_Free( clock, 0 );
 }
 
+void test_Clock_SetFps_AcceptsRequestedFrameRate( void )
+{
+   Clock_t* clock;
+
+   clock = Clock_Create( 0, 30 );
+
+   Clock_SetFps( clock, 240 );
+   TEST_ASSERT_EQUAL_UINT( 240, Clock_GetFps( clock ) );
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f / 240.0f, Clock_GetFrameSec( clock ) );
+
+   Clock_Free( clock, 0 );
+}
+
 void test_Clock_StartFrame_FirstFrameInitializesAbsoluteTimes( void )
 {
    Clock_t* clock;
@@ -192,6 +205,7 @@ int main( void )
    RUN_TEST( test_Clock_Create_InitializesClockState );
 
    RUN_TEST( test_Clock_SetFps_UpdatesFrameRateValues );
+   RUN_TEST( test_Clock_SetFps_AcceptsRequestedFrameRate );
 
    RUN_TEST( test_Clock_StartFrame_FirstFrameInitializesAbsoluteTimes );
    RUN_TEST( test_Clock_StartFrame_LaterFramesPreserveAbsoluteStartTime );
