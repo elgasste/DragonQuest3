@@ -1,5 +1,6 @@
 #include "mocks/mock_entity.h"
 #include "mocks/mock_npc.h"
+#include "mocks/mock_player.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
 
@@ -20,6 +21,7 @@ Game_t;
 
 global Game_t g_game;
 global Entity_t g_entity;
+global Player_t g_player;
 global Entity_t g_npcEntity;
 global Entity_t g_npcEntity2;
 global Npc_t g_npc;
@@ -53,9 +55,27 @@ Clock_t* Game_GetClock( Game_t* game )
    return (Clock_t*)1;
 }
 
+Player_t* Game_GetPlayer( Game_t* game, u32 playerIndex )
+{
+   UNUSED_PARAM( game );
+   UNUSED_PARAM( playerIndex );
+   return &g_player;
+}
+
+Player_t* Game_GetActivePlayer( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   return &g_player;
+}
+
 Entity_t* Game_GetActivePlayerEntity( Game_t* game )
 {
    return game->playerEntity;
+}
+
+Entity_t* Player_GetEntity( const Player_t* player )
+{
+   return player->entity;
 }
 
 TileMap_t* Game_GetTileMap( Game_t* game )
@@ -238,6 +258,7 @@ void setUp( void )
       g_tiles[i].isPassable = True;
    }
    g_textureSet.info.tileSize = 16;
+   g_player.entity = &g_entity;
    g_game.playerEntity = &g_entity;
    g_game.tileMap = &g_tileMap;
    g_game.tileTextureSet = &g_textureSet;

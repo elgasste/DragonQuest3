@@ -9,6 +9,7 @@
 
 // TODO: this should probably also go somewhere else
 #define GAME_DEFAULT_FPS   60
+#define GAME_MAX_PLAYERS   4
 
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
 typedef struct AnimationChain_t AnimationChain_t;
@@ -18,6 +19,7 @@ typedef struct Entity_t Entity_t;
 typedef struct GameData_t GameData_t;
 typedef struct Input_t Input_t;
 typedef struct MemArena_t MemArena_t;
+typedef struct Player_t Player_t;
 typedef struct TileMap_t TileMap_t;
 typedef struct TileTextureSet_t TileTextureSet_t;
 
@@ -38,6 +40,9 @@ AnimationChain_t* Game_GetAnimationChain( Game_t* game );
 u32 Game_GetPlayerCount( Game_t* game );
 Entity_t* Game_GetPlayerEntity( Game_t* game, u32 playerIndex );
 Entity_t* Game_GetActivePlayerEntity( Game_t* game );
+Player_t* Game_GetPlayer( Game_t* game, u32 playerIndex );
+Player_t* Game_GetActivePlayer( Game_t* game );
+u32* Game_GetPlayerOrder( Game_t* game );
 
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );

@@ -4,6 +4,7 @@
 #include "game.h"
 #include "npc.h"
 #include "platform.h"
+#include "player.h"
 #include "sprite.h"
 #include "sprite_texture_set.h"
 #include "tile_map.h"

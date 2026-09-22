@@ -589,6 +589,30 @@ void test_Game_GetStructSize_ReturnsNonZeroSize( void )
    TEST_ASSERT_GREATER_THAN_size_t( 0, Game_GetStructSize() );
 }
 
+void test_Game_GetPlayerEntity_ReturnsRequestedEntity( void )
+{
+   Game_t* game = CreateGame();
+
+   TEST_ASSERT_EQUAL_PTR( Player_GetEntity( Game_GetPlayer( game, 0 ) ), Game_GetPlayerEntity( game, 0 ) );
+   TEST_ASSERT_EQUAL_PTR( Player_GetEntity( Game_GetPlayer( game, 2 ) ), Game_GetPlayerEntity( game, 2 ) );
+   TEST_ASSERT_EQUAL_PTR( Player_GetEntity( Game_GetPlayer( game, 3 ) ), Game_GetPlayerEntity( game, 3 ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_GetActivePlayerEntity_UsesPlayerOrder( void )
+{
+   Game_t* game = CreateGame();
+
+   Game_GetPlayerOrder( game )[0] = 2;
+   TEST_ASSERT_EQUAL_PTR( Player_GetEntity( Game_GetPlayer( game, 2 ) ), Game_GetActivePlayerEntity( game ) );
+
+   Game_GetPlayerOrder( game )[0] = 1;
+   TEST_ASSERT_EQUAL_PTR( Player_GetEntity( Game_GetPlayer( game, 1 ) ), Game_GetActivePlayerEntity( game ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
 void test_Game_Create_InitializesDependenciesAndDefaultState( void )
 {
    Vector4i32_t viewportInUnits;
@@ -621,7 +645,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_UINT( 40, Game_GetPlayerEntity( game, 0 )->tileIndex );
    TEST_ASSERT_EQUAL_PTR( g_firstPlayerSprite, Entity_GetSprite( Game_GetPlayerEntity( game, 0 ) ) );
    TEST_ASSERT_EQUAL_PTR( g_activeSpriteTextureSet, ActiveSprite_GetTextureSet( g_playerSprite ) );
-   TEST_ASSERT_EQUAL_UINT( 1, g_playerSpriteTextureIndex );
+   TEST_ASSERT_EQUAL_UINT( 3, g_playerSpriteTextureIndex );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).x );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).y );
    TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
@@ -779,6 +803,10 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_GetStructSize_ReturnsNonZeroSize );
+   
+   RUN_TEST( test_Game_GetPlayerEntity_ReturnsRequestedEntity );
+   
+   RUN_TEST( test_Game_GetActivePlayerEntity_UsesPlayerOrder );
 
    RUN_TEST( test_Game_Create_InitializesDependenciesAndDefaultState );
 

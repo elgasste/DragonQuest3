@@ -2,6 +2,7 @@
 #include "entity.h"
 #include "game.h"
 #include "input.h"
+#include "player.h"
 #include "sprite.h"
 
 #define DIAGONAL_VELOCITY_MULTIPLIER   0.707f

@@ -5,6 +5,7 @@
 #include "mocks/mock_animation.h"
 #include "mocks/mock_entity.h"
 #include "mocks/mock_npc.h"
+#include "mocks/mock_player.h"
 #include "sprite.h"
 #include "sprite_texture_set.h"
 #include "tile_map.h"
@@ -84,6 +85,8 @@ static TileMap_t* g_tileMap;
 static TileTextureSet_t* g_tileTextureSet;
 static ActiveSpriteTextureSet_t* g_activeSpriteTextureSet;
 static Entity_t g_playerEntity;
+static Player_t g_player;
+static Player_t g_players[3];
 static Entity_t g_additionalPlayerEntities[3];
 static ActiveSprite_t g_playerSprite;
 static Entity_t g_npcEntity;
@@ -133,6 +136,10 @@ void setUp( void )
    g_playerRect.y = 60 * WORLD_UNITS_PER_PIXEL;
    g_playerRect.w = 12 * WORLD_UNITS_PER_PIXEL;
    g_playerRect.h = 14 * WORLD_UNITS_PER_PIXEL;
+   g_player.entity = &g_playerEntity;
+   g_players[0] = g_player;
+   g_players[1].entity = &g_additionalPlayerEntities[0];
+   g_players[2].entity = &g_additionalPlayerEntities[1];
    g_playerEntity.rect = g_playerRect;
    g_playerEntity.sprite = &g_playerSprite;
    g_playerEntity.spriteOffset.x = -2;
@@ -273,10 +280,21 @@ u32 Game_GetPlayerCount( Game_t* game )
    return g_playerCount;
 }
 
+Player_t* Game_GetPlayer( Game_t* game, u32 playerIndex )
+{
+   UNUSED_PARAM( game );
+   return &g_players[playerIndex];
+}
+
 Entity_t* Game_GetPlayerEntity( Game_t* game, u32 playerIndex )
 {
    UNUSED_PARAM( game );
    return playerIndex == 0 ? &g_playerEntity : &g_additionalPlayerEntities[playerIndex - 1];
+}
+
+Entity_t* Player_GetEntity( const Player_t* player )
+{
+   return player->entity;
 }
 
 Vector4i32_t Entity_GetRect( Entity_t* entity )

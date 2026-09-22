@@ -5,6 +5,7 @@
 #include "entity.h"
 #include "game.h"
 #include "input.h"
+#include "player.h"
 #include "tile_map.h"
 #include "win_common.h"
 #include <shellapi.h>

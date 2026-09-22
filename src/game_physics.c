@@ -4,6 +4,7 @@
 #include "entity.h"
 #include "game.h"
 #include "npc.h"
+#include "player.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
 #include "utility.h"
@@ -12,18 +13,30 @@ internal i32 GamePhysics_GetPixelMovement( i32 velocity, r32 frameSeconds, u32 f
 internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Vector4i32_t rect, u32 tileSize );
 internal b32 GamePhysics_RectCollidesWithNpc( TileMap_t* tileMap, Entity_t* movingEntity, Vector4i32_t rect );
 internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlayer );
+internal void GamePhysics_ChainPlayers( Game_t* game );
 
 void Game_TicPhysics( Game_t* game )
 {
    u32 i;
    TileMap_t* tileMap;
+   Player_t* activePlayer;
+   Vector4i32_t playerRectPrev, playerRectNew;
+
+   activePlayer = Game_GetActivePlayer( game );
+   playerRectPrev = Entity_GetRect( Player_GetEntity( activePlayer ) );
 
    tileMap = Game_GetTileMap( game );
-   GamePhysics_TicEntity( game, Game_GetActivePlayerEntity( game ), True );
+   GamePhysics_TicEntity( game, Player_GetEntity( activePlayer ), True );
 
    for ( i = 0; i < TileMap_GetNpcCount( tileMap ); i++ )
    {
       GamePhysics_TicEntity( game, Npc_GetEntity( TileMap_GetNpc( tileMap, i ) ), False );
+   }
+
+   playerRectNew = Entity_GetRect( Player_GetEntity( activePlayer ) );
+   if ( playerRectPrev.x != playerRectNew.x || playerRectPrev.y != playerRectNew.y )
+   {
+      GamePhysics_ChainPlayers( game );
    }
 }
 
@@ -239,4 +252,10 @@ internal b32 GamePhysics_RectCollidesWithNpc( TileMap_t* tileMap, Entity_t* movi
    }
 
    return False;
+}
+
+internal void GamePhysics_ChainPlayers( Game_t* game )
+{
+   // TODO
+   UNUSED_PARAM( game );
 }
