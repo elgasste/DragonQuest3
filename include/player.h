@@ -7,7 +7,7 @@
 
 #define PLAYER_NAME_BUFFER_SIZE     9
 #define PLAYER_NAME_MAX_LENGTH      ( PLAYER_NAME_BUFFER_SIZE - 1 )
-#define PLAYER_CHAIN_CONSTANT       3.75f
+#define PLAYER_CHAIN_CONSTANT       3.5f
 #define PLAYER_MOVE_HISTORY_SIZE    ( (u32)( CLOCK_MAX_FPS / PLAYER_CHAIN_CONSTANT ) )
 
 typedef struct PlayerMovement_t
@@ -33,6 +33,7 @@ PlayerMovement_t Player_GetMovement( Player_t* player, u32 index );
 u32 Player_GetMovementChainIndex( const Player_t* player );
 
 void Player_SetName( Player_t* player, const char* name );
+void Player_SetMoveHistoryCountFromFps( Player_t* player, u32 fps );
 void Player_SetChainNextPlayer( Player_t* player, b32 chainNextPlayer );
 
 void Player_ResetChaining( Player_t* player );

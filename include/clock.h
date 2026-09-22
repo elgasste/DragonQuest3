@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+#define CLOCK_MIN_FPS      30
 #define CLOCK_MAX_FPS      120
 
 typedef struct MemArena_t MemArena_t;

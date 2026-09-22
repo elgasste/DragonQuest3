@@ -6,6 +6,7 @@
 global u64 g_platformMicros;
 global u32 g_platformSleepMs;
 global u32 g_platformSleepCallCount;
+global u32 g_platformFatalErrorCount;
 
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
@@ -30,11 +31,18 @@ void Platform_SleepMs( u32 ms )
    g_platformSleepCallCount++;
 }
 
+void Platform_FatalError( const char* msg )
+{
+   UNUSED_PARAM( msg );
+   g_platformFatalErrorCount++;
+}
+
 void setUp( void )
 {
    g_platformMicros = 0;
    g_platformSleepMs = 0;
    g_platformSleepCallCount = 0;
+   g_platformFatalErrorCount = 0;
 }
 
 void tearDown( void ) {}
@@ -74,15 +82,35 @@ void test_Clock_SetFps_UpdatesFrameRateValues( void )
    Clock_Free( clock, 0 );
 }
 
-void test_Clock_SetFps_AcceptsRequestedFrameRate( void )
+void test_Clock_SetFps_AcceptsMinimumAndMaximumFrameRates( void )
 {
    Clock_t* clock;
 
-   clock = Clock_Create( 0, 30 );
+   clock = Clock_Create( 0, CLOCK_MIN_FPS );
 
-   Clock_SetFps( clock, 240 );
-   TEST_ASSERT_EQUAL_UINT( 240, Clock_GetFps( clock ) );
-   TEST_ASSERT_EQUAL_FLOAT( 1.0f / 240.0f, Clock_GetFrameSec( clock ) );
+   TEST_ASSERT_EQUAL_UINT( CLOCK_MIN_FPS, Clock_GetFps( clock ) );
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f / (r32)CLOCK_MIN_FPS, Clock_GetFrameSec( clock ) );
+
+   Clock_SetFps( clock, CLOCK_MAX_FPS );
+   TEST_ASSERT_EQUAL_UINT( CLOCK_MAX_FPS, Clock_GetFps( clock ) );
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f / (r32)CLOCK_MAX_FPS, Clock_GetFrameSec( clock ) );
+
+   Clock_Free( clock, 0 );
+}
+
+void test_Clock_SetFps_RejectsOutOfRangeFrameRates( void )
+{
+   Clock_t* clock;
+
+   clock = Clock_Create( 0, 60 );
+
+   Clock_SetFps( clock, CLOCK_MIN_FPS - 1 );
+   TEST_ASSERT_EQUAL_UINT( 60, Clock_GetFps( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 1, g_platformFatalErrorCount );
+
+   Clock_SetFps( clock, CLOCK_MAX_FPS + 1 );
+   TEST_ASSERT_EQUAL_UINT( 60, Clock_GetFps( clock ) );
+   TEST_ASSERT_EQUAL_UINT( 2, g_platformFatalErrorCount );
 
    Clock_Free( clock, 0 );
 }
@@ -205,7 +233,8 @@ int main( void )
    RUN_TEST( test_Clock_Create_InitializesClockState );
 
    RUN_TEST( test_Clock_SetFps_UpdatesFrameRateValues );
-   RUN_TEST( test_Clock_SetFps_AcceptsRequestedFrameRate );
+   RUN_TEST( test_Clock_SetFps_AcceptsMinimumAndMaximumFrameRates );
+   RUN_TEST( test_Clock_SetFps_RejectsOutOfRangeFrameRates );
 
    RUN_TEST( test_Clock_StartFrame_FirstFrameInitializesAbsoluteTimes );
    RUN_TEST( test_Clock_StartFrame_LaterFramesPreserveAbsoluteStartTime );

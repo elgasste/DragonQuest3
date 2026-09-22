@@ -243,12 +243,44 @@ void test_Player_AddMovement_SetsChainNextPlayerWhenHistoryWraps( void )
 {
 	Player_t* player = CreateTestPlayer();
 	PlayerMovement_t movement = { { 24, 36 }, Direction_Down };
+	u32 moveHistoryCount = (u32)( 60 / PLAYER_CHAIN_CONSTANT );
 
-	for ( u32 i = 0; i < PLAYER_MOVE_HISTORY_SIZE; i++ )
+	for ( u32 i = 0; i < moveHistoryCount - 1; i++ )
 	{
 		Player_AddMovement( player, movement );
 	}
 
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( moveHistoryCount - 1, Player_GetMovementChainIndex( player ) );
+
+	Player_AddMovement( player, movement );
+
+	TEST_ASSERT_TRUE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
+
+	DestroyTestPlayer( player );
+}
+
+void test_Player_SetMoveHistoryCountFromFps_ResetsChainingAndChangesWrapPoint( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 24, 36 }, Direction_Left };
+	u32 moveHistoryCount = (u32)( 120 / PLAYER_CHAIN_CONSTANT );
+
+	Player_AddMovement( player, movement );
+	Player_SetChainNextPlayer( player, True );
+	Player_SetMoveHistoryCountFromFps( player, 120 );
+
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
+
+	for ( u32 i = 0; i < moveHistoryCount - 1; i++ )
+	{
+		Player_AddMovement( player, movement );
+	}
+
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+	Player_AddMovement( player, movement );
 	TEST_ASSERT_TRUE( Player_GetChainNextPlayer( player ) );
 	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
 
@@ -287,6 +319,8 @@ int main( void )
 
 	RUN_TEST( test_Player_AddMovement_StoresMovementAndAdvancesChainIndex );
 	RUN_TEST( test_Player_AddMovement_SetsChainNextPlayerWhenHistoryWraps );
+	
+	RUN_TEST( test_Player_SetMoveHistoryCountFromFps_ResetsChainingAndChangesWrapPoint );
 	
 	RUN_TEST( test_Player_ResetChaining_ClearsChainState );
 

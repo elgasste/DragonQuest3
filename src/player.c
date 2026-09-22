@@ -38,7 +38,7 @@ void Player_Init( Player_t* player, MemArena_t* arena, ActiveSpriteTextureSet_t*
    Entity_SetSize( player->entity, size.x, size.y );
    Entity_SetSpriteOffset( player->entity, spriteOffset.x, spriteOffset.y );
 
-   player->moveHistoryCount = (u32)( fps / PLAYER_CHAIN_CONSTANT );
+   Player_SetMoveHistoryCountFromFps( player, fps );
    player->movementChainIndex = 0;
    player->chainNextPlayer = False;
 }
@@ -84,6 +84,12 @@ void Player_SetName( Player_t* player, const char* name )
    strcpy_s( player->name, PLAYER_NAME_BUFFER_SIZE, name );
 }
 
+void Player_SetMoveHistoryCountFromFps( Player_t* player, u32 fps )
+{
+   player->moveHistoryCount = (u32)( fps / PLAYER_CHAIN_CONSTANT );
+   Player_ResetChaining( player );
+}
+
 void Player_SetChainNextPlayer( Player_t* player, b32 chainNextPlayer )
 {
    player->chainNextPlayer = chainNextPlayer;
@@ -102,7 +108,7 @@ void Player_AddMovement( Player_t* player, PlayerMovement_t movement )
    player->moveHistory[player->movementChainIndex].newDir = movement.newDir;
    player->movementChainIndex++;
 
-   if ( player->movementChainIndex >= PLAYER_MOVE_HISTORY_SIZE )
+   if ( player->movementChainIndex >= player->moveHistoryCount )
    {
       player->chainNextPlayer = True;
       player->movementChainIndex = 0;

@@ -5,6 +5,7 @@
 #include "game.h"
 #include "npc.h"
 #include "player.h"
+#include "sprite.h"
 #include "tile_map.h"
 #include "tile_texture_set.h"
 #include "utility.h"
@@ -256,6 +257,39 @@ internal b32 GamePhysics_RectCollidesWithNpc( TileMap_t* tileMap, Entity_t* movi
 
 internal void GamePhysics_ChainPlayers( Game_t* game )
 {
-   // TODO
-   UNUSED_PARAM( game );
+   u32 i, playerCount, *playerOrder;
+   Player_t *frontPlayer, *backPlayer;
+   Entity_t* entity;
+   Vector4i32_t rect;
+   PlayerMovement_t movement;
+
+   playerCount = Game_GetPlayerCount( game );
+   playerOrder = Game_GetPlayerOrder( game );
+   
+   // always update the front player
+   frontPlayer = Game_GetPlayer( game, playerOrder[0] );
+   entity = Player_GetEntity( frontPlayer );
+   rect = Entity_GetRect( entity );
+   movement.newPos.x = rect.x;
+   movement.newPos.y = rect.y;
+   movement.newDir = ActiveSprite_GetDirection( Entity_GetSprite( entity ) );
+   Player_AddMovement( frontPlayer, movement );
+
+   // now update any trailing players
+   for ( i = 1; i < playerCount; i++ )
+   {
+      if ( !Player_GetChainNextPlayer( frontPlayer ) )
+      {
+         break;
+      }
+
+      backPlayer = Game_GetPlayer( game, playerOrder[i] );
+      entity = Player_GetEntity( backPlayer );
+      movement = Player_GetMovement( frontPlayer, Player_GetMovementChainIndex( backPlayer ) );
+      Player_AddMovement( backPlayer, movement );
+      Entity_SetPosition( entity, movement.newPos.x, movement.newPos.y );
+      ActiveSprite_SetDirection( Entity_GetSprite( entity ), movement.newDir );
+
+      frontPlayer = backPlayer;
+   }
 }

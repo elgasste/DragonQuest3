@@ -235,7 +235,7 @@ internal void LoadWinDebugConfig( const char* filePath, u32* targetFps )
    int savedDiagnostics;
 
    savedFps = (u32)GetPrivateProfileIntA( "Windows", "TargetFps", (int)*targetFps, filePath );
-   if ( savedFps >= MIN_GAME_FPS && savedFps <= MAX_GAME_FPS && savedFps % GAME_FPS_STEP == 0 )
+   if ( savedFps >= CLOCK_MIN_FPS && savedFps <= CLOCK_MAX_FPS && savedFps % CLOCK_FPS_STEP == 0 )
    {
       *targetFps = savedFps;
    }
