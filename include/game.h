@@ -46,6 +46,7 @@ u32* Game_GetPlayerOrder( Game_t* game );
 
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
+void Game_SetClockFps( Game_t* game, u32 fps );
 void Game_SetPlayerRect( Game_t* game, u32 playerIndex, Vector4i32_t playerRect );
 void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex );
 

@@ -204,6 +204,18 @@ void Game_Stop( Game_t* game )
    game->shutdown = True;
 }
 
+void Game_SetClockFps( Game_t* game, u32 fps )
+{
+   u32 i;
+
+   Clock_SetFps( game->clock, fps );
+
+   for ( i = 0; i < game->playerCount; i++ )
+   {
+      Player_SetMoveHistoryCountFromFps( Game_GetPlayer( game, i ), fps );
+   }
+}
+
 void Game_SetPlayerRect( Game_t* game, u32 playerIndex, Vector4i32_t playerRect )
 {
    Player_t* player;

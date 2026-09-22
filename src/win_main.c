@@ -81,7 +81,7 @@ int CALLBACK WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
    InitButtonMap();
 
    g_winGlobals.game = Game_Create( g_winGlobals.memArena, gameDataPath ); // does not transfer ownership of memory arena
-   Clock_SetFps( Game_GetClock( g_winGlobals.game ), targetFps );
+   Game_SetClockFps( g_winGlobals.game, targetFps );
 
    if ( !CreateMainWindow( hInstance ) || !CreateDiagnosticsWindow( hInstance ) )
    {

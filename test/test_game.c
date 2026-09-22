@@ -117,6 +117,11 @@ u32 Clock_GetFps( Clock_t* clock )
    return clock->fps;
 }
 
+void Clock_SetFps( Clock_t* clock, u32 fps )
+{
+   clock->fps = fps;
+}
+
 Input_t* Input_Create( MemArena_t* memArena )
 {
    g_input = (Input_t*)MemArena_AllocMem( memArena, sizeof( Input_t ) );
@@ -189,6 +194,12 @@ void Player_Free( MemArena_t* arena, Player_t* player )
 void Player_ResetChaining( Player_t* player )
 {
    UNUSED_PARAM( player );
+}
+
+void Player_SetMoveHistoryCountFromFps( Player_t* player, u32 fps )
+{
+   UNUSED_PARAM( player );
+   UNUSED_PARAM( fps );
 }
 
 Entity_t* Player_GetEntity( const Player_t* player )

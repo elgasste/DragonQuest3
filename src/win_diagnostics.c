@@ -629,12 +629,12 @@ internal void ChangeGameFps( b32 increase )
 
    if ( increase && fps < CLOCK_MAX_FPS )
    {
-      Clock_SetFps( clock, fps + CLOCK_FPS_STEP );
+      Game_SetClockFps( g_winGlobals.game, fps + CLOCK_FPS_STEP );
       SaveWinDebugConfig( fps + CLOCK_FPS_STEP );
    }
    else if ( !increase && fps > CLOCK_MIN_FPS )
    {
-      Clock_SetFps( clock, fps - CLOCK_FPS_STEP );
+      Game_SetClockFps( g_winGlobals.game, fps - CLOCK_FPS_STEP );
       SaveWinDebugConfig( fps - CLOCK_FPS_STEP );
    }
 }
