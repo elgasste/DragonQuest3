@@ -243,7 +243,7 @@ void test_Player_AddMovement_SetsChainNextPlayerWhenHistoryWraps( void )
 {
 	Player_t* player = CreateTestPlayer();
 	PlayerMovement_t movement = { { 24, 36 }, Direction_Down };
-	u32 moveHistoryCount = (u32)( 60 / PLAYER_CHAIN_CONSTANT );
+	u32 moveHistoryCount = 17;
 
 	for ( u32 i = 0; i < moveHistoryCount - 1; i++ )
 	{
@@ -265,15 +265,16 @@ void test_Player_SetMoveHistoryCountFromFps_ResetsChainingAndChangesWrapPoint( v
 {
 	Player_t* player = CreateTestPlayer();
 	PlayerMovement_t movement = { { 24, 36 }, Direction_Left };
-	u32 moveHistoryCount = (u32)( 120 / PLAYER_CHAIN_CONSTANT );
+	u32 moveHistoryCount = 17;
 
 	Player_AddMovement( player, movement );
 	Player_SetChainNextPlayer( player, True );
-	Player_SetMoveHistoryCountFromFps( player, 120 );
+	Player_SetMoveHistoryCountFromFps( player, 30 );
 
 	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
 	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
 
+	moveHistoryCount = 9;
 	for ( u32 i = 0; i < moveHistoryCount - 1; i++ )
 	{
 		Player_AddMovement( player, movement );

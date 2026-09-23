@@ -5,9 +5,11 @@
 #include "direction.h"
 #include "vector.h"
 
-#define PLAYER_NAME_BUFFER_SIZE     9
-#define PLAYER_NAME_MAX_LENGTH      ( PLAYER_NAME_BUFFER_SIZE - 1 )
-#define PLAYER_MOVE_HISTORY_SIZE    17
+#define PLAYER_NAME_BUFFER_SIZE        9
+#define PLAYER_NAME_MAX_LENGTH         ( PLAYER_NAME_BUFFER_SIZE - 1 )
+#define PLAYER_CHAIN_DISTANCE_PIXELS   16
+#define PLAYER_CHAIN_REFERENCE_FPS     60
+#define PLAYER_MOVE_HISTORY_SIZE       17
 
 typedef struct PlayerMovement_t
 {

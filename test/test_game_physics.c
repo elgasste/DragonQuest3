@@ -31,6 +31,7 @@ global u32 g_playerOrder[GAME_MAX_PLAYERS];
 global PlayerMovement_t g_playerMovements[GAME_MAX_PLAYERS][PLAYER_MOVE_HISTORY_SIZE];
 global u32 g_playerMovementIndices[GAME_MAX_PLAYERS];
 global b32 g_playerChainNext[GAME_MAX_PLAYERS];
+global u32 g_playerMoveHistoryCounts[GAME_MAX_PLAYERS];
 global Entity_t g_npcEntity;
 global Entity_t g_npcEntity2;
 global Npc_t g_npc;
@@ -39,6 +40,7 @@ global u32 g_npcCount;
 global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
 global Tile_t g_tiles[80];
+global r32 g_frameSec;
 global u32 g_clockFrameCount;
 global u32 g_gameOnPlayerTileIndexChangedCount;
 global u32 g_gameOnPlayerTileIndexChangedTileIndex;
@@ -49,7 +51,7 @@ WinDebugFlags_t g_winDebugFlags;
 r32 Clock_GetFrameSec( Clock_t* clock )
 {
    UNUSED_PARAM( clock );
-   return 1.0f / 60.0f;
+   return g_frameSec;
 }
 
 u32 Clock_GetFrameCount( Clock_t* clock )
@@ -125,7 +127,7 @@ void Player_AddMovement( Player_t* player, PlayerMovement_t movement )
 
    g_playerMovements[playerIndex][movementIndex] = movement;
    g_playerMovementIndices[playerIndex]++;
-   if ( g_playerMovementIndices[playerIndex] >= 1 )
+   if ( g_playerMovementIndices[playerIndex] >= g_playerMoveHistoryCounts[playerIndex] )
    {
       g_playerMovementIndices[playerIndex] = 0;
       g_playerChainNext[playerIndex] = True;
@@ -299,6 +301,7 @@ void setUp( void )
    g_winDebugFlags.moveFast = False;
 #endif
    g_clockFrameCount = 0;
+   g_frameSec = 1.0f / 60.0f;
    g_playerCount = 1;
    for ( u32 i = 0; i < GAME_MAX_PLAYERS; i++ )
    {
@@ -306,6 +309,7 @@ void setUp( void )
       g_playerMovements[i][0] = (PlayerMovement_t){ { 0, 0 }, Direction_Down };
       g_playerMovementIndices[i] = 0;
       g_playerChainNext[i] = False;
+      g_playerMoveHistoryCounts[i] = 1;
       g_playerSprites[i].dir = Direction_Down;
       g_players[i].entity = 0;
    }
@@ -628,6 +632,56 @@ void test_Game_TicPhysics_PropagatesMovementThroughPlayerChain( void )
    TEST_ASSERT_EQUAL_INT( Direction_Right, g_playerSprites[2].dir );
 }
 
+void test_Game_TicPhysics_MaintainsChainDistanceAtThirtyFps( void )
+{
+   g_playerCount = 2;
+   g_playerMoveHistoryCounts[0] = 9;
+   g_playerMoveHistoryCounts[1] = 9;
+   g_frameSec = 1.0f / 30.0f;
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 0;
+   g_playerEntity2.rect = g_entity.rect;
+   g_playerSprites[0].dir = Direction_Right;
+
+   for ( u32 i = 0; i < 9; i++ )
+   {
+      g_clockFrameCount = i;
+      g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+      Game_TicPhysics( &g_game );
+   }
+
+   TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x - g_playerEntity2.rect.x );
+}
+
+void test_Game_TicPhysics_MaintainsChainDistanceAtOneHundredTwentyFps( void )
+{
+   g_playerCount = 2;
+   g_playerMoveHistoryCounts[0] = 17;
+   g_playerMoveHistoryCounts[1] = 17;
+   g_frameSec = 1.0f / 120.0f;
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 0;
+   g_playerEntity2.rect = g_entity.rect;
+   g_playerSprites[0].dir = Direction_Right;
+
+   for ( u32 i = 0; i < 34; i++ )
+   {
+      g_clockFrameCount = i;
+      g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+      Game_TicPhysics( &g_game );
+   }
+
+   TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x - g_playerEntity2.rect.x );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -650,6 +704,8 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_WrapsPlayerAtLowerBounds );
    RUN_TEST( test_Game_TicPhysics_PropagatesMovementToFollowingPlayer );
    RUN_TEST( test_Game_TicPhysics_PropagatesMovementThroughPlayerChain );
+   RUN_TEST( test_Game_TicPhysics_MaintainsChainDistanceAtThirtyFps );
+   RUN_TEST( test_Game_TicPhysics_MaintainsChainDistanceAtOneHundredTwentyFps );
 
    return UNITY_END();
 }
