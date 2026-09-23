@@ -36,6 +36,7 @@ u32 Player_GetMovementChainIndex( const Player_t* player );
 void Player_SetName( Player_t* player, const char* name );
 void Player_SetMoveHistoryCountFromFps( Player_t* player, u32 fps );
 void Player_SetChainNextPlayer( Player_t* player, b32 chainNextPlayer );
+void Player_OffsetMovementHistory( Player_t* player, i32 offsetX, i32 offsetY );
 
 void Player_ResetChaining( Player_t* player );
 void Player_AddMovement( Player_t* player, PlayerMovement_t movement );

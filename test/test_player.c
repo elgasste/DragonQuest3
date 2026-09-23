@@ -303,6 +303,20 @@ void test_Player_ResetChaining_ClearsChainState( void )
 	DestroyTestPlayer( player );
 }
 
+void test_Player_OffsetMovementHistory_UpdatesStoredPositions( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 100, 200 }, Direction_Right };
+
+	Player_AddMovement( player, movement );
+	Player_OffsetMovementHistory( player, -160, 320 );
+
+	TEST_ASSERT_EQUAL_INT( -60, Player_GetMovement( player, 0 ).newPos.x );
+	TEST_ASSERT_EQUAL_INT( 520, Player_GetMovement( player, 0 ).newPos.y );
+
+	DestroyTestPlayer( player );
+}
+
 int main( void )
 {
 	UNITY_BEGIN();
@@ -324,6 +338,8 @@ int main( void )
 	RUN_TEST( test_Player_SetMoveHistoryCountFromFps_ResetsChainingAndChangesWrapPoint );
 	
 	RUN_TEST( test_Player_ResetChaining_ClearsChainState );
+	
+	RUN_TEST( test_Player_OffsetMovementHistory_UpdatesStoredPositions );
 
 	return UNITY_END();
 }

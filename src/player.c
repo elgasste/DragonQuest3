@@ -107,6 +107,17 @@ void Player_SetChainNextPlayer( Player_t* player, b32 chainNextPlayer )
    player->chainNextPlayer = chainNextPlayer;
 }
 
+void Player_OffsetMovementHistory( Player_t* player, i32 offsetX, i32 offsetY )
+{
+   u32 i;
+
+   for ( i = 0; i < player->moveHistoryCount; i++ )
+   {
+      player->moveHistory[i].newPos.x += offsetX;
+      player->moveHistory[i].newPos.y += offsetY;
+   }
+}
+
 void Player_ResetChaining( Player_t* player )
 {
    player->chainNextPlayer = False;

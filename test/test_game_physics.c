@@ -120,6 +120,17 @@ u32 Player_GetMovementChainIndex( const Player_t* player )
    return g_playerMovementIndices[ GetMockPlayerIndex( player ) ];
 }
 
+void Player_OffsetMovementHistory( Player_t* player, i32 offsetX, i32 offsetY )
+{
+   u32 playerIndex = GetMockPlayerIndex( player );
+
+   for ( u32 i = 0; i < g_playerMoveHistoryCounts[playerIndex]; i++ )
+   {
+      g_playerMovements[playerIndex][i].newPos.x += offsetX;
+      g_playerMovements[playerIndex][i].newPos.y += offsetY;
+   }
+}
+
 void Player_AddMovement( Player_t* player, PlayerMovement_t movement )
 {
    u32 playerIndex = GetMockPlayerIndex( player );
@@ -682,6 +693,29 @@ void test_Game_TicPhysics_MaintainsChainDistanceAtOneHundredTwentyFps( void )
    TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x - g_playerEntity2.rect.x );
 }
 
+void test_Game_TicPhysics_AdjustsAllPlayerHistoriesWhenMapWraps( void )
+{
+   g_tileMap.info.wraps = True;
+   g_playerCount = 2;
+   g_playerMoveHistoryCounts[0] = 2;
+   g_playerMoveHistoryCounts[1] = 2;
+   g_playerMovements[0][1].newPos.x = 159 * WORLD_UNITS_PER_PIXEL;
+   g_playerMovements[1][0].newPos.x = 20 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.x = 159 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 0;
+   g_playerMovementIndices[0] = 0;
+   g_playerMovementIndices[1] = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( -WORLD_UNITS_PER_PIXEL, g_playerMovements[0][1].newPos.x );
+   TEST_ASSERT_EQUAL_INT( -140 * WORLD_UNITS_PER_PIXEL, g_playerMovements[1][0].newPos.x );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -706,6 +740,7 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_PropagatesMovementThroughPlayerChain );
    RUN_TEST( test_Game_TicPhysics_MaintainsChainDistanceAtThirtyFps );
    RUN_TEST( test_Game_TicPhysics_MaintainsChainDistanceAtOneHundredTwentyFps );
+   RUN_TEST( test_Game_TicPhysics_AdjustsAllPlayerHistoriesWhenMapWraps );
 
    return UNITY_END();
 }
