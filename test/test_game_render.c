@@ -106,6 +106,7 @@ static DisplayDrawRectCall_t g_displayDrawRectCall;
 static DisplayDrawBufferCall_t g_displayDrawBufferCall;
 static PlatformRenderDisplayBufferCall_t g_platformRenderDisplayBufferCall;
 static DisplayApplyFadeCall_t g_displayApplyFadeCall;
+static u32 g_playerOrder[GAME_MAX_PLAYERS];
 
 void setUp( void )
 {
@@ -146,6 +147,10 @@ void setUp( void )
    g_playerEntity.spriteOffset.y = 3;
    memset( g_additionalPlayerEntities, 0, sizeof( g_additionalPlayerEntities ) );
    g_playerCount = 1;
+   g_playerOrder[0] = 0;
+   g_playerOrder[1] = 1;
+   g_playerOrder[2] = 2;
+   g_playerOrder[3] = 3;
    g_npcEntity.rect.x = 80 * WORLD_UNITS_PER_PIXEL;
    g_npcEntity.rect.y = 100 * WORLD_UNITS_PER_PIXEL;
    g_npcEntity.rect.w = 16 * WORLD_UNITS_PER_PIXEL;
@@ -278,6 +283,12 @@ u32 Game_GetPlayerCount( Game_t* game )
 {
    UNUSED_PARAM( game );
    return g_playerCount;
+}
+
+u32* Game_GetPlayerOrder( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   return g_playerOrder;
 }
 
 Player_t* Game_GetPlayer( Game_t* game, u32 playerIndex )
@@ -498,6 +509,30 @@ void test_Game_Render_DrawsAllPlayersInVerticalOrder( void )
    TEST_ASSERT_EQUAL_INT( 99, g_displayDrawBufferCalls[3].displayY );
 }
 
+void test_Game_Render_DrawsOverlappingPlayersFromBackToFront( void )
+{
+   g_playerCount = 3;
+   g_playerOrder[0] = 2;
+   g_playerOrder[1] = 0;
+   g_playerOrder[2] = 1;
+   g_additionalPlayerEntities[0] = g_playerEntity;
+   g_additionalPlayerEntities[1] = g_playerEntity;
+   g_playerEntity.rect.x = 10 * WORLD_UNITS_PER_PIXEL;
+   g_additionalPlayerEntities[0].rect.x = 20 * WORLD_UNITS_PER_PIXEL;
+   g_additionalPlayerEntities[1].rect.x = 30 * WORLD_UNITS_PER_PIXEL;
+   g_playerEntity.rect.y = 60 * WORLD_UNITS_PER_PIXEL;
+   g_additionalPlayerEntities[0].rect.y = 60 * WORLD_UNITS_PER_PIXEL;
+   g_additionalPlayerEntities[1].rect.y = 60 * WORLD_UNITS_PER_PIXEL;
+   g_npcEntity.rect.x = 400 * WORLD_UNITS_PER_PIXEL;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_INT( 3, g_displayDrawBufferCall.callCount );
+   TEST_ASSERT_EQUAL_INT( 8, g_displayDrawBufferCalls[0].displayX );
+   TEST_ASSERT_EQUAL_INT( -2, g_displayDrawBufferCalls[1].displayX );
+   TEST_ASSERT_EQUAL_INT( 18, g_displayDrawBufferCalls[2].displayX );
+}
+
 void test_Game_Render_DoesNotDrawNpcOutsideViewport( void )
 {
    g_npcEntity.rect.x = 400 * WORLD_UNITS_PER_PIXEL;
@@ -591,6 +626,7 @@ int main( void )
    RUN_TEST( test_Game_Render_DrawsVisibleNpcRelativeToViewport );
    RUN_TEST( test_Game_Render_DrawsEntitiesInVerticalOrder );
    RUN_TEST( test_Game_Render_DrawsAllPlayersInVerticalOrder );
+   RUN_TEST( test_Game_Render_DrawsOverlappingPlayersFromBackToFront );
    RUN_TEST( test_Game_Render_DoesNotDrawNpcOutsideViewport );
    RUN_TEST( test_Game_Render_AccountsForSpriteOffsetWhenDeterminingVisibility );
    RUN_TEST( test_Game_Render_PresentsDisplayBuffer );

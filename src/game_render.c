@@ -11,6 +11,7 @@
 
 internal void GameRender_DrawEntities( Game_t* game );
 internal void GameRender_DrawEntity( Game_t* game, Entity_t* entity );
+internal i32 GameRender_GetEntityDrawOrder( Game_t* game, u32 entityIndex, u32 playerCount );
 internal void GameRender_ApplyFadeOut( Game_t* game );
 internal void GameRender_ApplyFadeIn( Game_t* game );
 internal void GameRender_ApplyBlackout( Game_t* game );
@@ -54,7 +55,7 @@ void Game_Render( Game_t* game )
 internal void GameRender_DrawEntities( Game_t* game )
 {
    u32 i, drawOrder, playerCount, npcCount, entityCount;
-   i32 selectedY, selectedOrder, lastY, lastOrder;
+   i32 selectedY, selectedOrder, lastY, lastOrder, entityDrawOrder;
    b32 hasSelection, hasPrevious;
    Vector4i32_t viewportInPixels, entityRect;
    Vector2i32_t spriteOffset;
@@ -79,6 +80,8 @@ internal void GameRender_DrawEntities( Game_t* game )
 
       for ( i = 0; i < entityCount; i++ )
       {
+         entityDrawOrder = GameRender_GetEntityDrawOrder( game, i, playerCount );
+
          if ( i < playerCount )
          {
             entity = Game_GetPlayerEntity( game, i );
@@ -95,12 +98,12 @@ internal void GameRender_DrawEntities( Game_t* game )
               entityRect.x + ( spriteOffset.x * WORLD_UNITS_PER_PIXEL ) < ( viewportInPixels.x + viewportInPixels.w ) * WORLD_UNITS_PER_PIXEL &&
               entityRect.y + entityRect.h + ( spriteOffset.y * WORLD_UNITS_PER_PIXEL ) > viewportInPixels.y * WORLD_UNITS_PER_PIXEL &&
               entityRect.y + ( spriteOffset.y * WORLD_UNITS_PER_PIXEL ) < ( viewportInPixels.y + viewportInPixels.h ) * WORLD_UNITS_PER_PIXEL &&
-              ( !hasPrevious || entityRect.y > lastY || ( entityRect.y == lastY && (i32)i > lastOrder ) ) &&
-              ( !hasSelection || entityRect.y < selectedY || ( entityRect.y == selectedY && (i32)i < selectedOrder ) ) )
+                     ( !hasPrevious || entityRect.y > lastY || ( entityRect.y == lastY && entityDrawOrder > lastOrder ) ) &&
+                     ( !hasSelection || entityRect.y < selectedY || ( entityRect.y == selectedY && entityDrawOrder < selectedOrder ) ) )
          {
             selectedEntity = entity;
             selectedY = entityRect.y;
-            selectedOrder = (i32)i;
+                  selectedOrder = entityDrawOrder;
             hasSelection = True;
          }
       }
@@ -116,6 +119,28 @@ internal void GameRender_DrawEntities( Game_t* game )
       lastOrder = selectedOrder;
       hasPrevious = True;
    }
+}
+
+internal i32 GameRender_GetEntityDrawOrder( Game_t* game, u32 entityIndex, u32 playerCount )
+{
+   u32 i;
+   u32* playerOrder;
+
+   if ( entityIndex >= playerCount )
+   {
+      return (i32)entityIndex;
+   }
+
+   playerOrder = Game_GetPlayerOrder( game );
+   for ( i = 0; i < playerCount; i++ )
+   {
+      if ( playerOrder[i] == entityIndex )
+      {
+         return (i32)( playerCount - i );
+      }
+   }
+
+   return (i32)entityIndex;
 }
 
 internal void GameRender_DrawEntity( Game_t* game, Entity_t* entity )
