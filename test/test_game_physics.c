@@ -1,5 +1,7 @@
 #include "mocks/mock_entity.h"
 #include "mocks/mock_npc.h"
+#include "mocks/mock_player.h"
+#include "mocks/mock_sprite.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
 
@@ -20,6 +22,16 @@ Game_t;
 
 global Game_t g_game;
 global Entity_t g_entity;
+global Entity_t g_playerEntity2;
+global Player_t g_player;
+global Player_t g_players[GAME_MAX_PLAYERS];
+global ActiveSprite_t g_playerSprites[GAME_MAX_PLAYERS];
+global u32 g_playerCount;
+global u32 g_playerOrder[GAME_MAX_PLAYERS];
+global PlayerMovement_t g_playerMovements[GAME_MAX_PLAYERS][PLAYER_MOVE_HISTORY_SIZE];
+global u32 g_playerMovementIndices[GAME_MAX_PLAYERS];
+global b32 g_playerChainNext[GAME_MAX_PLAYERS];
+global u32 g_playerMoveHistoryCounts[GAME_MAX_PLAYERS];
 global Entity_t g_npcEntity;
 global Entity_t g_npcEntity2;
 global Npc_t g_npc;
@@ -28,6 +40,7 @@ global u32 g_npcCount;
 global TileMap_t g_tileMap;
 global TileTextureSet_t g_textureSet;
 global Tile_t g_tiles[80];
+global r32 g_frameSec;
 global u32 g_clockFrameCount;
 global u32 g_gameOnPlayerTileIndexChangedCount;
 global u32 g_gameOnPlayerTileIndexChangedTileIndex;
@@ -38,7 +51,7 @@ WinDebugFlags_t g_winDebugFlags;
 r32 Clock_GetFrameSec( Clock_t* clock )
 {
    UNUSED_PARAM( clock );
-   return 1.0f / 60.0f;
+   return g_frameSec;
 }
 
 u32 Clock_GetFrameCount( Clock_t* clock )
@@ -53,9 +66,98 @@ Clock_t* Game_GetClock( Game_t* game )
    return (Clock_t*)1;
 }
 
-Entity_t* Game_GetPlayerEntity( Game_t* game )
+Player_t* Game_GetPlayer( Game_t* game, u32 playerIndex )
+{
+   UNUSED_PARAM( game );
+   return &g_players[playerIndex];
+}
+
+Player_t* Game_GetActivePlayer( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   return &g_players[g_playerOrder[0]];
+}
+
+u32 Game_GetPlayerCount( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   return g_playerCount;
+}
+
+u32* Game_GetPlayerOrder( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   return g_playerOrder;
+}
+
+Entity_t* Game_GetActivePlayerEntity( Game_t* game )
 {
    return game->playerEntity;
+}
+
+Entity_t* Player_GetEntity( const Player_t* player )
+{
+   return player->entity;
+}
+
+internal u32 GetMockPlayerIndex( const Player_t* player )
+{
+   return (u32)( player - g_players );
+}
+
+b32 Player_GetChainNextPlayer( const Player_t* player )
+{
+   return g_playerChainNext[ GetMockPlayerIndex( player ) ];
+}
+
+PlayerMovement_t Player_GetMovement( Player_t* player, u32 index )
+{
+   return g_playerMovements[ GetMockPlayerIndex( player ) ][index];
+}
+
+u32 Player_GetMovementChainIndex( const Player_t* player )
+{
+   return g_playerMovementIndices[ GetMockPlayerIndex( player ) ];
+}
+
+void Player_OffsetMovementHistory( Player_t* player, i32 offsetX, i32 offsetY )
+{
+   u32 playerIndex = GetMockPlayerIndex( player );
+
+   for ( u32 i = 0; i < g_playerMoveHistoryCounts[playerIndex]; i++ )
+   {
+      g_playerMovements[playerIndex][i].newPos.x += offsetX;
+      g_playerMovements[playerIndex][i].newPos.y += offsetY;
+   }
+}
+
+void Player_AddMovement( Player_t* player, PlayerMovement_t movement )
+{
+   u32 playerIndex = GetMockPlayerIndex( player );
+   u32 movementIndex = g_playerMovementIndices[playerIndex];
+
+   g_playerMovements[playerIndex][movementIndex] = movement;
+   g_playerMovementIndices[playerIndex]++;
+   if ( g_playerMovementIndices[playerIndex] >= g_playerMoveHistoryCounts[playerIndex] )
+   {
+      g_playerMovementIndices[playerIndex] = 0;
+      g_playerChainNext[playerIndex] = True;
+   }
+}
+
+Direction_t ActiveSprite_GetDirection( ActiveSprite_t* activeSprite )
+{
+   return activeSprite->dir;
+}
+
+void ActiveSprite_SetDirection( ActiveSprite_t* activeSprite, Direction_t dir )
+{
+   activeSprite->dir = dir;
+}
+
+ActiveSprite_t* Entity_GetSprite( Entity_t* entity )
+{
+   return entity->sprite;
 }
 
 TileMap_t* Game_GetTileMap( Game_t* game )
@@ -210,6 +312,18 @@ void setUp( void )
    g_winDebugFlags.moveFast = False;
 #endif
    g_clockFrameCount = 0;
+   g_frameSec = 1.0f / 60.0f;
+   g_playerCount = 1;
+   for ( u32 i = 0; i < GAME_MAX_PLAYERS; i++ )
+   {
+      g_playerOrder[i] = i;
+      g_playerMovements[i][0] = (PlayerMovement_t){ { 0, 0 }, Direction_Down };
+      g_playerMovementIndices[i] = 0;
+      g_playerChainNext[i] = False;
+      g_playerMoveHistoryCounts[i] = 1;
+      g_playerSprites[i].dir = Direction_Down;
+      g_players[i].entity = 0;
+   }
    g_npcCount = 0;
    g_gameOnPlayerTileIndexChangedCount = 0;
    g_gameOnPlayerTileIndexChangedTileIndex = 0;
@@ -238,6 +352,11 @@ void setUp( void )
       g_tiles[i].isPassable = True;
    }
    g_textureSet.info.tileSize = 16;
+   g_player.entity = &g_entity;
+   g_players[0].entity = &g_entity;
+   g_players[1].entity = &g_playerEntity2;
+   g_entity.sprite = &g_playerSprites[0];
+   g_playerEntity2.sprite = &g_playerSprites[1];
    g_game.playerEntity = &g_entity;
    g_game.tileMap = &g_tileMap;
    g_game.tileTextureSet = &g_textureSet;
@@ -468,6 +587,135 @@ void test_Game_TicPhysics_WrapsPlayerAtLowerBounds( void )
    TEST_ASSERT_EQUAL_INT( 126 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
 }
 
+void test_Game_TicPhysics_PropagatesMovementToFollowingPlayer( void )
+{
+   g_playerCount = 2;
+   g_playerOrder[0] = 0;
+   g_playerOrder[1] = 1;
+   g_entity.rect.x = 32 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.y = 48 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 0;
+   g_playerEntity2.rect = g_entity.rect;
+   g_playerEntity2.rect.x = 0;
+   g_playerEntity2.rect.y = 0;
+   g_playerSprites[0].dir = Direction_Right;
+   g_playerSprites[1].dir = Direction_Left;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 33 * WORLD_UNITS_PER_PIXEL, g_playerEntity2.rect.x );
+   TEST_ASSERT_EQUAL_INT( 48 * WORLD_UNITS_PER_PIXEL, g_playerEntity2.rect.y );
+   TEST_ASSERT_EQUAL_INT( Direction_Right, g_playerSprites[1].dir );
+}
+
+void test_Game_TicPhysics_PropagatesMovementThroughPlayerChain( void )
+{
+   g_playerCount = 3;
+   g_playerOrder[0] = 0;
+   g_playerOrder[1] = 1;
+   g_playerOrder[2] = 2;
+   g_entity.rect.x = 32 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.y = 48 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_playerEntity2.rect = g_entity.rect;
+   g_playerEntity2.rect.x = 0;
+   g_playerEntity2.rect.y = 0;
+   g_players[2].entity = &g_npcEntity2;
+   g_npcEntity2.rect = g_entity.rect;
+   g_npcEntity2.rect.x = 0;
+   g_npcEntity2.rect.y = 0;
+   g_npcEntity2.sprite = &g_playerSprites[2];
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 0;
+   g_playerSprites[0].dir = Direction_Right;
+   g_playerSprites[1].dir = Direction_Left;
+   g_playerSprites[2].dir = Direction_Up;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 33 * WORLD_UNITS_PER_PIXEL, g_playerEntity2.rect.x );
+   TEST_ASSERT_EQUAL_INT( 33 * WORLD_UNITS_PER_PIXEL, g_npcEntity2.rect.x );
+   TEST_ASSERT_EQUAL_INT( Direction_Right, g_playerSprites[1].dir );
+   TEST_ASSERT_EQUAL_INT( Direction_Right, g_playerSprites[2].dir );
+}
+
+void test_Game_TicPhysics_MaintainsChainDistanceAtThirtyFps( void )
+{
+   g_playerCount = 2;
+   g_playerMoveHistoryCounts[0] = 9;
+   g_playerMoveHistoryCounts[1] = 9;
+   g_frameSec = 1.0f / 30.0f;
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 0;
+   g_playerEntity2.rect = g_entity.rect;
+   g_playerSprites[0].dir = Direction_Right;
+
+   for ( u32 i = 0; i < 9; i++ )
+   {
+      g_clockFrameCount = i;
+      g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+      Game_TicPhysics( &g_game );
+   }
+
+   TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x - g_playerEntity2.rect.x );
+}
+
+void test_Game_TicPhysics_MaintainsChainDistanceAtOneHundredTwentyFps( void )
+{
+   g_playerCount = 2;
+   g_playerMoveHistoryCounts[0] = 17;
+   g_playerMoveHistoryCounts[1] = 17;
+   g_frameSec = 1.0f / 120.0f;
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 0;
+   g_playerEntity2.rect = g_entity.rect;
+   g_playerSprites[0].dir = Direction_Right;
+
+   for ( u32 i = 0; i < 34; i++ )
+   {
+      g_clockFrameCount = i;
+      g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+      Game_TicPhysics( &g_game );
+   }
+
+   TEST_ASSERT_EQUAL_INT( 16 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x - g_playerEntity2.rect.x );
+}
+
+void test_Game_TicPhysics_AdjustsAllPlayerHistoriesWhenMapWraps( void )
+{
+   g_tileMap.info.wraps = True;
+   g_playerCount = 2;
+   g_playerMoveHistoryCounts[0] = 2;
+   g_playerMoveHistoryCounts[1] = 2;
+   g_playerMovements[0][1].newPos.x = 159 * WORLD_UNITS_PER_PIXEL;
+   g_playerMovements[1][0].newPos.x = 20 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.x = 159 * WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 60 * WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.y = 0;
+   g_playerMovementIndices[0] = 0;
+   g_playerMovementIndices[1] = 0;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( -WORLD_UNITS_PER_PIXEL, g_playerMovements[0][1].newPos.x );
+   TEST_ASSERT_EQUAL_INT( -140 * WORLD_UNITS_PER_PIXEL, g_playerMovements[1][0].newPos.x );
+}
+
 int main( void )
 {
    UNITY_BEGIN();
@@ -488,6 +736,11 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_DoesNotNotifyWhenPlayerTileIndexIsUnchanged );
    RUN_TEST( test_Game_TicPhysics_ClampsOversizedPlayerToOrigin );
    RUN_TEST( test_Game_TicPhysics_WrapsPlayerAtLowerBounds );
+   RUN_TEST( test_Game_TicPhysics_PropagatesMovementToFollowingPlayer );
+   RUN_TEST( test_Game_TicPhysics_PropagatesMovementThroughPlayerChain );
+   RUN_TEST( test_Game_TicPhysics_MaintainsChainDistanceAtThirtyFps );
+   RUN_TEST( test_Game_TicPhysics_MaintainsChainDistanceAtOneHundredTwentyFps );
+   RUN_TEST( test_Game_TicPhysics_AdjustsAllPlayerHistoriesWhenMapWraps );
 
    return UNITY_END();
 }

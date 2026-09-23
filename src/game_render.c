@@ -4,12 +4,14 @@
 #include "game.h"
 #include "npc.h"
 #include "platform.h"
+#include "player.h"
 #include "sprite.h"
 #include "sprite_texture_set.h"
 #include "tile_map.h"
 
 internal void GameRender_DrawEntities( Game_t* game );
 internal void GameRender_DrawEntity( Game_t* game, Entity_t* entity );
+internal i32 GameRender_GetEntityDrawOrder( Game_t* game, u32 entityIndex, u32 playerCount );
 internal void GameRender_ApplyFadeOut( Game_t* game );
 internal void GameRender_ApplyFadeIn( Game_t* game );
 internal void GameRender_ApplyBlackout( Game_t* game );
@@ -52,60 +54,56 @@ void Game_Render( Game_t* game )
 
 internal void GameRender_DrawEntities( Game_t* game )
 {
-   u32 i, drawOrder, npcCount;
-   i32 selectedY, selectedOrder, lastY, lastOrder;
-   b32 hasSelection, hasPrevious, playerDrawn;
+   u32 i, drawOrder, playerCount, npcCount, entityCount;
+   i32 selectedY, selectedOrder, lastY, lastOrder, entityDrawOrder;
+   b32 hasSelection, hasPrevious;
    Vector4i32_t viewportInPixels, entityRect;
    Vector2i32_t spriteOffset;
    TileMap_t* tileMap;
-   Entity_t *playerEntity, *npcEntity, *selectedEntity;
+   Entity_t *entity, *selectedEntity;
 
    tileMap = Game_GetTileMap( game );
    viewportInPixels = TileMap_GetViewportInPixels( tileMap );
-   playerEntity = Game_GetPlayerEntity( game );
+   playerCount = Game_GetPlayerCount( game );
    npcCount = TileMap_GetNpcCount( tileMap );
-   playerDrawn = False;
+   entityCount = playerCount + npcCount;
    lastY = 0;
-   selectedY = 0;
    hasPrevious = False;
    lastOrder = -1;
 
-   for ( drawOrder = 0; drawOrder <= npcCount; drawOrder++ )
+   for ( drawOrder = 0; drawOrder < entityCount; drawOrder++ )
    {
       hasSelection = False;
       selectedEntity = 0;
+      selectedY = 0;
       selectedOrder = 0;
 
-      if ( !playerDrawn )
+      for ( i = 0; i < entityCount; i++ )
       {
-         entityRect = Entity_GetRect( playerEntity );
-         if ( !playerDrawn &&
-              ( !hasPrevious || entityRect.y > lastY || ( entityRect.y == lastY && 0 > lastOrder ) ) &&
-              ( !hasSelection || entityRect.y < selectedY || ( entityRect.y == selectedY && 0 < selectedOrder ) ) )
-         {
-            selectedEntity = playerEntity;
-            selectedY = entityRect.y;
-            selectedOrder = 0;
-            hasSelection = True;
-         }
-      }
+         entityDrawOrder = GameRender_GetEntityDrawOrder( game, i, playerCount );
 
-      for ( i = 0; i < npcCount; i++ )
-      {
-         npcEntity = Npc_GetEntity( TileMap_GetNpc( tileMap, i ) );
-         entityRect = Entity_GetRect( npcEntity );
-         spriteOffset = Entity_GetSpriteOffset( npcEntity );
-         
+         if ( i < playerCount )
+         {
+            entity = Game_GetPlayerEntity( game, i );
+         }
+         else
+         {
+            entity = Npc_GetEntity( TileMap_GetNpc( tileMap, i - playerCount ) );
+         }
+
+         entityRect = Entity_GetRect( entity );
+         spriteOffset = Entity_GetSpriteOffset( entity );
+
          if ( entityRect.x + entityRect.w + ( spriteOffset.x * WORLD_UNITS_PER_PIXEL ) > viewportInPixels.x * WORLD_UNITS_PER_PIXEL &&
               entityRect.x + ( spriteOffset.x * WORLD_UNITS_PER_PIXEL ) < ( viewportInPixels.x + viewportInPixels.w ) * WORLD_UNITS_PER_PIXEL &&
               entityRect.y + entityRect.h + ( spriteOffset.y * WORLD_UNITS_PER_PIXEL ) > viewportInPixels.y * WORLD_UNITS_PER_PIXEL &&
               entityRect.y + ( spriteOffset.y * WORLD_UNITS_PER_PIXEL ) < ( viewportInPixels.y + viewportInPixels.h ) * WORLD_UNITS_PER_PIXEL &&
-              ( !hasPrevious || entityRect.y > lastY || ( entityRect.y == lastY && (i32)( i + 1 ) > lastOrder ) ) &&
-              ( !hasSelection || entityRect.y < selectedY || ( entityRect.y == selectedY && (i32)( i + 1 ) < selectedOrder ) ) )
+                     ( !hasPrevious || entityRect.y > lastY || ( entityRect.y == lastY && entityDrawOrder > lastOrder ) ) &&
+                     ( !hasSelection || entityRect.y < selectedY || ( entityRect.y == selectedY && entityDrawOrder < selectedOrder ) ) )
          {
-            selectedEntity = npcEntity;
+            selectedEntity = entity;
             selectedY = entityRect.y;
-            selectedOrder = (i32)( i + 1 );
+                  selectedOrder = entityDrawOrder;
             hasSelection = True;
          }
       }
@@ -117,15 +115,32 @@ internal void GameRender_DrawEntities( Game_t* game )
 
       GameRender_DrawEntity( game, selectedEntity );
 
-      if ( selectedEntity == playerEntity )
-      {
-         playerDrawn = True;
-      }
-
       lastY = selectedY;
       lastOrder = selectedOrder;
       hasPrevious = True;
    }
+}
+
+internal i32 GameRender_GetEntityDrawOrder( Game_t* game, u32 entityIndex, u32 playerCount )
+{
+   u32 i;
+   u32* playerOrder;
+
+   if ( entityIndex >= playerCount )
+   {
+      return (i32)entityIndex;
+   }
+
+   playerOrder = Game_GetPlayerOrder( game );
+   for ( i = 0; i < playerCount; i++ )
+   {
+      if ( playerOrder[i] == entityIndex )
+      {
+         return (i32)( playerCount - i );
+      }
+   }
+
+   return (i32)entityIndex;
 }
 
 internal void GameRender_DrawEntity( Game_t* game, Entity_t* entity )

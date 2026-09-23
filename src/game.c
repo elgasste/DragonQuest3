@@ -28,9 +28,9 @@ struct Game_t
    TileMap_t *tileMap;
    AnimationChain_t* animationChain;
 
-   // TODO: okay, so we have one player. we're gonna need to be able to
-   // have a maximum of 4 players in the party.
-   Player_t* player;
+   Player_t* players;
+   u32 playerCount;
+   u32 playerOrder[GAME_MAX_PLAYERS];
 
    b32 shutdown;
 };
@@ -46,7 +46,9 @@ size_t Game_GetStructSize( void )
 
 Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
 {
+   u32 i;
    Game_t* game;
+   Player_t* player;
 
    game = (Game_t*)MemArena_AllocMem( memArena, sizeof( Game_t ) );
    game->memArena = memArena;
@@ -62,12 +64,21 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, game->activeSpriteTextureSet, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
    game->animationChain = AnimationChain_Create( memArena, 32 );
 
-   game->player = Player_Create( game->memArena,
-                                 game->activeSpriteTextureSet,
-                                 (Vector2i32_t){ 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL },
-                                 (Vector2i32_t){ -2, -2 } );
-
-   TileMap_CenterEntityInTile( game->tileMap, Player_GetEntity( game->player ), ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
+   game->playerCount = GAME_MAX_PLAYERS;
+   game->players = (Player_t*)MemArena_AllocMem( game->memArena, Player_GetStructSize() * game->playerCount );
+   for ( i = 0; i < game->playerCount; i++ )
+   {
+      player = (Player_t*)( (u8*)game->players + i * Player_GetStructSize() );
+      Player_Init( player,
+                   game->memArena,
+                   game->activeSpriteTextureSet,
+                   (Vector2i32_t){ 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL },
+                   (Vector2i32_t){ -2, -2 },
+                   Clock_GetFps( game->clock ) );
+      ActiveSprite_SetTextureIndex( Entity_GetSprite( Player_GetEntity( player ) ), i );
+      TileMap_CenterEntityInTile( game->tileMap, Player_GetEntity( player ), ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
+      game->playerOrder[i] = i;
+   }
 
    // TODO: should this come from the game data file? or is it too integral to the game engine?
    TileMap_SetViewportInUnits( game->tileMap,
@@ -78,6 +89,8 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
 
 void Game_Free( Game_t* game, MemArena_t* memArena )
 {
+   u32 i;
+
    Clock_Free( game->clock, memArena );
    Input_Free( game->input, memArena );
    Display_Free( game->display, memArena );
@@ -92,7 +105,11 @@ void Game_Free( Game_t* game, MemArena_t* memArena )
    TileTextureSet_Free( game->tileTextureSet, memArena );
    ActiveSpriteTextureSet_Free( game->activeSpriteTextureSet, memArena );
 
-   Player_Free( memArena, game->player );
+   for ( i = 0; i < game->playerCount; i++ )
+   {
+      Player_Free( game->memArena, (Player_t*)( (u8*)game->players + i * Player_GetStructSize() ) );
+   }
+   MemArena_FreeMem( game->memArena, game->players );
 
    MemArena_FreeMem( memArena, game );
 }
@@ -137,9 +154,34 @@ AnimationChain_t* Game_GetAnimationChain( Game_t* game )
    return game->animationChain;
 }
 
-Entity_t* Game_GetPlayerEntity( Game_t* game )
+u32 Game_GetPlayerCount( Game_t* game )
 {
-   return Player_GetEntity( game->player );
+   return game->playerCount;
+}
+
+Entity_t* Game_GetPlayerEntity( Game_t* game, u32 playerIndex )
+{
+   return Player_GetEntity( Game_GetPlayer( game, playerIndex ) );
+}
+
+Entity_t* Game_GetActivePlayerEntity( Game_t* game )
+{
+   return Player_GetEntity( Game_GetActivePlayer( game ) );
+}
+
+Player_t* Game_GetPlayer( Game_t* game, u32 playerIndex )
+{
+   return (Player_t*)( (u8*)game->players + playerIndex * Player_GetStructSize() );
+}
+
+Player_t* Game_GetActivePlayer( Game_t* game )
+{
+   return (Player_t*)( (u8*)game->players + game->playerOrder[0] * Player_GetStructSize() );
+}
+
+u32* Game_GetPlayerOrder( Game_t* game )
+{
+   return game->playerOrder;
 }
 
 void Game_Run( Game_t* game )
@@ -162,10 +204,25 @@ void Game_Stop( Game_t* game )
    game->shutdown = True;
 }
 
-void Game_SetPlayerRect( Game_t* game, Vector4i32_t playerRect )
+void Game_SetClockFps( Game_t* game, u32 fps )
 {
-   Entity_SetPosition( Player_GetEntity( game->player ), playerRect.x, playerRect.y );
-   Entity_SetSize( Player_GetEntity( game->player ), playerRect.w, playerRect.h );
+   u32 i;
+
+   Clock_SetFps( game->clock, fps );
+
+   for ( i = 0; i < game->playerCount; i++ )
+   {
+      Player_SetMoveHistoryCountFromFps( Game_GetPlayer( game, i ), fps );
+   }
+}
+
+void Game_SetPlayerRect( Game_t* game, u32 playerIndex, Vector4i32_t playerRect )
+{
+   Player_t* player;
+
+   player = (Player_t*)( (u8*)game->players + playerIndex * Player_GetStructSize() );
+   Entity_SetPosition( Player_GetEntity( player ), playerRect.x, playerRect.y );
+   Entity_SetSize( Player_GetEntity( player ), playerRect.w, playerRect.h );
 }
 
 void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex )
@@ -186,6 +243,7 @@ void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex )
 internal void Game_Tic( Game_t* game )
 {
    r32 deltaSec;
+   Player_t* activePlayer;
 
    deltaSec = Clock_GetFrameSec( game->clock );
    
@@ -201,18 +259,24 @@ internal void Game_Tic( Game_t* game )
    Game_TicEntities( game, deltaSec );
    Game_TicPhysics( game );
 
-   TileMap_AnchorViewportToEntity( game->tileMap, Player_GetEntity( game->player ) );
+   activePlayer = Game_GetActivePlayer( game );
+   TileMap_AnchorViewportToEntity( game->tileMap, Player_GetEntity( activePlayer ) );
 }
 
 internal void Game_TicEntities( Game_t* game, r32 deltaSec )
 {
    u32 i;
+   Player_t* player;
    Entity_t* playerEntity;
    ActiveSprite_t* playerSprite;
 
-   playerEntity = Player_GetEntity( game->player );
-   playerSprite = Entity_GetSprite( playerEntity );
-   ActiveSprite_Tic( playerSprite, deltaSec );
+   for ( i = 0; i < game->playerCount; i++ )
+   {
+      player = (Player_t*)( (u8*)game->players + i * Player_GetStructSize() );
+      playerEntity = Player_GetEntity( player );
+      playerSprite = Entity_GetSprite( playerEntity );
+      ActiveSprite_Tic( playerSprite, deltaSec );
+   }
 
    for ( i = 0; i < TileMap_GetNpcCount( game->tileMap ); i++ )
    {
@@ -222,10 +286,10 @@ internal void Game_TicEntities( Game_t* game, r32 deltaSec )
 
 internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
 {
-   u32 destinationTileMapId, destinationTileIndex;
+   u32 i, destinationTileMapId, destinationTileIndex;
+   Player_t* player;
    Entity_t* playerEntity;
 
-   playerEntity = Player_GetEntity( game->player );
    destinationTileMapId = TileMapPortal_GetDestinationTileMapId( portal );
    destinationTileIndex = TileMapPortal_GetDestinationTileIndex( portal );
 
@@ -233,8 +297,14 @@ internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
    {
       TileMap_Free( game->tileMap, game->memArena );
       game->tileMap = TileMap_CreateFromGameData( game->memArena, game->gameData, game->activeSpriteTextureSet, destinationTileMapId, TileTextureSet_GetTileSize( game->tileTextureSet ) );
-      ActiveSprite_SetDirection( Entity_GetSprite( playerEntity), TileMapPortal_GetDestinationDir( portal ) );
    }
 
-   TileMap_CenterEntityInTile( game->tileMap, playerEntity, destinationTileIndex );
+   for ( i = 0; i < game->playerCount; i++ )
+   {
+      player = (Player_t*)( (u8*)game->players + i * Player_GetStructSize() );
+      playerEntity = Player_GetEntity( player );
+      TileMap_CenterEntityInTile( game->tileMap, playerEntity, destinationTileIndex );
+      ActiveSprite_SetDirection( Entity_GetSprite( playerEntity), TileMapPortal_GetDestinationDir( portal ) );
+      Player_ResetChaining( player );
+   }
 }

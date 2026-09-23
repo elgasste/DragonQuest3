@@ -5,6 +5,7 @@
 #include "entity.h"
 #include "game.h"
 #include "input.h"
+#include "player.h"
 #include "tile_map.h"
 #include "win_common.h"
 #include <shellapi.h>
@@ -73,7 +74,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
    g_winGlobals.hWndDiagnostics = CreateWindowExA( WS_EX_TOOLWINDOW,
                                                    g_winGlobals.diagnosticsWindowClassName,
                                                    STR_WIN_DIAGNOSTICS_WINDOW_TITLE,
-                                                   WS_OVERLAPPED | WS_CAPTION | WS_CLIPCHILDREN,
+                                                   WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    336,
@@ -247,7 +248,7 @@ internal LRESULT CALLBACK DiagnosticsWindowProc( _In_ HWND hWnd, _In_ UINT uMsg,
    switch ( uMsg )
    {
       case WM_CLOSE:
-         // this window should stay open for the duration of the app
+         ToggleDiagnosticsWindow();
          return 0;
       case WM_COMMAND:
          if ( HIWORD( wParam ) == BN_CLICKED )
@@ -449,7 +450,7 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    game = g_winGlobals.game;
    clock = Game_GetClock( game );
    input = Game_GetInput( game );
-   playerEntity = Game_GetPlayerEntity( game );
+   playerEntity = Game_GetActivePlayerEntity( game );
    playerRect = Entity_GetRect( playerEntity );
 
    GetClientRect( hWnd, &clientRect );
@@ -505,7 +506,7 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
-   playerTileIndex = Entity_GetTileIndex( Game_GetPlayerEntity( game ) );
+   playerTileIndex = Entity_GetTileIndex( Game_GetActivePlayerEntity( game ) );
    playerTileX = playerTileIndex % TileMap_GetTilesX( Game_GetTileMap( game ) );
    playerTileY = playerTileIndex / TileMap_GetTilesX( Game_GetTileMap( game ) );
    sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u (%u, %u)", playerTileIndex, playerTileX, playerTileY );
@@ -626,15 +627,15 @@ internal void ChangeGameFps( b32 increase )
    clock = Game_GetClock( g_winGlobals.game );
    fps = Clock_GetFps( clock );
 
-   if ( increase && fps < MAX_GAME_FPS )
+   if ( increase && fps < CLOCK_MAX_FPS )
    {
-      Clock_SetFps( clock, fps + GAME_FPS_STEP );
-      SaveWinDebugConfig( fps + GAME_FPS_STEP );
+      Game_SetClockFps( g_winGlobals.game, fps + CLOCK_FPS_STEP );
+      SaveWinDebugConfig( fps + CLOCK_FPS_STEP );
    }
-   else if ( !increase && fps > MIN_GAME_FPS )
+   else if ( !increase && fps > CLOCK_MIN_FPS )
    {
-      Clock_SetFps( clock, fps - GAME_FPS_STEP );
-      SaveWinDebugConfig( fps - GAME_FPS_STEP );
+      Game_SetClockFps( g_winGlobals.game, fps - CLOCK_FPS_STEP );
+      SaveWinDebugConfig( fps - CLOCK_FPS_STEP );
    }
 }
 

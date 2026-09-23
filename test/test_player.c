@@ -123,10 +123,20 @@ void tearDown( void ) {}
 
 internal Player_t* CreateTestPlayer( void )
 {
-	return Player_Create( (MemArena_t*)1,
-	                      (ActiveSpriteTextureSet_t*)2,
-	                      (Vector2i32_t){ 12, 14 },
-	                      (Vector2i32_t){ -2, 3 } );
+	Player_t* player = (Player_t*)MemArena_AllocMem( (MemArena_t*)1, Player_GetStructSize() );
+	Player_Init( player,
+	             (MemArena_t*)1,
+	             (ActiveSpriteTextureSet_t*)2,
+	             (Vector2i32_t){ 12, 14 },
+	             (Vector2i32_t){ -2, 3 },
+	             60 );
+	return player;
+}
+
+internal void DestroyTestPlayer( Player_t* player )
+{
+	Player_Free( (MemArena_t*)1, player );
+	MemArena_FreeMem( (MemArena_t*)1, player );
 }
 
 void test_Player_GetStructSize_ReturnsNonZeroSize( void )
@@ -141,7 +151,7 @@ void test_Player_Create_InitializesDefaultName( void )
 	TEST_ASSERT_EQUAL_STRING( "JDoe", Player_GetName( player ) );
 	TEST_ASSERT_EQUAL_UINT( 3, g_allocCount );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_Create_InitializesEntityState( void )
@@ -165,7 +175,7 @@ void test_Player_Create_InitializesEntityState( void )
 	TEST_ASSERT_EQUAL_PTR( (ActiveSpriteTextureSet_t*)2,
 	                       ActiveSprite_GetTextureSet( Entity_GetSprite( entity ) ) );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_SetName_UpdatesName( void )
@@ -177,7 +187,7 @@ void test_Player_SetName_UpdatesName( void )
 	TEST_ASSERT_EQUAL_STRING( "Hero", Player_GetName( player ) );
 	TEST_ASSERT_EQUAL_UINT( 0, g_fatalErrorCount );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_SetName_AcceptsMaximumLengthName( void )
@@ -189,7 +199,7 @@ void test_Player_SetName_AcceptsMaximumLengthName( void )
 	TEST_ASSERT_EQUAL_STRING( "12345678", Player_GetName( player ) );
 	TEST_ASSERT_EQUAL_UINT( 0, g_fatalErrorCount );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_SetName_RejectsNameLongerThanMaximum( void )
@@ -201,16 +211,110 @@ void test_Player_SetName_RejectsNameLongerThanMaximum( void )
 	TEST_ASSERT_EQUAL_STRING( "JDoe", Player_GetName( player ) );
 	TEST_ASSERT_EQUAL_UINT( 1, g_fatalErrorCount );
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 }
 
 void test_Player_Free_ReleasesPlayer( void )
 {
 	Player_t* player = CreateTestPlayer();
 
-	Player_Free( (MemArena_t*)1, player );
+	DestroyTestPlayer( player );
 
 	TEST_ASSERT_EQUAL_UINT( 3, g_freeCount );
+}
+
+void test_Player_AddMovement_StoresMovementAndAdvancesChainIndex( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 24, 36 }, Direction_Right };
+
+	Player_AddMovement( player, movement );
+
+	TEST_ASSERT_EQUAL_INT( 24, Player_GetMovement( player, 0 ).newPos.x );
+	TEST_ASSERT_EQUAL_INT( 36, Player_GetMovement( player, 0 ).newPos.y );
+	TEST_ASSERT_EQUAL_INT( Direction_Right, Player_GetMovement( player, 0 ).newDir );
+	TEST_ASSERT_EQUAL_UINT( 1, Player_GetMovementChainIndex( player ) );
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+
+	DestroyTestPlayer( player );
+}
+
+void test_Player_AddMovement_SetsChainNextPlayerWhenHistoryWraps( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 24, 36 }, Direction_Down };
+	u32 moveHistoryCount = 17;
+
+	for ( u32 i = 0; i < moveHistoryCount - 1; i++ )
+	{
+		Player_AddMovement( player, movement );
+	}
+
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( moveHistoryCount - 1, Player_GetMovementChainIndex( player ) );
+
+	Player_AddMovement( player, movement );
+
+	TEST_ASSERT_TRUE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
+
+	DestroyTestPlayer( player );
+}
+
+void test_Player_SetMoveHistoryCountFromFps_ResetsChainingAndChangesWrapPoint( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 24, 36 }, Direction_Left };
+	u32 moveHistoryCount = 17;
+
+	Player_AddMovement( player, movement );
+	Player_SetChainNextPlayer( player, True );
+	Player_SetMoveHistoryCountFromFps( player, 30 );
+
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
+
+	moveHistoryCount = 9;
+	for ( u32 i = 0; i < moveHistoryCount - 1; i++ )
+	{
+		Player_AddMovement( player, movement );
+	}
+
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+	Player_AddMovement( player, movement );
+	TEST_ASSERT_TRUE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
+
+	DestroyTestPlayer( player );
+}
+
+void test_Player_ResetChaining_ClearsChainState( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 24, 36 }, Direction_Up };
+
+	Player_AddMovement( player, movement );
+	Player_SetChainNextPlayer( player, True );
+	Player_ResetChaining( player );
+
+	TEST_ASSERT_FALSE( Player_GetChainNextPlayer( player ) );
+	TEST_ASSERT_EQUAL_UINT( 0, Player_GetMovementChainIndex( player ) );
+
+	DestroyTestPlayer( player );
+}
+
+void test_Player_OffsetMovementHistory_UpdatesStoredPositions( void )
+{
+	Player_t* player = CreateTestPlayer();
+	PlayerMovement_t movement = { { 100, 200 }, Direction_Right };
+
+	Player_AddMovement( player, movement );
+	Player_OffsetMovementHistory( player, -160, 320 );
+
+	TEST_ASSERT_EQUAL_INT( -60, Player_GetMovement( player, 0 ).newPos.x );
+	TEST_ASSERT_EQUAL_INT( 520, Player_GetMovement( player, 0 ).newPos.y );
+
+	DestroyTestPlayer( player );
 }
 
 int main( void )
@@ -222,11 +326,20 @@ int main( void )
 	RUN_TEST( test_Player_Create_InitializesDefaultName );
 	RUN_TEST( test_Player_Create_InitializesEntityState );
 
-   RUN_TEST( test_Player_Free_ReleasesPlayer );
+    RUN_TEST( test_Player_Free_ReleasesPlayer );
 
 	RUN_TEST( test_Player_SetName_UpdatesName );
 	RUN_TEST( test_Player_SetName_AcceptsMaximumLengthName );
 	RUN_TEST( test_Player_SetName_RejectsNameLongerThanMaximum );
+
+	RUN_TEST( test_Player_AddMovement_StoresMovementAndAdvancesChainIndex );
+	RUN_TEST( test_Player_AddMovement_SetsChainNextPlayerWhenHistoryWraps );
+	
+	RUN_TEST( test_Player_SetMoveHistoryCountFromFps_ResetsChainingAndChangesWrapPoint );
+	
+	RUN_TEST( test_Player_ResetChaining_ClearsChainState );
+	
+	RUN_TEST( test_Player_OffsetMovementHistory_UpdatesStoredPositions );
 
 	return UNITY_END();
 }

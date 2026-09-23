@@ -87,6 +87,12 @@ u32 Clock_GetLagFrameCount( Clock_t *clock )
 
 void Clock_SetFps( Clock_t* clock, u32 fps )
 {
+   if ( fps < CLOCK_MIN_FPS || fps > CLOCK_MAX_FPS )
+   {
+      Platform_FatalError( "FPS is out of range" );
+      return;
+   }
+
    clock->fps = fps;
    clock->frameMicroSec = 1000000 / (u64)fps;
    clock->frameSec = 1.0f / (r32)fps;

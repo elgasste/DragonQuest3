@@ -11,7 +11,7 @@ typedef struct Clock_t
 }
 Clock_t;
 
-Clock_t* Clock_Create( MemArena_t* memArena );
+Clock_t* Clock_Create( MemArena_t* memArena, u32 fps );
 void Clock_Free( Clock_t* clock, MemArena_t* memArena );
 void Clock_Init( Clock_t* clock, u32 fps );
 void Clock_StartFrame( Clock_t* clock );

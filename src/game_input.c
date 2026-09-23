@@ -2,6 +2,7 @@
 #include "entity.h"
 #include "game.h"
 #include "input.h"
+#include "player.h"
 #include "sprite.h"
 
 #define DIAGONAL_VELOCITY_MULTIPLIER   0.707f
@@ -16,7 +17,7 @@ void Game_HandleInput( Game_t* game )
    Vector2i32_t playerVelocity;
    i32 newVelocity;
 
-   playerEntity = Game_GetPlayerEntity( game );
+   playerEntity = Game_GetActivePlayerEntity( game );
    playerSprite = Entity_GetSprite( playerEntity );
    // TODO: this should come from the specific tile the player is standing on
    newVelocity = 60 * WORLD_UNITS_PER_PIXEL;
