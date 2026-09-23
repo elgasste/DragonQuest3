@@ -39,6 +39,8 @@ global u32 g_gameDataFreeCount;
 global u32 g_displayFreeCount;
 global u32 g_entityFreeCount;
 global u32 g_animationChainFreeCount;
+global u32 g_playerMoveHistoryUpdateCount;
+global u32 g_playerMoveHistoryFps;
 global Clock_t* g_clock;
 global Input_t* g_input;
 global Display_t* g_display;
@@ -199,7 +201,8 @@ void Player_ResetChaining( Player_t* player )
 void Player_SetMoveHistoryCountFromFps( Player_t* player, u32 fps )
 {
    UNUSED_PARAM( player );
-   UNUSED_PARAM( fps );
+   g_playerMoveHistoryUpdateCount++;
+   g_playerMoveHistoryFps = fps;
 }
 
 Entity_t* Player_GetEntity( const Player_t* player )
@@ -599,6 +602,8 @@ void setUp( void )
    g_displayFreeCount = 0;
    g_entityFreeCount = 0;
    g_animationChainFreeCount = 0;
+   g_playerMoveHistoryUpdateCount = 0;
+   g_playerMoveHistoryFps = 0;
    g_tileMapGetPortalCount = 0;
    g_testPortal = 0;
    g_tileMapId = 1;
@@ -701,6 +706,22 @@ void test_Game_SetPlayerRect_UpdatesPlayerRectangle( void )
    TEST_ASSERT_EQUAL_INT( 30, playerRect.y );
    TEST_ASSERT_EQUAL_INT( 18, playerRect.w );
    TEST_ASSERT_EQUAL_INT( 20, playerRect.h );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_SetClockFps_UpdatesAllPlayerMovementHistories( void )
+{
+   Game_t* game = CreateGame();
+
+   g_playerMoveHistoryUpdateCount = 0;
+   g_playerMoveHistoryFps = 0;
+
+   Game_SetClockFps( game, 30 );
+
+   TEST_ASSERT_EQUAL_UINT( 30, Clock_GetFps( Game_GetClock( game ) ) );
+   TEST_ASSERT_EQUAL_UINT( GAME_MAX_PLAYERS, g_playerMoveHistoryUpdateCount );
+   TEST_ASSERT_EQUAL_UINT( 30, g_playerMoveHistoryFps );
 
    Game_Free( game, (MemArena_t*)1 );
 }
@@ -848,6 +869,7 @@ int main( void )
    RUN_TEST( test_Game_Create_InitializesDependenciesAndDefaultState );
 
    RUN_TEST( test_Game_SetPlayerRect_UpdatesPlayerRectangle );
+   RUN_TEST( test_Game_SetClockFps_UpdatesAllPlayerMovementHistories );
 
    RUN_TEST( test_Game_Run_ExecutesOneFrameAndUpdatesViewport );
    RUN_TEST( test_Game_Run_TicsPlayerSpriteWithClockFrameDuration );

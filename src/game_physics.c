@@ -46,50 +46,6 @@ void Game_TicPhysics( Game_t* game )
    }
 }
 
-internal void GamePhysics_AdjustPlayerHistoriesForWrap( Game_t* game, Vector4i32_t previousRect, Vector4i32_t currentRect )
-{
-   i32 mapWidth, mapHeight, offsetX, offsetY;
-   u32 i, tileSize;
-   TileMap_t* tileMap;
-   TileTextureSet_t* tileTextureSet;
-
-   tileMap = Game_GetTileMap( game );
-   tileTextureSet = Game_GetTileTextureSet( game );
-   tileSize = TileTextureSet_GetTileSize( tileTextureSet );
-   mapWidth = (i32)( TileMap_GetTilesX( tileMap ) * tileSize ) * WORLD_UNITS_PER_PIXEL;
-   mapHeight = (i32)( TileMap_GetTilesY( tileMap ) * tileSize ) * WORLD_UNITS_PER_PIXEL;
-   offsetX = 0;
-   offsetY = 0;
-
-   if ( previousRect.x - currentRect.x > mapWidth / 2 )
-   {
-      offsetX = -mapWidth;
-   }
-   else if ( currentRect.x - previousRect.x > mapWidth / 2 )
-   {
-      offsetX = mapWidth;
-   }
-
-   if ( previousRect.y - currentRect.y > mapHeight / 2 )
-   {
-      offsetY = -mapHeight;
-   }
-   else if ( currentRect.y - previousRect.y > mapHeight / 2 )
-   {
-      offsetY = mapHeight;
-   }
-
-   if ( offsetX == 0 && offsetY == 0 )
-   {
-      return;
-   }
-
-   for ( i = 0; i < Game_GetPlayerCount( game ); i++ )
-   {
-      Player_OffsetMovementHistory( Game_GetPlayer( game, i ), offsetX, offsetY );
-   }
-}
-
 internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlayer )
 {
    i32 mapWidth, mapHeight, maxX, maxY, moveX, moveY, stepX, stepY, steps;
@@ -340,5 +296,49 @@ internal void GamePhysics_ChainPlayers( Game_t* game )
       ActiveSprite_SetDirection( Entity_GetSprite( entity ), movement.newDir );
 
       frontPlayer = backPlayer;
+   }
+}
+
+internal void GamePhysics_AdjustPlayerHistoriesForWrap( Game_t* game, Vector4i32_t previousRect, Vector4i32_t currentRect )
+{
+   i32 mapWidth, mapHeight, offsetX, offsetY;
+   u32 i, tileSize;
+   TileMap_t* tileMap;
+   TileTextureSet_t* tileTextureSet;
+
+   tileMap = Game_GetTileMap( game );
+   tileTextureSet = Game_GetTileTextureSet( game );
+   tileSize = TileTextureSet_GetTileSize( tileTextureSet );
+   mapWidth = (i32)( TileMap_GetTilesX( tileMap ) * tileSize ) * WORLD_UNITS_PER_PIXEL;
+   mapHeight = (i32)( TileMap_GetTilesY( tileMap ) * tileSize ) * WORLD_UNITS_PER_PIXEL;
+   offsetX = 0;
+   offsetY = 0;
+
+   if ( previousRect.x - currentRect.x > mapWidth / 2 )
+   {
+      offsetX = -mapWidth;
+   }
+   else if ( currentRect.x - previousRect.x > mapWidth / 2 )
+   {
+      offsetX = mapWidth;
+   }
+
+   if ( previousRect.y - currentRect.y > mapHeight / 2 )
+   {
+      offsetY = -mapHeight;
+   }
+   else if ( currentRect.y - previousRect.y > mapHeight / 2 )
+   {
+      offsetY = mapHeight;
+   }
+
+   if ( offsetX == 0 && offsetY == 0 )
+   {
+      return;
+   }
+
+   for ( i = 0; i < Game_GetPlayerCount( game ); i++ )
+   {
+      Player_OffsetMovementHistory( Game_GetPlayer( game, i ), offsetX, offsetY );
    }
 }
