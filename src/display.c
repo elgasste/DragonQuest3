@@ -8,6 +8,7 @@
 struct Display_t
 {
    PixelBuffer_t* buffer;
+   r32 dayFilterIntensity;
 };
 
 internal u32 Display_AlphaBlendColor( u32 destination, u32 source );
@@ -22,6 +23,7 @@ Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 {
    Display_t* display = (Display_t*)MemArena_AllocMem( memArena, sizeof( Display_t ) );
    display->buffer = PixelBuffer_Create( memArena, w, h );
+   display->dayFilterIntensity = 1.0f;
    return display;
 }
 
@@ -44,6 +46,16 @@ u32 Display_GetHeight( Display_t* display )
 const u32* Display_GetPixels( Display_t* display )
 {
    return PixelBuffer_GetPixels( display->buffer );
+}
+
+r32 Display_GetDayFilterIntensity( Display_t* display )
+{
+   return display->dayFilterIntensity;
+}
+
+void Display_SetDayFilterIntensity( Display_t* display, r32 intensity )
+{
+   display->dayFilterIntensity = intensity;
 }
 
 void Display_Fill( Display_t* display, u32 color )

@@ -41,6 +41,7 @@ struct Game_t
 internal void Game_Tic( Game_t* game );
 internal void Game_TicEntities( Game_t* game, r32 deltaSec );
 internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal );
+internal void Game_UpdateDayFilterIntensity( Game_t* game );
 
 size_t Game_GetStructSize( void )
 {
@@ -259,6 +260,8 @@ void Game_IncrementDaylightFactor( Game_t* game )
       game->daylightFactor = 0.0f;
       game->isAM = True;
    }
+
+   Game_UpdateDayFilterIntensity( game );
 }
 
 internal void Game_Tic( Game_t* game )
@@ -325,4 +328,26 @@ internal void Game_EnterPortal( Game_t* game, TileMapPortal_t* portal )
       ActiveSprite_SetDirection( Entity_GetSprite( playerEntity), TileMapPortal_GetDestinationDir( portal ) );
       Player_ResetChaining( player );
    }
+}
+
+internal void Game_UpdateDayFilterIntensity( Game_t* game )
+{
+   if ( game->daylightFactor < DAY_FACTOR_LOW_CUTOFF )
+   {
+      Display_SetDayFilterIntensity( game->display, 0.0f );
+   }
+   else if ( game->daylightFactor > DAY_FACTOR_HIGH_CUTOFF )
+   {
+      Display_SetDayFilterIntensity( game->display, 1.0f );
+   }
+   else
+   {
+      Display_SetDayFilterIntensity( game->display, ( game->daylightFactor - DAY_FACTOR_LOW_CUTOFF ) / ( DAY_FACTOR_HIGH_CUTOFF - DAY_FACTOR_LOW_CUTOFF ) );
+   }
+
+   // TODO: if we're underground, don't go full-nighttime
+   // if ( TILEMAP_IS_UNDERGROUND( game->tileMap.flags ) && game->screen.dayFilterIntensity < DAY_FACTOR_UNDERGROUND_THRESHOLD )
+   // {
+   //    game->screen.dayFilterIntensity = DAY_FACTOR_UNDERGROUND_THRESHOLD;
+   // }
 }
