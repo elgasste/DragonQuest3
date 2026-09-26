@@ -14,6 +14,7 @@ struct Tile_t
 {
    u32 textureIndex;
    b32 isPassable;
+   TileSpeed_t speed;
 };
 END_PACKED_STRUCT
 
@@ -32,6 +33,11 @@ b32 Tile_GetIsPassable( Tile_t* tile )
    return tile->isPassable;
 }
 
+TileSpeed_t Tile_GetSpeed( Tile_t* tile )
+{
+   return tile->speed;
+}
+
 void Tile_SetTextureIndex( Tile_t* tile, u32 textureIndex )
 {
    tile->textureIndex = textureIndex;
@@ -40,6 +46,23 @@ void Tile_SetTextureIndex( Tile_t* tile, u32 textureIndex )
 void Tile_SetIsPassable( Tile_t* tile, b32 isPassable )
 {
    tile->isPassable = isPassable;
+}
+
+void Tile_SetSpeed( Tile_t* tile, TileSpeed_t speed )
+{
+   tile->speed = speed;
+}
+
+u32 Tile_GetVelocityFromSpeed( TileSpeed_t speed )
+{
+   switch ( speed )
+   {
+      case TileSpeed_ExtraSlow: return 30 * WORLD_UNITS_PER_PIXEL;
+      case TileSpeed_Slow: return 45 * WORLD_UNITS_PER_PIXEL;
+      case TileSpeed_Normal: return 60 * WORLD_UNITS_PER_PIXEL;
+
+      default: return 60 * WORLD_UNITS_PER_PIXEL;
+   }
 }
 
 PACKED_STRUCT

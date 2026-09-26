@@ -56,6 +56,12 @@ add_executable(Test_Game_Render
    test_game_render.c
 )
 
+add_executable(Test_Game_Input
+   ../src/game_input.c
+   vendor/unity.c
+   test_game_input.c
+)
+
 add_executable(Test_Input
    ../src/input.c
    vendor/unity.c
@@ -120,6 +126,7 @@ set_property(TARGET Test_Game PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Physics PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Data PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Game_Render PROPERTY COMPILE_WARNING_AS_ERROR ON)
+set_property(TARGET Test_Game_Input PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_Input PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_MemArena PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Test_PixelBuffer PROPERTY COMPILE_WARNING_AS_ERROR ON)
@@ -141,6 +148,7 @@ if(MSVC)
    target_compile_options(Test_Game_Physics PRIVATE /W4 /wd4201)
    target_compile_options(Test_Game_Data PRIVATE /W4)
    target_compile_options(Test_Game_Render PRIVATE /W4)
+   target_compile_options(Test_Game_Input PRIVATE /W4)
    target_compile_options(Test_Input PRIVATE /W4)
    target_compile_options(Test_MemArena PRIVATE /W4)
    target_compile_options(Test_PixelBuffer PRIVATE /W4)
@@ -174,15 +182,20 @@ target_include_directories(Test_Game PRIVATE mocks)
 target_include_directories(Test_Game PRIVATE ../include)
 target_include_directories(Test_Game PRIVATE ../src)
 
-target_include_directories(Test_Game_Physics PRIVATE vendor)
-target_include_directories(Test_Game_Physics PRIVATE mocks)
-target_include_directories(Test_Game_Physics PRIVATE ../include)
-target_include_directories(Test_Game_Physics PRIVATE ../src)
-
 target_include_directories(Test_Game_Data PRIVATE vendor)
 target_include_directories(Test_Game_Data PRIVATE mocks)
 target_include_directories(Test_Game_Data PRIVATE ../include)
 target_include_directories(Test_Game_Data PRIVATE ../src)
+
+target_include_directories(Test_Game_Input PRIVATE vendor)
+target_include_directories(Test_Game_Input PRIVATE mocks)
+target_include_directories(Test_Game_Input PRIVATE ../include)
+target_include_directories(Test_Game_Input PRIVATE ../src)
+
+target_include_directories(Test_Game_Physics PRIVATE vendor)
+target_include_directories(Test_Game_Physics PRIVATE mocks)
+target_include_directories(Test_Game_Physics PRIVATE ../include)
+target_include_directories(Test_Game_Physics PRIVATE ../src)
 
 target_include_directories(Test_Game_Render PRIVATE vendor)
 target_include_directories(Test_Game_Render PRIVATE ../include)
@@ -237,6 +250,7 @@ add_test( NAME Unity_Display_Tests COMMAND Test_Display)
 add_test( NAME Unity_Entity_Tests COMMAND Test_Entity)
 add_test( NAME Unity_Game_Tests COMMAND Test_Game)
 add_test( NAME Unity_Game_Data_Tests COMMAND Test_Game_Data)
+add_test( NAME Unity_Game_Input_Tests COMMAND Test_Game_Input)
 add_test( NAME Unity_Game_Physics_Tests COMMAND Test_Game_Physics)
 add_test( NAME Unity_Game_Render_Tests COMMAND Test_Game_Render)
 add_test( NAME Unity_Input_Tests COMMAND Test_Input)

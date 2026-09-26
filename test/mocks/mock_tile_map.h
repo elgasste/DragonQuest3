@@ -7,6 +7,7 @@ typedef struct Tile_t
 {
    u32 textureIndex;
    b32 isPassable;
+   TileSpeed_t speed;
 }
 Tile_t;
 

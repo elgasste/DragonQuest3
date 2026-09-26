@@ -6,6 +6,16 @@
 #include "vector.h"
 #include "direction.h"
 
+typedef enum TileSpeed_t
+{
+   TileSpeed_ExtraSlow = 0,
+   TileSpeed_Slow,
+   TileSpeed_Normal,
+
+   TileSpeed_Count
+}
+TileSpeed_t;
+
 typedef struct Entity_t Entity_t;
 typedef struct GameData_t GameData_t;
 typedef struct MemArena_t MemArena_t;
@@ -17,9 +27,13 @@ size_t Tile_GetStructSize( void );
 
 u32 Tile_GetTextureIndex( Tile_t* tile );
 b32 Tile_GetIsPassable( Tile_t* tile );
+TileSpeed_t Tile_GetSpeed( Tile_t* tile );
 
 void Tile_SetTextureIndex( Tile_t* tile, u32 textureIndex );
 void Tile_SetIsPassable( Tile_t* tile, b32 isPassable );
+void Tile_SetSpeed( Tile_t* tile, TileSpeed_t speed );
+
+u32 Tile_GetVelocityFromSpeed( TileSpeed_t speed );
 
 typedef struct TileMapPortal_t TileMapPortal_t;
 size_t TileMapPortal_GetStructSize( void );

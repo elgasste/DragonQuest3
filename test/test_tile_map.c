@@ -216,6 +216,38 @@ void test_Tile_Getters_ReturnTileProperties( void )
    TEST_ASSERT_TRUE( Tile_GetIsPassable( &tile ) );
 }
 
+void test_Tile_GetSpeed_ReturnsTileSpeed( void )
+{
+   Tile_t tile = { 7, True, TileSpeed_Slow };
+
+   TEST_ASSERT_EQUAL_INT( TileSpeed_Slow, Tile_GetSpeed( &tile ) );
+}
+
+void test_Tile_SetSpeed_UpdatesTileSpeed( void )
+{
+   Tile_t tile = { 0, False, TileSpeed_Normal };
+
+   Tile_SetSpeed( &tile, TileSpeed_ExtraSlow );
+
+   TEST_ASSERT_EQUAL_INT( TileSpeed_ExtraSlow, Tile_GetSpeed( &tile ) );
+
+   Tile_SetSpeed( &tile, TileSpeed_Normal );
+
+   TEST_ASSERT_EQUAL_INT( TileSpeed_Normal, Tile_GetSpeed( &tile ) );
+}
+
+void test_Tile_GetVelocityFromSpeed_ReturnsVelocityForEachSpeed( void )
+{
+   TEST_ASSERT_EQUAL_UINT( 30 * WORLD_UNITS_PER_PIXEL, Tile_GetVelocityFromSpeed( TileSpeed_ExtraSlow ) );
+   TEST_ASSERT_EQUAL_UINT( 45 * WORLD_UNITS_PER_PIXEL, Tile_GetVelocityFromSpeed( TileSpeed_Slow ) );
+   TEST_ASSERT_EQUAL_UINT( 60 * WORLD_UNITS_PER_PIXEL, Tile_GetVelocityFromSpeed( TileSpeed_Normal ) );
+}
+
+void test_Tile_GetVelocityFromSpeed_FallsBackToNormalForUnknownSpeed( void )
+{
+   TEST_ASSERT_EQUAL_UINT( 60 * WORLD_UNITS_PER_PIXEL, Tile_GetVelocityFromSpeed( TileSpeed_Count ) );
+}
+
 void test_Tile_Setters_UpdateTileProperties( void )
 {
    Tile_t tile = { 0, False };
@@ -363,6 +395,23 @@ void test_TileMap_GetTile_ReturnsTilesInRowMajorOrder( void )
    TEST_ASSERT_EQUAL_UINT( 30, TileMap_GetTile( tileMap, 2 )->textureIndex );
    TEST_ASSERT_EQUAL_UINT( 40, TileMap_GetTile( tileMap, 3 )->textureIndex );
    TEST_ASSERT_EQUAL_UINT( 60, TileMap_GetTile( tileMap, 5 )->textureIndex );
+
+   TileMap_Free( tileMap, (MemArena_t*)1 );
+}
+
+void test_TileMap_CreateFromGameData_LoadsTileSpeeds( void )
+{
+   Tile_t expectedTiles[4] = { { 1, True, TileSpeed_Slow }, { 2, False, TileSpeed_ExtraSlow }, { 3, True, TileSpeed_Normal }, { 4, False, TileSpeed_Slow } };
+   TestTileMapData_t map = { 7, 2, 2, False, 0 };
+   TileMap_t* tileMap;
+
+   SetUpMapFixture( map, expectedTiles );
+   tileMap = LoadMap( 7 );
+
+   TEST_ASSERT_EQUAL_INT( TileSpeed_Slow, Tile_GetSpeed( TileMap_GetTile( tileMap, 0 ) ) );
+   TEST_ASSERT_EQUAL_INT( TileSpeed_ExtraSlow, Tile_GetSpeed( TileMap_GetTile( tileMap, 1 ) ) );
+   TEST_ASSERT_EQUAL_INT( TileSpeed_Normal, Tile_GetSpeed( TileMap_GetTile( tileMap, 2 ) ) );
+   TEST_ASSERT_EQUAL_INT( TileSpeed_Slow, Tile_GetSpeed( TileMap_GetTile( tileMap, 3 ) ) );
 
    TileMap_Free( tileMap, (MemArena_t*)1 );
 }
@@ -633,6 +682,12 @@ int main( void )
    RUN_TEST( test_Tile_Getters_ReturnTileProperties );
    RUN_TEST( test_Tile_Setters_UpdateTileProperties );
    
+   RUN_TEST( test_Tile_GetSpeed_ReturnsTileSpeed );
+   RUN_TEST( test_Tile_SetSpeed_UpdatesTileSpeed );
+   
+   RUN_TEST( test_Tile_GetVelocityFromSpeed_ReturnsVelocityForEachSpeed );
+   RUN_TEST( test_Tile_GetVelocityFromSpeed_FallsBackToNormalForUnknownSpeed );
+   
    RUN_TEST( test_TileMapPortal_GetStructSize_ReturnsNonZeroSize );
    RUN_TEST( test_TileMapPortal_Getters_ReturnPortalProperties );
 
@@ -643,6 +698,7 @@ int main( void )
    RUN_TEST( test_TileMap_CreateFromGameData_RejectsTruncatedPortals );
    RUN_TEST( test_TileMap_CreateFromGameData_LoadsNpcsAfterPortals );
    RUN_TEST( test_TileMap_CreateFromGameData_RejectsTruncatedNpcs );
+   RUN_TEST( test_TileMap_CreateFromGameData_LoadsTileSpeeds );
 
    RUN_TEST( test_TileMap_GetTile_ReturnsTilesInRowMajorOrder );
    

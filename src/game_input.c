@@ -4,6 +4,7 @@
 #include "input.h"
 #include "player.h"
 #include "sprite.h"
+#include "tile_map.h"
 
 #define DIAGONAL_VELOCITY_MULTIPLIER   0.707f
 
@@ -14,13 +15,17 @@ void Game_HandleInput( Game_t* game )
    Input_t* input;
    Entity_t* playerEntity;
    ActiveSprite_t* playerSprite;
+   TileMap_t* tileMap;
+   Tile_t* tile;
    Vector2i32_t playerVelocity;
    i32 newVelocity;
 
    playerEntity = Game_GetActivePlayerEntity( game );
    playerSprite = Entity_GetSprite( playerEntity );
-   // TODO: this should come from the specific tile the player is standing on
-   newVelocity = 60 * WORLD_UNITS_PER_PIXEL;
+
+   tileMap = Game_GetTileMap( game );
+   tile = TileMap_GetTile( tileMap, TileMap_GetTileIndexForEntity( tileMap, playerEntity ) );
+   newVelocity = Tile_GetVelocityFromSpeed( Tile_GetSpeed( tile ) );
 
    input = Game_GetInput( game );
    leftIsDown = Input_IsButtonDown( input, InputButton_Left );
