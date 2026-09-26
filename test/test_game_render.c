@@ -491,6 +491,15 @@ void test_Game_Render_DrawsEntitiesInVerticalOrder( void )
    TEST_ASSERT_EQUAL_INT( 43, g_displayDrawBufferCalls[1].displayY );
 }
 
+void test_Game_Render_DrawsNpcWhenSameYAsFrontPlayer( void )
+{
+   g_npcEntity.rect.y = g_playerEntity.rect.y;
+
+   Game_Render( (Game_t*)4 );
+
+   TEST_ASSERT_EQUAL_INT( 2, g_displayDrawBufferCall.callCount );
+}
+
 void test_Game_Render_DrawsAllPlayersInVerticalOrder( void )
 {
    g_playerCount = 3;
@@ -625,6 +634,7 @@ int main( void )
    RUN_TEST( test_Game_Render_DrawsPlayerRelativeToViewport );
    RUN_TEST( test_Game_Render_DrawsVisibleNpcRelativeToViewport );
    RUN_TEST( test_Game_Render_DrawsEntitiesInVerticalOrder );
+   RUN_TEST( test_Game_Render_DrawsNpcWhenSameYAsFrontPlayer );
    RUN_TEST( test_Game_Render_DrawsAllPlayersInVerticalOrder );
    RUN_TEST( test_Game_Render_DrawsOverlappingPlayersFromBackToFront );
    RUN_TEST( test_Game_Render_DoesNotDrawNpcOutsideViewport );
