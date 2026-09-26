@@ -236,6 +236,18 @@ void test_Tile_SetSpeed_UpdatesTileSpeed( void )
    TEST_ASSERT_EQUAL_INT( TileSpeed_Normal, Tile_GetSpeed( &tile ) );
 }
 
+void test_Tile_GetVelocityFromSpeed_ReturnsVelocityForEachSpeed( void )
+{
+   TEST_ASSERT_EQUAL_UINT( 30 * WORLD_UNITS_PER_PIXEL, Tile_GetVelocityFromSpeed( TileSpeed_ExtraSlow ) );
+   TEST_ASSERT_EQUAL_UINT( 45 * WORLD_UNITS_PER_PIXEL, Tile_GetVelocityFromSpeed( TileSpeed_Slow ) );
+   TEST_ASSERT_EQUAL_UINT( 60 * WORLD_UNITS_PER_PIXEL, Tile_GetVelocityFromSpeed( TileSpeed_Normal ) );
+}
+
+void test_Tile_GetVelocityFromSpeed_FallsBackToNormalForUnknownSpeed( void )
+{
+   TEST_ASSERT_EQUAL_UINT( 60 * WORLD_UNITS_PER_PIXEL, Tile_GetVelocityFromSpeed( TileSpeed_Count ) );
+}
+
 void test_Tile_Setters_UpdateTileProperties( void )
 {
    Tile_t tile = { 0, False };
@@ -672,6 +684,9 @@ int main( void )
    
    RUN_TEST( test_Tile_GetSpeed_ReturnsTileSpeed );
    RUN_TEST( test_Tile_SetSpeed_UpdatesTileSpeed );
+   
+   RUN_TEST( test_Tile_GetVelocityFromSpeed_ReturnsVelocityForEachSpeed );
+   RUN_TEST( test_Tile_GetVelocityFromSpeed_FallsBackToNormalForUnknownSpeed );
    
    RUN_TEST( test_TileMapPortal_GetStructSize_ReturnsNonZeroSize );
    RUN_TEST( test_TileMapPortal_Getters_ReturnPortalProperties );

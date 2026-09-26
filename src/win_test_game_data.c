@@ -157,7 +157,7 @@ internal u32 LandscapeTilePixel( u32 tileIndex, u32 x, u32 y )
       }
       return 0xFF000000u | RGB( 80, 170, 70 );
    }
-   else if ( tileIndex == 1 ) // dirt
+   else if ( tileIndex == 1 ) // water
    {
       if ( speckle )
       {
@@ -165,7 +165,7 @@ internal u32 LandscapeTilePixel( u32 tileIndex, u32 x, u32 y )
       }
       return 0xFF000000u | RGB( 140, 100, 65 );
    }
-   else if ( tileIndex == 2 ) // sand
+   else if ( tileIndex == 2 ) // snow?
    {
       if ( speckle )
       {
@@ -173,7 +173,7 @@ internal u32 LandscapeTilePixel( u32 tileIndex, u32 x, u32 y )
       }
       return 0xFF000000u | RGB( 235, 210, 150 );
    }
-   else if ( tileIndex == 3 ) // water
+   else if ( tileIndex == 3 ) // sand
    {
       if ( ( x + ( y % 4 ) ) % 6 < 2 )
       {
@@ -181,7 +181,7 @@ internal u32 LandscapeTilePixel( u32 tileIndex, u32 x, u32 y )
       }
       return 0xFF000000u | RGB( 80, 140, 220 );
    }
-   else if ( tileIndex == 4 ) // stone
+   else if ( tileIndex == 4 ) // gravel
    {
       if ( speckle )
       {
@@ -189,7 +189,7 @@ internal u32 LandscapeTilePixel( u32 tileIndex, u32 x, u32 y )
       }
       return 0xFF000000u | RGB( 140, 140, 145 );
    }
-   else if ( tileIndex == 5 ) // path
+   else if ( tileIndex == 5 ) // ice
    {
       if ( speckle )
       {
@@ -462,13 +462,14 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       // random
       index = Platform_Rand_u32Ranged( 0, 9 );
       curTileMap->tiles[i].textureIndex = index;
-      curTileMap->tiles[i].isPassable = index == 7 ? False : True;
+      curTileMap->tiles[i].isPassable = index == 7 ? False : True; // trees are not passable
 
-      if ( i == 5130 )
+      curTileMap->tiles[i].speed = index == 6 ? TileSpeed_ExtraSlow : index == 3 ? TileSpeed_Slow : TileSpeed_Normal;
+
+      if ( i == 5130 ) // portal
       {
          curTileMap->tiles[i].textureIndex = 10;
          curTileMap->tiles[i].isPassable = True;
-         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
    }
 
@@ -512,9 +513,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       if ( i == 2320 )
       {
          // portal
-         curTileMap->tiles[i].textureIndex = 10;
+         index = 10;
+         curTileMap->tiles[i].textureIndex = index;
          curTileMap->tiles[i].isPassable = True;
-         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
       else
       {
@@ -522,8 +523,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
          index = Platform_Rand_u32Ranged( 0, 9 );
          curTileMap->tiles[i].textureIndex = index;
          curTileMap->tiles[i].isPassable = index == 7 ? False : True;
-         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
+
+      curTileMap->tiles[i].speed = index == 6 ? TileSpeed_ExtraSlow : index == 3 ? TileSpeed_Slow : TileSpeed_Normal;
    }
 
    // 3: 3x3, no wrapping
@@ -590,9 +592,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       if ( i == 1555 )
       {
          // portal
-         curTileMap->tiles[i].textureIndex = 10;
+         index = 10;
+         curTileMap->tiles[i].textureIndex = index;
          curTileMap->tiles[i].isPassable = True;
-         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
       else
       {
@@ -600,8 +602,9 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
          index = Platform_Rand_u32Ranged( 0, 9 );
          curTileMap->tiles[i].textureIndex = index;
          curTileMap->tiles[i].isPassable = index == 7 ? False : True;
-         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
+
+      curTileMap->tiles[i].speed = index == 6 ? TileSpeed_ExtraSlow : index == 3 ? TileSpeed_Slow : TileSpeed_Normal;
    }
 
    return tileMaps;

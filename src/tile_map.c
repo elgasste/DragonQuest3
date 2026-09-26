@@ -53,6 +53,18 @@ void Tile_SetSpeed( Tile_t* tile, TileSpeed_t speed )
    tile->speed = speed;
 }
 
+u32 Tile_GetVelocityFromSpeed( TileSpeed_t speed )
+{
+   switch ( speed )
+   {
+      case TileSpeed_ExtraSlow: return 30 * WORLD_UNITS_PER_PIXEL;
+      case TileSpeed_Slow: return 45 * WORLD_UNITS_PER_PIXEL;
+      case TileSpeed_Normal: return 60 * WORLD_UNITS_PER_PIXEL;
+
+      default: return 60 * WORLD_UNITS_PER_PIXEL;
+   }
+}
+
 PACKED_STRUCT
 struct TileMapPortal_t
 {
