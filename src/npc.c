@@ -87,23 +87,21 @@ void Npc_SetWanders( Npc_t* npc, b32 wanders )
    npc->wanders = wanders;
 }
 
-void Npc_Tic( Npc_t* npc, Clock_t* clock )
+void Npc_Tic( Npc_t* npc )
 {
-   r32 deltaSec;
    Entity_t* entity;
    ActiveSprite_t* sprite;
 
    entity = Npc_GetEntity( npc );
    sprite = Entity_GetSprite( entity );
-   deltaSec = Clock_GetFrameSec( clock );
-   ActiveSprite_Tic( sprite, deltaSec );
+   ActiveSprite_Tic( sprite, CLOCK_FRAME_SEC );
 
    if ( !npc->wanders )
    {
       return;
    }
 
-   npc->elapsedSeconds += deltaSec;
+   npc->elapsedSeconds += CLOCK_FRAME_SEC;
 
    if ( npc->elapsedSeconds > npc->actionSeconds )
    {

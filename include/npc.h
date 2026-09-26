@@ -43,6 +43,6 @@ b32 Npc_GetWanders( Npc_t* npc );
 
 void Npc_SetWanders( Npc_t* npc, b32 wanders );
 
-void Npc_Tic( Npc_t* npc, Clock_t* clock );
+void Npc_Tic( Npc_t* npc );
 
 #endif // NPC_H

@@ -7,8 +7,6 @@
 // 4 MB
 #define GAME_MEMORY_SIZE   ( 1024 * 1024 * 4 )
 
-// TODO: this should probably also go somewhere else
-#define GAME_DEFAULT_FPS   60
 #define GAME_MAX_PLAYERS   4
 
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
@@ -46,7 +44,6 @@ u32* Game_GetPlayerOrder( Game_t* game );
 
 void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
-void Game_SetClockFps( Game_t* game, u32 fps );
 void Game_SetPlayerRect( Game_t* game, u32 playerIndex, Vector4i32_t playerRect );
 void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex );
 

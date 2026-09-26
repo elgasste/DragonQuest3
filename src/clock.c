@@ -4,10 +4,6 @@
 
 struct Clock_t
 {
-   u32 fps;
-   u64 frameMicroSec;
-   r32 frameSec;
-
    u64 frameStartMicro;
    u64 absoluteStartMicro;
    u64 absoluteEndMicro;
@@ -24,13 +20,11 @@ size_t Clock_GetStructSize( void )
    return sizeof( Clock_t );
 }
 
-Clock_t* Clock_Create( MemArena_t* memArena, u32 fps )
+Clock_t* Clock_Create( MemArena_t* memArena )
 {
    Clock_t* clock;
 
    clock = (Clock_t*)MemArena_AllocMem( memArena, sizeof( Clock_t ) );
-
-   Clock_SetFps( clock, fps );
 
    clock->frameStartMicro = 0;
    clock->absoluteStartMicro = 0;
@@ -48,16 +42,6 @@ Clock_t* Clock_Create( MemArena_t* memArena, u32 fps )
 void Clock_Free( Clock_t* clock, MemArena_t* memArena )
 {
    MemArena_FreeMem( memArena, clock );
-}
-
-u32 Clock_GetFps( Clock_t *clock )
-{
-   return clock->fps;
-}
-
-r32 Clock_GetFrameSec( Clock_t *clock )
-{
-   return clock->frameSec;
 }
 
 u64 Clock_GetAbsoluteStartMicro( Clock_t *clock )
@@ -85,19 +69,6 @@ u32 Clock_GetLagFrameCount( Clock_t *clock )
    return clock->lagFrameCount;
 }
 
-void Clock_SetFps( Clock_t* clock, u32 fps )
-{
-   if ( fps < CLOCK_MIN_FPS || fps > CLOCK_MAX_FPS )
-   {
-      Platform_FatalError( "FPS is out of range" );
-      return;
-   }
-
-   clock->fps = fps;
-   clock->frameMicroSec = 1000000 / (u64)fps;
-   clock->frameSec = 1.0f / (r32)fps;
-}
-
 void Clock_StartFrame( Clock_t* clock )
 {
    clock->frameStartMicro = Platform_GetMicros();
@@ -120,9 +91,9 @@ void Clock_EndFrame( Clock_t* clock )
    elapsedMicro = frameEndMicro - clock->frameStartMicro;
    clock->lastframeMicro = elapsedMicro;
 
-   if ( elapsedMicro <= clock->frameMicroSec )
+   if ( elapsedMicro <= CLOCK_FRAME_MICROSEC )
    {
-      Platform_SleepMs( (u32)( ( clock->frameMicroSec - elapsedMicro ) / 1000 ) );
+      Platform_SleepMs( (u32)( ( CLOCK_FRAME_MICROSEC - elapsedMicro ) / 1000 ) );
    }
    else
    {

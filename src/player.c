@@ -13,7 +13,6 @@ struct Player_t
    char name[PLAYER_NAME_BUFFER_SIZE];
 
    PlayerMovement_t moveHistory[PLAYER_MOVE_HISTORY_SIZE];
-   u32 moveHistoryCount;
    u32 movementChainIndex;
    b32 chainNextPlayer;
 };
@@ -23,7 +22,7 @@ size_t Player_GetStructSize( void )
    return sizeof( Player_t );
 }
 
-void Player_Init( Player_t* player, MemArena_t* arena, ActiveSpriteTextureSet_t* textureSet, Vector2i32_t size, Vector2i32_t spriteOffset, u32 fps )
+void Player_Init( Player_t* player, MemArena_t* arena, ActiveSpriteTextureSet_t* textureSet, Vector2i32_t size, Vector2i32_t spriteOffset )
 {
    ActiveSprite_t* sprite;
 
@@ -38,10 +37,7 @@ void Player_Init( Player_t* player, MemArena_t* arena, ActiveSpriteTextureSet_t*
    Entity_SetSize( player->entity, size.x, size.y );
    Entity_SetSpriteOffset( player->entity, spriteOffset.x, spriteOffset.y );
 
-   player->moveHistoryCount = PLAYER_MOVE_HISTORY_SIZE;
-   Player_SetMoveHistoryCountFromFps( player, fps );
-   player->movementChainIndex = 0;
-   player->chainNextPlayer = False;
+   Player_ResetChaining( player );
 }
 
 void Player_Free( MemArena_t* arena, Player_t* player )
@@ -85,24 +81,6 @@ void Player_SetName( Player_t* player, const char* name )
    strcpy_s( player->name, PLAYER_NAME_BUFFER_SIZE, name );
 }
 
-void Player_SetMoveHistoryCountFromFps( Player_t* player, u32 fps )
-{
-   u32 moveHistoryCount;
-
-   moveHistoryCount = ( fps * PLAYER_CHAIN_DISTANCE_PIXELS / PLAYER_CHAIN_REFERENCE_FPS ) + 1;
-   if ( moveHistoryCount > PLAYER_MOVE_HISTORY_SIZE )
-   {
-      moveHistoryCount = PLAYER_MOVE_HISTORY_SIZE;
-   }
-   if ( moveHistoryCount == 0 )
-   {
-      moveHistoryCount = 1;
-   }
-
-   player->moveHistoryCount = moveHistoryCount;
-   Player_ResetChaining( player );
-}
-
 void Player_SetChainNextPlayer( Player_t* player, b32 chainNextPlayer )
 {
    player->chainNextPlayer = chainNextPlayer;
@@ -112,7 +90,7 @@ void Player_OffsetMovementHistory( Player_t* player, i32 offsetX, i32 offsetY )
 {
    u32 i;
 
-   for ( i = 0; i < player->moveHistoryCount; i++ )
+   for ( i = 0; i < PLAYER_MOVE_HISTORY_SIZE; i++ )
    {
       player->moveHistory[i].newPos.x += offsetX;
       player->moveHistory[i].newPos.y += offsetY;
@@ -132,7 +110,7 @@ void Player_AddMovement( Player_t* player, PlayerMovement_t movement )
    player->moveHistory[player->movementChainIndex].newDir = movement.newDir;
    player->movementChainIndex++;
 
-   if ( player->movementChainIndex >= player->moveHistoryCount )
+   if ( player->movementChainIndex >= PLAYER_MOVE_HISTORY_SIZE )
    {
       player->chainNextPlayer = True;
       player->movementChainIndex = 0;

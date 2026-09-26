@@ -1,6 +1,5 @@
 #include "mem_arena.h"
 #include "pixel_buffer.h"
-#include "platform.h"
 
 struct PixelBuffer_t
 {

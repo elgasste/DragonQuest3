@@ -15,6 +15,7 @@
 #include <stdlib.h>
 
 #include "animation.h"
+#include "clock.h"
 #include "display.h"
 #include "game.h"
 #include "sprite.h"
@@ -24,7 +25,6 @@ global u32 g_allocCount;
 global u32 g_freeCount;
 global u32 g_clockStartCount;
 global u32 g_clockEndCount;
-global r32 g_frameSec;
 global r32 g_spriteTicDeltaSec;
 global u32 g_spriteTicCount;
 global ActiveSprite_t* g_spriteTicSprite;
@@ -40,8 +40,6 @@ global u32 g_gameDataFreeCount;
 global u32 g_displayFreeCount;
 global u32 g_entityFreeCount;
 global u32 g_animationChainFreeCount;
-global u32 g_playerMoveHistoryUpdateCount;
-global u32 g_playerMoveHistoryFps;
 global Clock_t* g_clock;
 global Input_t* g_input;
 global Display_t* g_display;
@@ -85,10 +83,9 @@ void MemArena_FreeMem( MemArena_t* arena, void* mem )
    free( mem );
 }
 
-Clock_t* Clock_Create( MemArena_t* memArena, u32 fps )
+Clock_t* Clock_Create( MemArena_t* memArena )
 {
    g_clock = (Clock_t*)MemArena_AllocMem( memArena, sizeof( Clock_t ) );
-   g_clock->fps = fps;
    return g_clock;
 }
 
@@ -107,22 +104,6 @@ void Clock_EndFrame( Clock_t* clock )
 {
    UNUSED_PARAM( clock );
    g_clockEndCount++;
-}
-
-r32 Clock_GetFrameSec( Clock_t* clock )
-{
-   UNUSED_PARAM( clock );
-   return g_frameSec;
-}
-
-u32 Clock_GetFps( Clock_t* clock )
-{
-   return clock->fps;
-}
-
-void Clock_SetFps( Clock_t* clock, u32 fps )
-{
-   clock->fps = fps;
 }
 
 Input_t* Input_Create( MemArena_t* memArena )
@@ -174,10 +155,8 @@ void Player_Init( Player_t* player,
                   MemArena_t* arena,
                   ActiveSpriteTextureSet_t* textureSet,
                   Vector2i32_t size,
-                  Vector2i32_t spriteOffset,
-                  u32 fps )
+                  Vector2i32_t spriteOffset )
 {
-	UNUSED_PARAM( fps );
    player->entity = Entity_Create( arena, ActiveSprite_Create( arena, textureSet ) );
    ActiveSprite_SetTextureIndex( Entity_GetSprite( player->entity ), 1 );
    Entity_SetSize( player->entity, size.x, size.y );
@@ -197,13 +176,6 @@ void Player_Free( MemArena_t* arena, Player_t* player )
 void Player_ResetChaining( Player_t* player )
 {
    UNUSED_PARAM( player );
-}
-
-void Player_SetMoveHistoryCountFromFps( Player_t* player, u32 fps )
-{
-   UNUSED_PARAM( player );
-   g_playerMoveHistoryUpdateCount++;
-   g_playerMoveHistoryFps = fps;
 }
 
 Entity_t* Player_GetEntity( const Player_t* player )
@@ -269,9 +241,9 @@ Entity_t* Npc_GetEntity( Npc_t* npc )
    return npc->entity;
 }
 
-void Npc_Tic( Npc_t* npc, Clock_t* clock )
+void Npc_Tic( Npc_t* npc )
 {
-   ActiveSprite_Tic( Entity_GetSprite( Npc_GetEntity( npc ) ), Clock_GetFrameSec( clock ) );
+   ActiveSprite_Tic( Entity_GetSprite( Npc_GetEntity( npc ) ), CLOCK_FRAME_SEC );
 }
 
 Vector2i32_t Entity_GetSpriteOffset( Entity_t* entity )
@@ -584,7 +556,6 @@ void setUp( void )
    g_freeCount = 0;
    g_clockStartCount = 0;
    g_clockEndCount = 0;
-   g_frameSec = 1.0f / GAME_DEFAULT_FPS;
    g_spriteTicDeltaSec = 0.0f;
    g_spriteTicCount = 0;
    g_spriteTicSprite = 0;
@@ -609,8 +580,6 @@ void setUp( void )
    g_displayFreeCount = 0;
    g_entityFreeCount = 0;
    g_animationChainFreeCount = 0;
-   g_playerMoveHistoryUpdateCount = 0;
-   g_playerMoveHistoryFps = 0;
    g_tileMapGetPortalCount = 0;
    g_testPortal = 0;
    g_tileMapId = 1;
@@ -696,7 +665,6 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_UINT( 3, g_playerSpriteTextureIndex );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).x );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).y );
-   TEST_ASSERT_EQUAL_UINT( GAME_DEFAULT_FPS, g_clock->fps );
 
    Game_Free( game, (MemArena_t*)1 );
 }
@@ -713,45 +681,6 @@ void test_Game_SetPlayerRect_UpdatesPlayerRectangle( void )
    TEST_ASSERT_EQUAL_INT( 30, playerRect.y );
    TEST_ASSERT_EQUAL_INT( 18, playerRect.w );
    TEST_ASSERT_EQUAL_INT( 20, playerRect.h );
-
-   Game_Free( game, (MemArena_t*)1 );
-}
-
-void test_Game_SetClockFps_UpdatesAllPlayerMovementHistories( void )
-{
-   Game_t* game = CreateGame();
-
-   g_playerMoveHistoryUpdateCount = 0;
-   g_playerMoveHistoryFps = 0;
-
-   Game_SetClockFps( game, 30 );
-
-   TEST_ASSERT_EQUAL_UINT( 30, Clock_GetFps( Game_GetClock( game ) ) );
-   TEST_ASSERT_EQUAL_UINT( GAME_MAX_PLAYERS, g_playerMoveHistoryUpdateCount );
-   TEST_ASSERT_EQUAL_UINT( 30, g_playerMoveHistoryFps );
-
-   Game_Free( game, (MemArena_t*)1 );
-}
-
-void test_Game_SetClockFps_SyncsAllPlayersToActivePlayerPositionAndDirection( void )
-{
-   Game_t* game = CreateGame();
-
-   Game_SetPlayerRect( game, 0, (Vector4i32_t){ 50, 60, 12, 14 } );
-   ActiveSprite_SetDirection( Entity_GetSprite( Game_GetPlayerEntity( game, 0 ) ), Direction_Left );
-   Game_SetPlayerRect( game, 1, (Vector4i32_t){ 1, 2, 12, 14 } );
-   Game_SetPlayerRect( game, 2, (Vector4i32_t){ 3, 4, 12, 14 } );
-   Game_SetPlayerRect( game, 3, (Vector4i32_t){ 5, 6, 12, 14 } );
-
-   Game_SetClockFps( game, 30 );
-
-   for ( u32 i = 0; i < GAME_MAX_PLAYERS; i++ )
-   {
-      Vector4i32_t rect = Entity_GetRect( Game_GetPlayerEntity( game, i ) );
-      TEST_ASSERT_EQUAL_INT( 50, rect.x );
-      TEST_ASSERT_EQUAL_INT( 60, rect.y );
-      TEST_ASSERT_EQUAL_INT( Direction_Left, ActiveSprite_GetDirection( Entity_GetSprite( Game_GetPlayerEntity( game, i ) ) ) );
-   }
 
    Game_Free( game, (MemArena_t*)1 );
 }
@@ -777,12 +706,11 @@ void test_Game_Run_TicsPlayerSpriteWithClockFrameDuration( void )
 {
    Game_t* game = CreateGame();
 
-   g_frameSec = 0.25f;
    Game_Run( game );
 
    TEST_ASSERT_EQUAL_UINT( 4, g_spriteTicCount );
    TEST_ASSERT_EQUAL_PTR( g_playerSprite, g_spriteTicSprite );
-   TEST_ASSERT_EQUAL_FLOAT( 0.25f, g_spriteTicDeltaSec );
+   TEST_ASSERT_EQUAL_FLOAT( CLOCK_FRAME_SEC, g_spriteTicDeltaSec );
 
    Game_Free( game, (MemArena_t*)1 );
 }
@@ -792,12 +720,11 @@ void test_Game_Run_TicsNpcSpritesWithClockFrameDuration( void )
    Game_t* game = CreateGame();
 
    g_npcCount = 1;
-   g_frameSec = 0.25f;
    Game_Run( game );
 
    TEST_ASSERT_EQUAL_UINT( 5, g_spriteTicCount );
    TEST_ASSERT_EQUAL_PTR( g_npcSprite, g_spriteTicSprite );
-   TEST_ASSERT_EQUAL_FLOAT( 0.25f, g_spriteTicDeltaSec );
+   TEST_ASSERT_EQUAL_FLOAT( CLOCK_FRAME_SEC, g_spriteTicDeltaSec );
 
    Game_Free( game, (MemArena_t*)1 );
 }
@@ -899,8 +826,6 @@ int main( void )
    RUN_TEST( test_Game_Create_InitializesDependenciesAndDefaultState );
 
    RUN_TEST( test_Game_SetPlayerRect_UpdatesPlayerRectangle );
-   RUN_TEST( test_Game_SetClockFps_UpdatesAllPlayerMovementHistories );
-   RUN_TEST( test_Game_SetClockFps_SyncsAllPlayersToActivePlayerPositionAndDirection );
 
    RUN_TEST( test_Game_Run_ExecutesOneFrameAndUpdatesViewport );
    RUN_TEST( test_Game_Run_TicsPlayerSpriteWithClockFrameDuration );
