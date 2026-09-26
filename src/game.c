@@ -207,12 +207,25 @@ void Game_Stop( Game_t* game )
 void Game_SetClockFps( Game_t* game, u32 fps )
 {
    u32 i;
+   Player_t* player;
+   Entity_t* entity;
+   Vector4i32_t activePlayerRect;
+   Direction_t activePlayerDir;
 
    Clock_SetFps( game->clock, fps );
 
+   player = Game_GetActivePlayer( game );
+   entity = Player_GetEntity( player );
+   activePlayerRect = Entity_GetRect( entity );
+   activePlayerDir = ActiveSprite_GetDirection( Entity_GetSprite( entity ) );
+
    for ( i = 0; i < game->playerCount; i++ )
    {
-      Player_SetMoveHistoryCountFromFps( Game_GetPlayer( game, i ), fps );
+      player = Game_GetPlayer( game, i );
+      entity = Player_GetEntity( player );
+      Player_SetMoveHistoryCountFromFps( player, fps );
+      Entity_SetPosition( entity, activePlayerRect.x, activePlayerRect.y );
+      ActiveSprite_SetDirection( Entity_GetSprite( entity ), activePlayerDir );
    }
 }
 

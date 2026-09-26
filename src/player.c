@@ -38,6 +38,7 @@ void Player_Init( Player_t* player, MemArena_t* arena, ActiveSpriteTextureSet_t*
    Entity_SetSize( player->entity, size.x, size.y );
    Entity_SetSpriteOffset( player->entity, spriteOffset.x, spriteOffset.y );
 
+   player->moveHistoryCount = PLAYER_MOVE_HISTORY_SIZE;
    Player_SetMoveHistoryCountFromFps( player, fps );
    player->movementChainIndex = 0;
    player->chainNextPlayer = False;
