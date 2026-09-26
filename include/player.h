@@ -1,7 +1,6 @@
 #if !defined( PLAYER_H )
 #define PLAYER_H
 
-#include "clock.h"
 #include "direction.h"
 #include "vector.h"
 

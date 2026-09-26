@@ -4,12 +4,10 @@
 
 #include "clock.h"
 #include "display.h"
-#include "entity.h"
 #include "game.h"
 #include "input.h"
 #include "mem_arena.h"
 #include "platform.h"
-#include "tile_map.h"
 #include "win_common.h"
 
 internal void SetExeDir( void );
