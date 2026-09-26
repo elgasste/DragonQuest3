@@ -79,9 +79,14 @@ u32 TileMap_GetTilesY( TileMap_t* tileMap )
    return tileMap->info.tilesY;
 }
 
+u32 TileMap_GetFlags( TileMap_t* tileMap )
+{
+   return tileMap->info.flags;
+}
+
 b32 TileMap_GetWraps( TileMap_t* tileMap )
 {
-   return tileMap->info.wraps;
+   return TILEMAP_GET_WRAPS( tileMap->info.flags );
 }
 
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
@@ -193,6 +198,19 @@ void test_Display_DrawRect_UsesAlphaChannelToBlendColor( void )
    Display_Free( display, (MemArena_t*)1 );
 }
 
+void test_Display_ApplyFade_BlendsToRequestedAlpha( void )
+{
+   Display_t* display = CreateDisplay( 2, 1 );
+
+   Display_Fill( display, 0x00112233u );
+   Display_ApplyFade( display, 0.5f );
+
+   AssertPixel( display, 0, 0, 0x00081119u );
+   AssertPixel( display, 1, 0, 0x00081119u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
 void test_Display_DrawRect_NearlyTransparentColorMostlyPreservesPixel( void )
 {
    Display_t* display = CreateDisplay( 1, 1 );
@@ -295,7 +313,7 @@ void test_Display_DrawTileMapViewport_DrawsVisibleNonWrappingTiles( void )
 {
    Tile_t tiles[] = { { 0, True }, { 1, True }, { 2, True }, { 3, True } };
    u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
-   TileMap_t tileMap = { { 0, 2, 2, False }, tiles };
+   TileMap_t tileMap = { { 0, 2, 2, 0, 0, 0 }, tiles };
    TileTextureSet_t textureSet = { { 4, 1 }, textures };
    Display_t* display = CreateDisplay( 2, 2 );
 
@@ -314,7 +332,7 @@ void test_Display_DrawTileMapViewport_DrawsWrappingTilesAcrossViewport( void )
 {
    Tile_t tiles[] = { { 0, True } };
    u32 textures[] = { 0xFF000077u };
-   TileMap_t tileMap = { { 0, 1, 1, True }, tiles };
+   TileMap_t tileMap = { { 0, 1, 1, 0, 0, TILEMAP_WRAPS }, tiles };
    TileTextureSet_t textureSet = { { 1, 1 }, textures };
    Display_t* display = CreateDisplay( 3, 2 );
 
@@ -329,7 +347,7 @@ void test_Display_DrawTileMapViewport_RepeatsMultiTileMapInBothAxes( void )
 {
    Tile_t tiles[] = { { 0, True }, { 1, True }, { 2, True }, { 3, True } };
    u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
-   TileMap_t tileMap = { { 0, 2, 2, True }, tiles };
+   TileMap_t tileMap = { { 0, 2, 2, 0, 0, TILEMAP_WRAPS }, tiles };
    TileTextureSet_t textureSet = { { 4, 1 }, textures };
    Display_t* display = CreateDisplay( 4, 4 );
 
@@ -356,7 +374,7 @@ void test_Display_DrawTileMapViewport_HandlesNegativeWrappingViewport( void )
 {
    Tile_t tiles[] = { { 0, True }, { 1, True }, { 2, True }, { 3, True } };
    u32 textures[] = { 0xFF000011u, 0xFF000022u, 0xFF000033u, 0xFF000044u };
-   TileMap_t tileMap = { { 0, 2, 2, True }, tiles };
+   TileMap_t tileMap = { { 0, 2, 2, 0, 0, TILEMAP_WRAPS }, tiles };
    TileTextureSet_t textureSet = { { 4, 1 }, textures };
    Display_t* display = CreateDisplay( 3, 3 );
 
@@ -380,7 +398,7 @@ void test_Display_DrawTileMapViewport_AppliesDisplayOffsetForWrappingMap( void )
 {
    Tile_t tiles[] = { { 0, True } };
    u32 textures[] = { 0xFF000099u };
-   TileMap_t tileMap = { { 0, 1, 1, True }, tiles };
+   TileMap_t tileMap = { { 0, 1, 1, 0, 0, TILEMAP_WRAPS }, tiles };
    TileTextureSet_t textureSet = { { 1, 1 }, textures };
    Display_t* display = CreateDisplay( 4, 4 );
 
@@ -406,6 +424,8 @@ int main( void )
    RUN_TEST( test_Display_Create_StoresDimensionsAndInitializesPixels );
 
    RUN_TEST( test_Display_Fill_FillsTheWholeDisplay );
+
+   RUN_TEST( test_Display_ApplyFade_BlendsToRequestedAlpha );
 
    RUN_TEST( test_Display_DrawRect_DrawsRectangleAtRequestedPosition );
    RUN_TEST( test_Display_DrawRect_UsesAlphaChannelToBlendColor );

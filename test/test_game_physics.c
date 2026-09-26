@@ -249,9 +249,14 @@ u32 TileMap_GetTilesY( TileMap_t* tileMap )
    return tileMap->info.tilesY;
 }
 
-Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex )
+u32 TileMap_GetFlags( TileMap_t* tileMap )
 {
-   UNUSED_PARAM( tileMap );
+   return tileMap->info.flags;
+}
+
+Tile_t* TileMap_GetTile( TileMap_t* tileIndexMap, u32 tileIndex )
+{
+   UNUSED_PARAM( tileIndexMap );
    return &g_tiles[tileIndex];
 }
 
@@ -262,7 +267,7 @@ b32 Tile_GetIsPassable( Tile_t* tile )
 
 b32 TileMap_GetWraps( TileMap_t* tileMap )
 {
-   return tileMap->info.wraps;
+   return TILEMAP_GET_WRAPS( tileMap->info.flags );
 }
 
 void TileMap_WrapEntityPosition( TileMap_t* tileMap, Entity_t* entity )
@@ -337,7 +342,7 @@ void setUp( void )
    g_npcEntity2.rect.h = WORLD_UNITS_PER_PIXEL;
    g_tileMap.info.tilesX = 10;
    g_tileMap.info.tilesY = 8;
-   g_tileMap.info.wraps = False;
+   g_tileMap.info.flags = 0;
    g_tileMap.tiles = g_tiles;
    for ( u32 i = 0; i < 80; i++ )
    {
@@ -474,14 +479,13 @@ void test_Game_TicPhysics_AllowsOtherAxisAfterCollision( void )
    g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
    g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
    g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL * 60;
-   g_entity.velocity.y = 20 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 10 * WORLD_UNITS_PER_PIXEL * 60;
    g_tiles[1].isPassable = False;
-   g_tiles[11].isPassable = False;
 
    Game_TicPhysics( &g_game );
 
    TEST_ASSERT_EQUAL_INT( 15 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
-   TEST_ASSERT_EQUAL_INT( 20 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
+   TEST_ASSERT_EQUAL_INT( 10 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
 }
 
 void test_Game_TicPhysics_ClampsPlayerAtLowerBounds( void )
@@ -512,7 +516,7 @@ void test_Game_TicPhysics_ClampsPlayerAtUpperBounds( void )
 
 void test_Game_TicPhysics_DoesNotClampWrappingMap( void )
 {
-   g_tileMap.info.wraps = True;
+   g_tileMap.info.flags = TILEMAP_WRAPS;
    g_entity.rect.x = 150 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 110 * WORLD_UNITS_PER_PIXEL;
    g_entity.velocity.x = 20 * WORLD_UNITS_PER_PIXEL * 60;
@@ -565,9 +569,25 @@ void test_Game_TicPhysics_ClampsOversizedPlayerToOrigin( void )
    TEST_ASSERT_EQUAL_INT( 0, g_entity.rect.y );
 }
 
+void test_Game_TicPhysics_StopsPlayerWhenYIsBlockedWhileXIsFree( void )
+{
+   g_entity.rect.x = 0;
+   g_entity.rect.y = 0;
+   g_entity.rect.w = WORLD_UNITS_PER_PIXEL;
+   g_entity.rect.h = WORLD_UNITS_PER_PIXEL;
+   g_entity.velocity.x = 10 * WORLD_UNITS_PER_PIXEL * 60;
+   g_entity.velocity.y = 20 * WORLD_UNITS_PER_PIXEL * 60;
+   g_tiles[10].isPassable = False;
+
+   Game_TicPhysics( &g_game );
+
+   TEST_ASSERT_EQUAL_INT( 10 * WORLD_UNITS_PER_PIXEL, g_entity.rect.x );
+   TEST_ASSERT_EQUAL_INT( 15 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
+}
+
 void test_Game_TicPhysics_WrapsPlayerAtLowerBounds( void )
 {
-   g_tileMap.info.wraps = True;
+   g_tileMap.info.flags = TILEMAP_WRAPS;
    g_entity.rect.x = 5 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 3 * WORLD_UNITS_PER_PIXEL;
    g_entity.velocity.x = -10 * WORLD_UNITS_PER_PIXEL * 60;
@@ -661,7 +681,7 @@ void test_Game_TicPhysics_MaintainsChainDistanceAfterHistoryWraps( void )
 
 void test_Game_TicPhysics_AdjustsAllPlayerHistoriesWhenMapWraps( void )
 {
-   g_tileMap.info.wraps = True;
+   g_tileMap.info.flags = TILEMAP_WRAPS;
    g_playerCount = 2;
    g_playerMoveHistoryCounts[0] = 2;
    g_playerMoveHistoryCounts[1] = 2;
@@ -697,6 +717,7 @@ int main( void )
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtLowerBounds );
    RUN_TEST( test_Game_TicPhysics_ClampsPlayerAtUpperBounds );
    RUN_TEST( test_Game_TicPhysics_DoesNotClampWrappingMap );
+   RUN_TEST( test_Game_TicPhysics_StopsPlayerWhenYIsBlockedWhileXIsFree );
    RUN_TEST( test_Game_TicPhysics_UpdatesPlayerTileIndex );
    RUN_TEST( test_Game_TicPhysics_NotifiesWhenPlayerTileIndexChanges );
    RUN_TEST( test_Game_TicPhysics_DoesNotNotifyWhenPlayerTileIndexIsUnchanged );

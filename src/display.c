@@ -199,7 +199,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
    tilesY = TileMap_GetTilesY( tileMap );
    tileMapSizeX = (i32)( tilesX * tileSizePixels );
    tileMapSizeY = (i32)( tilesY * tileSizePixels );
-   wraps = TileMap_GetWraps( tileMap );
+   wraps = TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) );
 
    if ( !wraps && viewportInPixels.w >= tileMapSizeX && viewportInPixels.h >= tileMapSizeY )
    {

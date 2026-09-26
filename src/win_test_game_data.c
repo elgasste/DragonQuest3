@@ -66,9 +66,9 @@ typedef struct TileMapInfoMock_t
    u32 id;
    u32 tilesX;
    u32 tilesY;
-   b32 wraps;
    u32 portalCount;
    u32 npcCount;
+   b32 flags;
 }
 TileMapInfoMock_t;
 
@@ -378,12 +378,11 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    *tileMapCount = 5;
    tileMaps = (TileMapMock_t*)malloc( *tileMapCount * sizeof( TileMapMock_t ) );
 
-   // 0: 10x10 checkerboard, no wrapping
+   // 0: 10x10 checkerboard, no wrapping, doesn't affect daylight
    curTileMap = tileMaps;
    curTileMap->info.id = 0;
    curTileMap->info.tilesX = 10;
    curTileMap->info.tilesY = 10;
-   curTileMap->info.wraps = False;
 
    curTileMap->info.portalCount = 1;
    curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
@@ -394,6 +393,8 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
 
    curTileMap->info.npcCount = 0;
    curTileMap->npcs = 0;
+
+   curTileMap->info.flags = 0;
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -430,12 +431,11 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       curTileMap->tiles[i].speed = TileSpeed_Normal;
    }
 
-   // 1: 256x256 random, wrapping
+   // 1: 256x256 random, wrapping, affects daylight
    curTileMap++;
    curTileMap->info.id = 1;
    curTileMap->info.tilesX = 256;
    curTileMap->info.tilesY = 256;
-   curTileMap->info.wraps = True;
 
    curTileMap->info.portalCount = 1;
    curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
@@ -443,6 +443,10 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->portals[0].destinationTileMapId = 0;
    curTileMap->portals[0].destinationTileIndex = 38;
    curTileMap->portals[0].destinationDir = Direction_Right;
+
+   curTileMap->info.flags = 0;
+   TILEMAP_SET_WRAPS( curTileMap->info.flags );
+   TILEMAP_SET_AFFECTS_DAYLIGHT( curTileMap->info.flags );
 
    curTileMap->info.npcCount = 1;
    curTileMap->npcs = (NpcInfo_t*)malloc( sizeof( NpcInfo_t ) );
@@ -489,12 +493,14 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       curTileMap->tiles[i * curTileMap->info.tilesX + ( curTileMap->info.tilesX - 1 )].isPassable = True;
    }
 
-   // 2: 128x128 random, no wrapping
+   // 2: 128x128 random, doesn't wrap, affects daylight
    curTileMap++;
    curTileMap->info.id = 2;
    curTileMap->info.tilesX = 128;
    curTileMap->info.tilesY = 128;
-   curTileMap->info.wraps = False;
+
+   curTileMap->info.flags = 0;
+   TILEMAP_SET_AFFECTS_DAYLIGHT( curTileMap->info.flags );
 
    curTileMap->info.portalCount = 1;
    curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
@@ -528,12 +534,13 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       curTileMap->tiles[i].speed = index == 6 ? TileSpeed_ExtraSlow : index == 3 ? TileSpeed_Slow : TileSpeed_Normal;
    }
 
-   // 3: 3x3, no wrapping
+   // 3: 3x3, doesn't wrap, doesn't affect daylight
    curTileMap++;
    curTileMap->info.id = 3;
    curTileMap->info.tilesX = 3;
    curTileMap->info.tilesY = 3;
-   curTileMap->info.wraps = False;
+
+   curTileMap->info.flags = 0;
    
    curTileMap->info.portalCount = 2;
    curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
@@ -568,13 +575,15 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       curTileMap->tiles[i].speed = TileSpeed_Normal;
    }
 
-   // 4: 256x256 random, no wrapping
+   // 4: 256x256 random, doesn't wrap, affects daylight
    curTileMap++;
    curTileMap->info.id = 4;
    curTileMap->info.tilesX = 256;
    curTileMap->info.tilesY = 256;
-   curTileMap->info.wraps = False;
    
+   curTileMap->info.flags = 0;
+   TILEMAP_SET_AFFECTS_DAYLIGHT( curTileMap->info.flags );
+
    curTileMap->info.portalCount = 1;
    curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );
    curTileMap->portals[0].sourceTileIndex = 1555;

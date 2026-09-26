@@ -36,7 +36,7 @@ void Game_TicPhysics( Game_t* game )
    }
 
    playerRectNew = Entity_GetRect( Player_GetEntity( activePlayer ) );
-   if ( TileMap_GetWraps( tileMap ) )
+   if ( TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) ) )
    {
       GamePhysics_AdjustPlayerHistoriesForWrap( game, playerRectPrev, playerRectNew );
    }
@@ -112,7 +112,7 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
    Entity_SetPosition( entity, entityRect.x, entityRect.y );
 
    // clamp the player to the edge of the map as well, if it doesn't wrap
-   if ( !TileMap_GetWraps( tileMap ) )
+   if ( !TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) ) )
    {
       mapWidth = (i32)( TileMap_GetTilesX( tileMap ) * TileTextureSet_GetTileSize( tileTextureSet ) ) * WORLD_UNITS_PER_PIXEL;
       mapHeight = (i32)( TileMap_GetTilesY( tileMap ) * TileTextureSet_GetTileSize( tileTextureSet ) ) * WORLD_UNITS_PER_PIXEL;
@@ -204,7 +204,7 @@ internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Ve
    {
       for ( tileX = firstTileX; tileX <= lastTileX; tileX++ )
       {
-         if ( TileMap_GetWraps( tileMap ) )
+         if ( TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) ) )
          {
             tileIndex = (u32)( ( ( tileY % tilesY ) + tilesY ) % tilesY ) * (u32)tilesX + (u32)( ( ( tileX % tilesX ) + tilesX ) % tilesX );
          }
