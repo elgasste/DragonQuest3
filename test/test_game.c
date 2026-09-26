@@ -664,7 +664,7 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_PTR( g_activeSpriteTextureSet, ActiveSprite_GetTextureSet( g_playerSprite ) );
    TEST_ASSERT_EQUAL_UINT( 3, g_playerSpriteTextureIndex );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).x );
-   TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).y );
+   TEST_ASSERT_EQUAL_INT( -4, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).y );
 
    Game_Free( game, (MemArena_t*)1 );
 }

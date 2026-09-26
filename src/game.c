@@ -73,7 +73,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
                    game->memArena,
                    game->activeSpriteTextureSet,
                    (Vector2i32_t){ 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL },
-                   (Vector2i32_t){ -2, -2 } );
+                   (Vector2i32_t){ -2, -4 } );
       ActiveSprite_SetTextureIndex( Entity_GetSprite( Player_GetEntity( player ) ), i );
       TileMap_CenterEntityInTile( game->tileMap, Player_GetEntity( player ), ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
       game->playerOrder[i] = i;
