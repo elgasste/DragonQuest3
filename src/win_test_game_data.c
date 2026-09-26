@@ -5,6 +5,7 @@
 #include "game_data.h"
 #include "npc.h"
 #include "platform.h"
+#include "tile_map.h"
 #include "version.h"
 #include "win_common.h"
 
@@ -45,6 +46,7 @@ typedef struct TileMock_t
 {
    u32 textureIndex;
    b32 isPassable;
+   TileSpeed_t speed;
 }
 TileMock_t;
 
@@ -425,6 +427,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       }
 
       curTileMap->tiles[i].isPassable = True;
+      curTileMap->tiles[i].speed = TileSpeed_Normal;
    }
 
    // 1: 256x256 random, wrapping
@@ -465,6 +468,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       {
          curTileMap->tiles[i].textureIndex = 10;
          curTileMap->tiles[i].isPassable = True;
+         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
    }
 
@@ -510,6 +514,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
          // portal
          curTileMap->tiles[i].textureIndex = 10;
          curTileMap->tiles[i].isPassable = True;
+         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
       else
       {
@@ -517,6 +522,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
          index = Platform_Rand_u32Ranged( 0, 9 );
          curTileMap->tiles[i].textureIndex = index;
          curTileMap->tiles[i].isPassable = index == 7 ? False : True;
+         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
    }
 
@@ -557,6 +563,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       }
 
       curTileMap->tiles[i].isPassable = True;
+      curTileMap->tiles[i].speed = TileSpeed_Normal;
    }
 
    // 4: 256x256 random, no wrapping
@@ -585,6 +592,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
          // portal
          curTileMap->tiles[i].textureIndex = 10;
          curTileMap->tiles[i].isPassable = True;
+         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
       else
       {
@@ -592,6 +600,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
          index = Platform_Rand_u32Ranged( 0, 9 );
          curTileMap->tiles[i].textureIndex = index;
          curTileMap->tiles[i].isPassable = index == 7 ? False : True;
+         curTileMap->tiles[i].speed = TileSpeed_Normal;
       }
    }
 
