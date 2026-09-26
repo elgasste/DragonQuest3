@@ -43,6 +43,7 @@ global Tile_t g_tiles[80];
 global u32 g_clockFrameCount;
 global u32 g_gameOnPlayerTileIndexChangedCount;
 global u32 g_gameOnPlayerTileIndexChangedTileIndex;
+global u32 g_gameIncrementDaylightFactorCount;
 #if defined( _WIN32 )
 WinDebugFlags_t g_winDebugFlags;
 #endif
@@ -239,6 +240,12 @@ void Entity_SetTileIndex( Entity_t* entity, u32 tileIndex )
    entity->tileIndex = tileIndex;
 }
 
+void Game_IncrementDaylightFactor( Game_t* game )
+{
+   UNUSED_PARAM( game );
+   g_gameIncrementDaylightFactorCount++;
+}
+
 u32 TileMap_GetTilesX( TileMap_t* tileMap )
 {
    return tileMap->info.tilesX;
@@ -324,6 +331,7 @@ void setUp( void )
    g_npcCount = 0;
    g_gameOnPlayerTileIndexChangedCount = 0;
    g_gameOnPlayerTileIndexChangedTileIndex = 0;
+   g_gameIncrementDaylightFactorCount = 0;
    g_entity.rect.x = 20 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.y = 30 * WORLD_UNITS_PER_PIXEL;
    g_entity.rect.w = 10 * WORLD_UNITS_PER_PIXEL;
@@ -370,6 +378,19 @@ void test_Game_TicPhysics_MovesPlayerByVelocity( void )
    TEST_ASSERT_EQUAL_INT( 34 * WORLD_UNITS_PER_PIXEL, g_entity.rect.y );
    TEST_ASSERT_EQUAL_INT( 0, g_entity.velocity.x );
    TEST_ASSERT_EQUAL_INT( 0, g_entity.velocity.y );
+}
+
+void test_Game_TicPhysics_IncrementsDaylightOnlyWhenPlayerMoves( void )
+{
+   g_entity.velocity.x = 0;
+   g_entity.velocity.y = 0;
+
+   Game_TicPhysics( &g_game );
+   TEST_ASSERT_EQUAL_UINT( 0, g_gameIncrementDaylightFactorCount );
+
+   g_entity.velocity.x = WORLD_UNITS_PER_PIXEL * 60;
+   Game_TicPhysics( &g_game );
+   TEST_ASSERT_EQUAL_UINT( 1, g_gameIncrementDaylightFactorCount );
 }
 
 void test_Game_TicPhysics_StopsBeforeNonPassableTile( void )
@@ -707,6 +728,7 @@ int main( void )
    UNITY_BEGIN();
 
    RUN_TEST( test_Game_TicPhysics_MovesPlayerByVelocity );
+   RUN_TEST( test_Game_TicPhysics_IncrementsDaylightOnlyWhenPlayerMoves );
    RUN_TEST( test_Game_TicPhysics_StopsBeforeNonPassableTile );
    RUN_TEST( test_Game_TicPhysics_StopsBeforeNpc );
    RUN_TEST( test_Game_TicPhysics_MovesNpcWithoutNotifyingPlayerTileChange );

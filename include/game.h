@@ -9,6 +9,8 @@
 
 #define GAME_MAX_PLAYERS   4
 
+#define DAY_FACTOR_TOTAL_SECONDS    29.00f
+
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
 typedef struct AnimationChain_t AnimationChain_t;
 typedef struct Clock_t Clock_t;
@@ -35,6 +37,8 @@ TileTextureSet_t* Game_GetTileTextureSet( Game_t* game );
 ActiveSpriteTextureSet_t* Game_GetActiveSpriteTextureSet( Game_t* game );
 TileMap_t* Game_GetTileMap( Game_t* game );
 AnimationChain_t* Game_GetAnimationChain( Game_t* game );
+r32 Game_GetDaylightFactor( Game_t* game );
+b32 Game_GetIsAM( Game_t* game );
 u32 Game_GetPlayerCount( Game_t* game );
 Entity_t* Game_GetPlayerEntity( Game_t* game, u32 playerIndex );
 Entity_t* Game_GetActivePlayerEntity( Game_t* game );
@@ -46,6 +50,7 @@ void Game_Run( Game_t* game );
 void Game_Stop( Game_t* game );
 void Game_SetPlayerRect( Game_t* game, u32 playerIndex, Vector4i32_t playerRect );
 void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex );
+void Game_IncrementDaylightFactor( Game_t* game );
 
 // game_input.c
 void Game_HandleInput( Game_t* game );

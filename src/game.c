@@ -28,6 +28,9 @@ struct Game_t
    TileMap_t *tileMap;
    AnimationChain_t* animationChain;
 
+   b32 isAM;
+   r32 daylightFactor;
+
    Player_t* players;
    u32 playerCount;
    u32 playerOrder[GAME_MAX_PLAYERS];
@@ -63,6 +66,9 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    // TODO: temporary, everything from here down will come from the game data file.
    game->tileMap = TileMap_CreateFromGameData( memArena, game->gameData, game->activeSpriteTextureSet, 1, TileTextureSet_GetTileSize( game->tileTextureSet ) );
    game->animationChain = AnimationChain_Create( memArena, 32 );
+
+   game->isAM = False;
+   game->daylightFactor = 1.0f; // noon
 
    game->playerCount = GAME_MAX_PLAYERS;
    game->players = (Player_t*)MemArena_AllocMem( game->memArena, Player_GetStructSize() * game->playerCount );
@@ -153,6 +159,16 @@ AnimationChain_t* Game_GetAnimationChain( Game_t* game )
    return game->animationChain;
 }
 
+r32 Game_GetDaylightFactor( Game_t* game )
+{
+   return game->daylightFactor;
+}
+
+b32 Game_GetIsAM( Game_t* game )
+{
+   return game->isAM;
+}
+
 u32 Game_GetPlayerCount( Game_t* game )
 {
    return game->playerCount;
@@ -224,6 +240,24 @@ void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex )
       AnimationChain_Push( game->animationChain, AnimationType_Blackout, 0.2f, 0, 0, 0 );
       AnimationChain_Push( game->animationChain, AnimationType_FadeIn, 0.2f, 0, 0, 0 );
       AnimationChain_Start( game->animationChain, 0, 0, 0 );
+   }
+}
+
+void Game_IncrementDaylightFactor( Game_t* game )
+{
+   game->daylightFactor += game->isAM
+      ? ( 1 / ( DAY_FACTOR_TOTAL_SECONDS * (r32)CLOCK_FPS ) )
+      : -( 1 / ( DAY_FACTOR_TOTAL_SECONDS * (r32)CLOCK_FPS ) );
+
+   if ( game->daylightFactor > 1.0f )
+   {
+      game->daylightFactor = 1.0f;
+      game->isAM = False;
+   }
+   else if ( game->daylightFactor < 0.0f )
+   {
+      game->daylightFactor = 0.0f;
+      game->isAM = True;
    }
 }
 

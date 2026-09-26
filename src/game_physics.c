@@ -36,13 +36,16 @@ void Game_TicPhysics( Game_t* game )
    }
 
    playerRectNew = Entity_GetRect( Player_GetEntity( activePlayer ) );
+
    if ( TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) ) )
    {
       GamePhysics_AdjustPlayerHistoriesForWrap( game, playerRectPrev, playerRectNew );
    }
+
    if ( playerRectPrev.x != playerRectNew.x || playerRectPrev.y != playerRectNew.y )
    {
       GamePhysics_ChainPlayers( game );
+      Game_IncrementDaylightFactor( game );
    }
 }
 
