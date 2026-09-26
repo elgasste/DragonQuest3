@@ -24,12 +24,6 @@ global u32 g_freeCount;
 WinDebugFlags_t g_winDebugFlags;
 #endif
 
-r32 Clock_GetFrameSec( Clock_t* clock )
-{
-	UNUSED_PARAM( clock );
-	return 1.0f / 60.0f;
-}
-
 global u32 g_randU32Sequence[64];
 global size_t g_randU32Index;
 global size_t g_randU32Count;
@@ -259,7 +253,6 @@ void test_Npc_Tic_PausesBrieflyAfterWandering( void )
 	Npc_t npc;
 	Entity_t* entity;
 	Vector2i32_t velocity;
-	Clock_t* clock = (Clock_t*)1;
 	int i;
 
 	WriteNpcInfo();
@@ -268,14 +261,14 @@ void test_Npc_Tic_PausesBrieflyAfterWandering( void )
 
 	for ( i = 0; i < 61; i++ )
 	{
-		Npc_Tic( &npc, clock );
+		Npc_Tic( &npc );
 	}
 	velocity = Entity_GetVelocity( entity );
 	TEST_ASSERT_NOT_EQUAL( 0, velocity.x );
 
 	for ( i = 0; i < 61; i++ )
 	{
-		Npc_Tic( &npc, clock );
+		Npc_Tic( &npc );
 	}
 	velocity = Entity_GetVelocity( entity );
 	TEST_ASSERT_EQUAL_INT( 0, velocity.x );
@@ -283,7 +276,7 @@ void test_Npc_Tic_PausesBrieflyAfterWandering( void )
 
 	for ( i = 0; i < 16; i++ )
 	{
-		Npc_Tic( &npc, clock );
+		Npc_Tic( &npc );
 	}
 	velocity = Entity_GetVelocity( entity );
 	TEST_ASSERT_NOT_EQUAL( 0, velocity.x );
@@ -296,7 +289,6 @@ void test_Npc_Tic_UpdatesSpriteDirectionMatchingVelocity( void )
 	Npc_t npc;
 	Entity_t* entity;
 	ActiveSprite_t* sprite;
-	Clock_t* clock = (Clock_t*)1;
 	int i;
 
 	// Test moving Left:
@@ -326,7 +318,7 @@ void test_Npc_Tic_UpdatesSpriteDirectionMatchingVelocity( void )
 
 	for ( i = 0; i < 61; i++ )
 	{
-		Npc_Tic( &npc, clock );
+		Npc_Tic( &npc );
 	}
 
 	TEST_ASSERT_LESS_THAN_INT32( 0, Entity_GetVelocity( entity ).x );
@@ -351,7 +343,7 @@ void test_Npc_Tic_UpdatesSpriteDirectionMatchingVelocity( void )
 
 	for ( i = 0; i < 61; i++ )
 	{
-		Npc_Tic( &npc, clock );
+		Npc_Tic( &npc );
 	}
 
 	TEST_ASSERT_GREATER_THAN_INT32( 0, Entity_GetVelocity( entity ).x );
@@ -376,7 +368,7 @@ void test_Npc_Tic_UpdatesSpriteDirectionMatchingVelocity( void )
 
 	for ( i = 0; i < 61; i++ )
 	{
-		Npc_Tic( &npc, clock );
+		Npc_Tic( &npc );
 	}
 
 	TEST_ASSERT_GREATER_THAN_INT32( 0, Entity_GetVelocity( entity ).y );

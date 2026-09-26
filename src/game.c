@@ -53,7 +53,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
    game = (Game_t*)MemArena_AllocMem( memArena, sizeof( Game_t ) );
    game->memArena = memArena;
    
-   game->clock = Clock_Create( memArena, GAME_DEFAULT_FPS );
+   game->clock = Clock_Create( memArena );
    game->input = Input_Create( game->memArena );
    game->display = Display_Create( game->memArena, DISPLAY_WIDTH, DISPLAY_HEIGHT );
    game->gameData = GameData_Create( game->memArena, gameDataFilePath );
@@ -73,8 +73,7 @@ Game_t* Game_Create( MemArena_t* memArena, const char* gameDataFilePath )
                    game->memArena,
                    game->activeSpriteTextureSet,
                    (Vector2i32_t){ 12 * WORLD_UNITS_PER_PIXEL, 12 * WORLD_UNITS_PER_PIXEL },
-                   (Vector2i32_t){ -2, -2 },
-                   Clock_GetFps( game->clock ) );
+                   (Vector2i32_t){ -2, -2 } );
       ActiveSprite_SetTextureIndex( Entity_GetSprite( Player_GetEntity( player ) ), i );
       TileMap_CenterEntityInTile( game->tileMap, Player_GetEntity( player ), ( TileMap_GetTilesX( game->tileMap ) * 20 ) + 20 );
       game->playerOrder[i] = i;
@@ -204,31 +203,6 @@ void Game_Stop( Game_t* game )
    game->shutdown = True;
 }
 
-void Game_SetClockFps( Game_t* game, u32 fps )
-{
-   u32 i;
-   Player_t* player;
-   Entity_t* entity;
-   Vector4i32_t activePlayerRect;
-   Direction_t activePlayerDir;
-
-   Clock_SetFps( game->clock, fps );
-
-   player = Game_GetActivePlayer( game );
-   entity = Player_GetEntity( player );
-   activePlayerRect = Entity_GetRect( entity );
-   activePlayerDir = ActiveSprite_GetDirection( Entity_GetSprite( entity ) );
-
-   for ( i = 0; i < game->playerCount; i++ )
-   {
-      player = Game_GetPlayer( game, i );
-      entity = Player_GetEntity( player );
-      Player_SetMoveHistoryCountFromFps( player, fps );
-      Entity_SetPosition( entity, activePlayerRect.x, activePlayerRect.y );
-      ActiveSprite_SetDirection( Entity_GetSprite( entity ), activePlayerDir );
-   }
-}
-
 void Game_SetPlayerRect( Game_t* game, u32 playerIndex, Vector4i32_t playerRect )
 {
    Player_t* player;
@@ -255,21 +229,18 @@ void Game_OnPlayerTileIndexChanged( Game_t* game, u32 newTileIndex )
 
 internal void Game_Tic( Game_t* game )
 {
-   r32 deltaSec;
    Player_t* activePlayer;
-
-   deltaSec = Clock_GetFrameSec( game->clock );
    
    if ( AnimationChain_GetIsRunning( game->animationChain ) )
    {
-      AnimationChain_Tic( game->animationChain, deltaSec );
+      AnimationChain_Tic( game->animationChain, CLOCK_FRAME_SEC );
    }
    else
    {
       Game_HandleInput( game );
    }
 
-   Game_TicEntities( game, deltaSec );
+   Game_TicEntities( game, CLOCK_FRAME_SEC );
    Game_TicPhysics( game );
 
    activePlayer = Game_GetActivePlayer( game );
@@ -293,7 +264,7 @@ internal void Game_TicEntities( Game_t* game, r32 deltaSec )
 
    for ( i = 0; i < TileMap_GetNpcCount( game->tileMap ); i++ )
    {
-      Npc_Tic( TileMap_GetNpc( game->tileMap, i ), game->clock );
+      Npc_Tic( TileMap_GetNpc( game->tileMap, i ) );
    }
 }
 

@@ -50,13 +50,11 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
 {
    i32 mapWidth, mapHeight, maxX, maxY, moveX, moveY, stepX, stepY, steps;
    u32 tileSize, prevTileIndex;
-   r32 frameSeconds;
    Vector4i32_t entityRect;
    Vector2i32_t velocity;
    TileMap_t* tileMap;
    TileTextureSet_t* tileTextureSet;
 
-   frameSeconds = Clock_GetFrameSec( Game_GetClock( game ) );
    tileMap = Game_GetTileMap( game );
    tileTextureSet = Game_GetTileTextureSet( game );
    entityRect = Entity_GetRect( entity );
@@ -77,8 +75,8 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
 #endif
 
    tileSize = TileTextureSet_GetTileSize( tileTextureSet ) * WORLD_UNITS_PER_PIXEL;
-   moveX = GamePhysics_GetPixelMovement( velocity.x, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
-   moveY = GamePhysics_GetPixelMovement( velocity.y, frameSeconds, Clock_GetFrameCount( Game_GetClock( game ) ) );
+   moveX = GamePhysics_GetPixelMovement( velocity.x, CLOCK_FRAME_SEC, Clock_GetFrameCount( Game_GetClock( game ) ) );
+   moveY = GamePhysics_GetPixelMovement( velocity.y, CLOCK_FRAME_SEC, Clock_GetFrameCount( Game_GetClock( game ) ) );
    stepX = ( moveX < 0 ) ? -1 : 1;
    stepY = ( moveY < 0 ) ? -1 : 1;
    steps = ( abs( moveX ) > abs( moveY ) ) ? abs( moveX ) : abs( moveY );
