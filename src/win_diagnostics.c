@@ -71,7 +71,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN,
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
-                                                   336,
+                                                   380,
                                                    470,
                                                    g_winGlobals.hWndMain,
                                                    0,
@@ -180,7 +180,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         "BUTTON",
                                         "Clear Log File",
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
-                                        224,
+                                        268,
                                         378,
                                         90,
                                         26,
@@ -193,7 +193,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                        "BUTTON",
                                        "Open Log File",
                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
-                                       224,
+                                       268,
                                        346,
                                        90,
                                        26,
@@ -397,7 +397,8 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    Input_t* input;
    Entity_t* playerEntity;
    Vector4i32_t playerRect;
-   u32 gameSeconds, realSeconds, playerTileIndex, playerTileX, playerTileY;
+   u32 gameSeconds, realSeconds, dayClockMinutes, hourHand, playerTileIndex, playerTileX, playerTileY;
+   char sunMsg[STRING_SIZE_DEFAULT];
    char str[STRING_SIZE_DEFAULT];
 
    dc = BeginPaint( hWnd, &ps );
@@ -453,6 +454,32 @@ internal void UpdateDiagnosticsText( HWND hWnd )
 
    realSeconds = (u32)( Clock_GetAbsoluteEndMicro( clock ) - Clock_GetAbsoluteStartMicro( clock ) ) / 1000000;
    sprintf_s( str, STRING_SIZE_DEFAULT, " Real World Timer: %u:%02u:%02u", realSeconds / 3600, realSeconds / 60, realSeconds );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   // 12 hours is 720 minutes
+   if ( Game_GetIsAM( game ) )
+   {
+      dayClockMinutes = (u32)( 720 * Game_GetDaylightFactor( game ) );
+   }
+   else
+   {
+      dayClockMinutes = (u32)( 720 * ( 1.0 - Game_GetDaylightFactor( game ) ) );
+   }
+   if ( Game_GetDaylightFactor( game ) < DAY_FACTOR_LOW_CUTOFF )
+   {
+      sprintf_s( sunMsg, STRING_SIZE_DEFAULT, "down" );
+   }
+   else if ( Game_GetDaylightFactor( game ) > DAY_FACTOR_HIGH_CUTOFF )
+   {
+      sprintf_s( sunMsg, STRING_SIZE_DEFAULT, "up" );
+   }
+   else
+   {
+      sprintf_s( sunMsg, STRING_SIZE_DEFAULT, Game_GetIsAM( game ) ? "rising" : "setting" );
+   }
+   hourHand = ( ( dayClockMinutes / 60 ) == 0 ) ? 12 : ( dayClockMinutes / 60 );
+   sprintf_s( str, STRING_SIZE_DEFAULT, "    In-Game Clock: %0u:%02u %s (sun is %s)", hourHand, dayClockMinutes % 60, Game_GetIsAM( game ) ? "AM" : "PM", sunMsg );
    DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 

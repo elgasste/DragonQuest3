@@ -19,7 +19,7 @@ internal void GamePhysics_AdjustPlayerHistoriesForWrap( Game_t* game, Vector4i32
 
 void Game_TicPhysics( Game_t* game )
 {
-   u32 i;
+   u32 i, flags;
    TileMap_t* tileMap;
    Player_t* activePlayer;
    Vector4i32_t playerRectPrev, playerRectNew;
@@ -28,6 +28,7 @@ void Game_TicPhysics( Game_t* game )
    playerRectPrev = Entity_GetRect( Player_GetEntity( activePlayer ) );
 
    tileMap = Game_GetTileMap( game );
+   flags = TileMap_GetFlags( tileMap );
    GamePhysics_TicEntity( game, Player_GetEntity( activePlayer ), True );
 
    for ( i = 0; i < TileMap_GetNpcCount( tileMap ); i++ )
@@ -37,7 +38,7 @@ void Game_TicPhysics( Game_t* game )
 
    playerRectNew = Entity_GetRect( Player_GetEntity( activePlayer ) );
 
-   if ( TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) ) )
+   if ( TILEMAP_GET_WRAPS( flags ) )
    {
       GamePhysics_AdjustPlayerHistoriesForWrap( game, playerRectPrev, playerRectNew );
    }
@@ -45,7 +46,11 @@ void Game_TicPhysics( Game_t* game )
    if ( playerRectPrev.x != playerRectNew.x || playerRectPrev.y != playerRectNew.y )
    {
       GamePhysics_ChainPlayers( game );
-      Game_IncrementDaylightFactor( game );
+
+      if ( TILEMAP_GET_AFFECTS_DAYLIGHT( flags ) )
+      {
+         Game_IncrementDaylightFactor( game );
+      }
    }
 }
 

@@ -382,6 +382,7 @@ void test_Game_TicPhysics_MovesPlayerByVelocity( void )
 
 void test_Game_TicPhysics_IncrementsDaylightOnlyWhenPlayerMoves( void )
 {
+   g_tileMap.info.flags = TILEMAP_AFFECTS_DAYLIGHT;
    g_entity.velocity.x = 0;
    g_entity.velocity.y = 0;
 

@@ -9,7 +9,10 @@
 
 #define GAME_MAX_PLAYERS   4
 
-#define DAY_FACTOR_TOTAL_SECONDS    29.00f
+#define DAY_FACTOR_TOTAL_SECONDS                29.00f
+#define DAY_FACTOR_LOW_CUTOFF                   0.15f
+#define DAY_FACTOR_HIGH_CUTOFF                  0.85f
+#define DAY_FACTOR_UNDERGROUND_THRESHOLD        0.40f
 
 typedef struct ActiveSpriteTextureSet_t ActiveSpriteTextureSet_t;
 typedef struct AnimationChain_t AnimationChain_t;
