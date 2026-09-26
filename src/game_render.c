@@ -128,7 +128,8 @@ internal i32 GameRender_GetEntityDrawOrder( Game_t* game, u32 entityIndex, u32 p
 
    if ( entityIndex >= playerCount )
    {
-      return (i32)entityIndex;
+      // we add one here to make sure the NPC with the index "playerCount" doesn't get skipped
+      return (i32)( entityIndex + 1 );
    }
 
    playerOrder = Game_GetPlayerOrder( game );
