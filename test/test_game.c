@@ -7,6 +7,7 @@
 #include "mocks/mock_mem_arena.h"
 #include "mocks/mock_npc.h"
 #include "mocks/mock_player.h"
+#include "mocks/mock_sprite.h"
 #include "mocks/mock_sprite_texture_set.h"
 #include "mocks/mock_tile_map.h"
 #include "mocks/mock_tile_texture_set.h"
@@ -331,7 +332,8 @@ void ActiveSpriteTextureSet_Free( ActiveSpriteTextureSet_t* textureSet, MemArena
 
 ActiveSprite_t* ActiveSprite_Create( MemArena_t* memArena, ActiveSpriteTextureSet_t* textureSet )
 {
-   ActiveSprite_t* sprite = (ActiveSprite_t*)MemArena_AllocMem( memArena, 1 );
+   ActiveSprite_t* sprite = (ActiveSprite_t*)MemArena_AllocMem( memArena, sizeof( ActiveSprite_t ) );
+   sprite->dir = Direction_Down;
    if ( !g_firstPlayerSprite )
    {
       g_firstPlayerSprite = sprite;
@@ -361,8 +363,13 @@ void ActiveSprite_SetTextureIndex( ActiveSprite_t* activeSprite, u32 textureInde
 
 void ActiveSprite_SetDirection( ActiveSprite_t* activeSprite, Direction_t dir )
 {
-   UNUSED_PARAM( activeSprite );
+   activeSprite->dir = dir;
    g_playerSpriteDirection = dir;
+}
+
+Direction_t ActiveSprite_GetDirection( ActiveSprite_t* activeSprite )
+{
+   return activeSprite->dir;
 }
 
 ActiveSpriteTextureSet_t* ActiveSprite_GetTextureSet( ActiveSprite_t* activeSprite )
@@ -726,6 +733,29 @@ void test_Game_SetClockFps_UpdatesAllPlayerMovementHistories( void )
    Game_Free( game, (MemArena_t*)1 );
 }
 
+void test_Game_SetClockFps_SyncsAllPlayersToActivePlayerPositionAndDirection( void )
+{
+   Game_t* game = CreateGame();
+
+   Game_SetPlayerRect( game, 0, (Vector4i32_t){ 50, 60, 12, 14 } );
+   ActiveSprite_SetDirection( Entity_GetSprite( Game_GetPlayerEntity( game, 0 ) ), Direction_Left );
+   Game_SetPlayerRect( game, 1, (Vector4i32_t){ 1, 2, 12, 14 } );
+   Game_SetPlayerRect( game, 2, (Vector4i32_t){ 3, 4, 12, 14 } );
+   Game_SetPlayerRect( game, 3, (Vector4i32_t){ 5, 6, 12, 14 } );
+
+   Game_SetClockFps( game, 30 );
+
+   for ( u32 i = 0; i < GAME_MAX_PLAYERS; i++ )
+   {
+      Vector4i32_t rect = Entity_GetRect( Game_GetPlayerEntity( game, i ) );
+      TEST_ASSERT_EQUAL_INT( 50, rect.x );
+      TEST_ASSERT_EQUAL_INT( 60, rect.y );
+      TEST_ASSERT_EQUAL_INT( Direction_Left, ActiveSprite_GetDirection( Entity_GetSprite( Game_GetPlayerEntity( game, i ) ) ) );
+   }
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
 void test_Game_Run_ExecutesOneFrameAndUpdatesViewport( void )
 {
    Game_t* game = CreateGame();
@@ -870,6 +900,7 @@ int main( void )
 
    RUN_TEST( test_Game_SetPlayerRect_UpdatesPlayerRectangle );
    RUN_TEST( test_Game_SetClockFps_UpdatesAllPlayerMovementHistories );
+   RUN_TEST( test_Game_SetClockFps_SyncsAllPlayersToActivePlayerPositionAndDirection );
 
    RUN_TEST( test_Game_Run_ExecutesOneFrameAndUpdatesViewport );
    RUN_TEST( test_Game_Run_TicsPlayerSpriteWithClockFrameDuration );
