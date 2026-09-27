@@ -494,6 +494,10 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 
+   sprintf_s( str, STRING_SIZE_DEFAULT, "      Underground: %s", TILEMAP_GET_IS_UNDERGROUND( TileMap_GetFlags( Game_GetTileMap( game ) ) ) ? "Yes" : "No" );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
    r.top += 16;
    r.left = ( clientRect.right - 150 ) / 2;
 
