@@ -72,7 +72,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                                    CW_USEDEFAULT,
                                                    CW_USEDEFAULT,
                                                    380,
-                                                   470,
+                                                   502,
                                                    g_winGlobals.hWndMain,
                                                    0,
                                                    hInstance,
@@ -116,7 +116,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                           "Reset Debug Flags",
                                           WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                           10,
-                                          234,
+                                          266,
                                           180,
                                           26,
                                           g_winGlobals.hWndDiagnostics,
@@ -129,7 +129,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                       g_winDebugFlags.noClip ? "Disable No-Clip" : "Enable No-Clip",
                                       WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                       10,
-                                      266,
+                                      298,
                                       180,
                                       26,
                                       g_winGlobals.hWndDiagnostics,
@@ -142,7 +142,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         g_winDebugFlags.showHitBoxes ? "Hide Hit Boxes" : "Show Hit Boxes",
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                         10,
-                                        298,
+                                        330,
                                         180,
                                         26,
                                         g_winGlobals.hWndDiagnostics,
@@ -155,7 +155,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         g_winDebugFlags.moveFast ? "Disable Fast Movement" : "Enable Fast Movement",
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                         10,
-                                        330,
+                                        362,
                                         180,
                                         26,
                                         g_winGlobals.hWndDiagnostics,
@@ -168,7 +168,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                          "Dump Memory Stats",
                                          WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                          10,
-                                         378,
+                                         410,
                                          180,
                                          26,
                                          g_winGlobals.hWndDiagnostics,
@@ -181,7 +181,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                         "Clear Log File",
                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                         268,
-                                        378,
+                                        410,
                                         90,
                                         26,
                                         g_winGlobals.hWndDiagnostics,
@@ -194,7 +194,7 @@ b32 CreateDiagnosticsWindow( HINSTANCE hInstance )
                                        "Open Log File",
                                        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
                                        268,
-                                       346,
+                                       378,
                                        90,
                                        26,
                                        g_winGlobals.hWndDiagnostics,
@@ -491,6 +491,10 @@ internal void UpdateDiagnosticsText( HWND hWnd )
    playerTileX = playerTileIndex % TileMap_GetTilesX( Game_GetTileMap( game ) );
    playerTileY = playerTileIndex / TileMap_GetTilesX( Game_GetTileMap( game ) );
    sprintf_s( str, STRING_SIZE_DEFAULT, "Player Tile Index: %u (%u, %u)", playerTileIndex, playerTileX, playerTileY );
+   DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
+   r.top += 16;
+
+   sprintf_s( str, STRING_SIZE_DEFAULT, "      Underground: %s", TILEMAP_GET_IS_UNDERGROUND( TileMap_GetFlags( Game_GetTileMap( game ) ) ) ? "Yes" : "No" );
    DrawTextA( dcMem, str, -1, &r, DT_SINGLELINE | DT_NOCLIP );
    r.top += 16;
 

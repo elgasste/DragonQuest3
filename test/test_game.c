@@ -375,8 +375,10 @@ TileMap_t* TileMap_CreateFromGameData( MemArena_t* memArena, GameData_t* gameDat
    UNUSED_PARAM( tileSizePixels );
    g_tileMap = (TileMap_t*)MemArena_AllocMem( memArena, sizeof( TileMap_t ) );
    g_tileMapId = tileMapId;
+   g_tileMap->info.id = tileMapId;
    g_tileMap->info.tilesX = tileMapId;
    g_tileMap->info.tilesY = tileMapId;
+   g_tileMap->info.flags = 0;
    g_tileMap->tiles = 0;
    return g_tileMap;
 }
@@ -425,6 +427,11 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 u32 TileMap_GetTilesX( TileMap_t* tileMap )
 {
    return tileMap->info.tilesX;
+}
+
+u32 TileMap_GetFlags( TileMap_t* tileMap )
+{
+   return tileMap->info.flags;
 }
 
 void TileMap_CenterEntityInTile( TileMap_t* tileMap, Entity_t* entity, u32 tileIndex )
@@ -598,6 +605,10 @@ void setUp( void )
    g_tileMapId = 1;
    g_tileMapCenterEntityCount = 0;
    g_dayFilterIntensity = 1.0f;
+   if ( g_tileMap )
+   {
+      g_tileMap->info.flags = 0;
+   }
 }
 
 void test_Game_IncrementDaylightFactor_UsesFullDayIntensityAtHighDaylight( void )
@@ -632,6 +643,7 @@ void test_Game_IncrementDaylightFactor_UsesFullNightIntensityAtLowDaylight( void
 {
    Game_t* game = CreateGame();
 
+   g_tileMap->info.flags = 0;
    while ( !Game_GetIsAM( game ) )
    {
       Game_IncrementDaylightFactor( game );
@@ -643,6 +655,54 @@ void test_Game_IncrementDaylightFactor_UsesFullNightIntensityAtLowDaylight( void
    Game_IncrementDaylightFactor( game );
 
    TEST_ASSERT_EQUAL_FLOAT( 0.0f, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_IncrementDaylightFactor_ClampsDisplayIntensityAtDayBounds( void )
+{
+   Game_t* game = CreateGame();
+
+   g_tileMap->info.flags = 0;
+   while ( !Game_GetIsAM( game ) )
+   {
+      Game_IncrementDaylightFactor( game );
+   }
+   TEST_ASSERT_EQUAL_FLOAT( 0.0f, Game_GetDaylightFactor( game ) );
+   TEST_ASSERT_EQUAL_FLOAT( 0.0f, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+
+   while ( Game_GetIsAM( game ) )
+   {
+      Game_IncrementDaylightFactor( game );
+   }
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f, Game_GetDaylightFactor( game ) );
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_IncrementDaylightFactor_ClampsUndergroundNighttimeToMinimum( void )
+{
+   Game_t* game = CreateGame();
+   r32 expectedDaylightFactor = 0.10f;
+   u32 stepCount = 0;
+
+   g_tileMap->info.flags = TILEMAP_IS_UNDERGROUND;
+
+   while ( Game_GetDaylightFactor( game ) > expectedDaylightFactor && stepCount < 1000 )
+   {
+      Game_IncrementDaylightFactor( game );
+      stepCount++;
+   }
+
+   while ( Game_GetDaylightFactor( game ) > 0.0f && stepCount < 2000 )
+   {
+      Game_IncrementDaylightFactor( game );
+      stepCount++;
+   }
+
+   TEST_ASSERT_TRUE( Game_GetDaylightFactor( game ) <= 0.0f );
+   TEST_ASSERT_EQUAL_FLOAT( DAY_FACTOR_UNDERGROUND_THRESHOLD, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+
    Game_Free( game, (MemArena_t*)1 );
 }
 
@@ -932,6 +992,8 @@ int main( void )
    RUN_TEST( test_Game_IncrementDaylightFactor_UsesFullDayIntensityAtHighDaylight );
    RUN_TEST( test_Game_IncrementDaylightFactor_UsesInterpolatedIntensityDuringDayCycle );
    RUN_TEST( test_Game_IncrementDaylightFactor_UsesFullNightIntensityAtLowDaylight );
+   RUN_TEST( test_Game_IncrementDaylightFactor_ClampsDisplayIntensityAtDayBounds );
+   RUN_TEST( test_Game_IncrementDaylightFactor_ClampsUndergroundNighttimeToMinimum );
 
    RUN_TEST( test_Game_SetPlayerRect_UpdatesPlayerRectangle );
 
