@@ -378,7 +378,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    *tileMapCount = 5;
    tileMaps = (TileMapMock_t*)malloc( *tileMapCount * sizeof( TileMapMock_t ) );
 
-   // 0: 10x10 checkerboard, no wrapping, doesn't affect daylight
+   // 0: 10x10 checkerboard, no wrapping, doesn't affect daylight, is underground
    curTileMap = tileMaps;
    curTileMap->info.id = 0;
    curTileMap->info.tilesX = 10;
@@ -395,6 +395,7 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
    curTileMap->npcs = 0;
 
    curTileMap->info.flags = 0;
+   TILEMAP_SET_IS_UNDERGROUND( curTileMap->info.flags );
 
    curTileMap->tiles = (TileMock_t*)malloc( curTileMap->info.tilesX * curTileMap->info.tilesY * sizeof( TileMock_t ) );
 
@@ -534,13 +535,14 @@ internal TileMapMock_t* CreateTestTileMaps( u32* tileMapCount )
       curTileMap->tiles[i].speed = index == 6 ? TileSpeed_ExtraSlow : index == 3 ? TileSpeed_Slow : TileSpeed_Normal;
    }
 
-   // 3: 3x3, doesn't wrap, doesn't affect daylight
+   // 3: 3x3, doesn't wrap, doesn't affect daylight, is underground
    curTileMap++;
    curTileMap->info.id = 3;
    curTileMap->info.tilesX = 3;
    curTileMap->info.tilesY = 3;
 
    curTileMap->info.flags = 0;
+   TILEMAP_SET_IS_UNDERGROUND( curTileMap->info.flags );
    
    curTileMap->info.portalCount = 2;
    curTileMap->portals = (TileMapPortalMock_t*)malloc( curTileMap->info.portalCount * sizeof( TileMapPortalMock_t ) );

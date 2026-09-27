@@ -8,12 +8,15 @@
 
 #define TILEMAP_WRAPS                              0x1
 #define TILEMAP_AFFECTS_DAYLIGHT                   0x2
+#define TILEMAP_IS_UNDERGROUND                     0x4
 
 #define TILEMAP_GET_WRAPS( f )                     ( ( f ) & TILEMAP_WRAPS )
 #define TILEMAP_GET_AFFECTS_DAYLIGHT( f )          ( ( f ) & TILEMAP_AFFECTS_DAYLIGHT )
+#define TILEMAP_GET_IS_UNDERGROUND( f )            ( ( f ) & TILEMAP_IS_UNDERGROUND )
 
 #define TILEMAP_SET_WRAPS( f )                     ( ( f ) |= TILEMAP_WRAPS )
 #define TILEMAP_SET_AFFECTS_DAYLIGHT( f )          ( ( f ) |= TILEMAP_AFFECTS_DAYLIGHT )
+#define TILEMAP_SET_IS_UNDERGROUND( f )            ( ( f ) |= TILEMAP_IS_UNDERGROUND )
 
 typedef enum TileSpeed_t
 {

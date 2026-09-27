@@ -345,9 +345,9 @@ internal void Game_UpdateDayFilterIntensity( Game_t* game )
       Display_SetDayFilterIntensity( game->display, ( game->daylightFactor - DAY_FACTOR_LOW_CUTOFF ) / ( DAY_FACTOR_HIGH_CUTOFF - DAY_FACTOR_LOW_CUTOFF ) );
    }
 
-   // TODO: if we're underground, don't go full-nighttime
-   // if ( TILEMAP_IS_UNDERGROUND( game->tileMap.flags ) && game->screen.dayFilterIntensity < DAY_FACTOR_UNDERGROUND_THRESHOLD )
-   // {
-   //    game->screen.dayFilterIntensity = DAY_FACTOR_UNDERGROUND_THRESHOLD;
-   // }
+   // if we're underground, don't go full nighttime
+   if ( TILEMAP_GET_IS_UNDERGROUND( TileMap_GetFlags( game->tileMap ) ) && Display_GetDayFilterIntensity( game->display ) < DAY_FACTOR_UNDERGROUND_THRESHOLD )
+   {
+      Display_SetDayFilterIntensity( game->display, DAY_FACTOR_UNDERGROUND_THRESHOLD );
+   }
 }
