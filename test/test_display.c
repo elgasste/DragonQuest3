@@ -223,6 +223,32 @@ void test_Display_DrawRect_NearlyTransparentColorMostlyPreservesPixel( void )
    Display_Free( display, (MemArena_t*)1 );
 }
 
+void test_Display_DrawRect_TransparentColorDoesNotDarkenExistingPixelsWhenDayFilterIsActive( void )
+{
+   Display_t* display = CreateDisplay( 1, 1 );
+
+   Display_SetDayFilterIntensity( display, 0.0f );
+   Display_Fill( display, 0x00FFFFFFu );
+   Display_DrawRect( display, 0, 0, 1, 1, 0x00000000u );
+
+   AssertPixel( display, 0, 0, 0x00FFFFFFu );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
+void test_Display_DrawRect_AppliesDaylightFilterToOpaquePixels( void )
+{
+   Display_t* display = CreateDisplay( 1, 1 );
+
+   Display_SetDayFilterIntensity( display, 0.5f );
+   Display_Fill( display, 0x00000000u );
+   Display_DrawRect( display, 0, 0, 1, 1, 0xFFFFFFFFu );
+
+   AssertPixel( display, 0, 0, 0x00A3A3C5u );
+
+   Display_Free( display, (MemArena_t*)1 );
+}
+
 void test_Display_DrawBuffer_UsesAlphaChannelToBlendColor( void )
 {
    u32 source[] = { 0x8080A0C0u };
@@ -430,6 +456,8 @@ int main( void )
    RUN_TEST( test_Display_DrawRect_DrawsRectangleAtRequestedPosition );
    RUN_TEST( test_Display_DrawRect_UsesAlphaChannelToBlendColor );
    RUN_TEST( test_Display_DrawRect_NearlyTransparentColorMostlyPreservesPixel );
+   RUN_TEST( test_Display_DrawRect_TransparentColorDoesNotDarkenExistingPixelsWhenDayFilterIsActive );
+   RUN_TEST( test_Display_DrawRect_AppliesDaylightFilterToOpaquePixels );
    RUN_TEST( test_Display_DrawRect_ClipsRectangleToDisplayBounds );
 
    RUN_TEST( test_Display_DrawVector4i_UsesVectorAsRectangle );
