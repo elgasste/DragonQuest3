@@ -68,6 +68,7 @@ global TileMapPortal_t* g_testPortal;
 global u32 g_tileMapId;
 global u32 g_tileMapCenterEntityCount;
 global AnimationChain_t* g_animationChain;
+global r32 g_dayFilterIntensity;
 
 void* MemArena_AllocMem( MemArena_t* arena, size_t size )
 {
@@ -126,6 +127,7 @@ void Input_ResetPressStates( Input_t* input )
 Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 {
    g_display = (Display_t*)MemArena_AllocMem( memArena, sizeof( Display_t ) );
+   g_display->dayFilterIntensity = 1.0f;
    UNUSED_PARAM( w );
    UNUSED_PARAM( h );
    return g_display;
@@ -135,6 +137,17 @@ void Display_Free( Display_t* display, MemArena_t* memArena )
 {
    MemArena_FreeMem( memArena, display );
    g_displayFreeCount++;
+}
+
+r32 Display_GetDayFilterIntensity( Display_t* display )
+{
+   return display->dayFilterIntensity;
+}
+
+void Display_SetDayFilterIntensity( Display_t* display, r32 intensity )
+{
+   display->dayFilterIntensity = intensity;
+   g_dayFilterIntensity = intensity;
 }
 
 Entity_t* Entity_Create( MemArena_t* memArena, ActiveSprite_t* sprite )
@@ -584,6 +597,53 @@ void setUp( void )
    g_testPortal = 0;
    g_tileMapId = 1;
    g_tileMapCenterEntityCount = 0;
+   g_dayFilterIntensity = 1.0f;
+}
+
+void test_Game_IncrementDaylightFactor_UsesFullDayIntensityAtHighDaylight( void )
+{
+   Game_t* game = CreateGame();
+
+   TEST_ASSERT_FLOAT_WITHIN( 0.000001f, 1.0f, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+
+   Game_IncrementDaylightFactor( game );
+
+   TEST_ASSERT_FLOAT_WITHIN( 0.000001f, 1.0f, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_IncrementDaylightFactor_UsesInterpolatedIntensityDuringDayCycle( void )
+{
+   Game_t* game = CreateGame();
+   r32 targetFactor = 0.50f;
+   r32 expectedIntensity;
+
+   while ( Game_GetDaylightFactor( game ) > targetFactor )
+   {
+      Game_IncrementDaylightFactor( game );
+   }
+
+   expectedIntensity = ( Game_GetDaylightFactor( game ) - DAY_FACTOR_LOW_CUTOFF ) / ( DAY_FACTOR_HIGH_CUTOFF - DAY_FACTOR_LOW_CUTOFF );
+   TEST_ASSERT_FLOAT_WITHIN( 0.001f, expectedIntensity, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_IncrementDaylightFactor_UsesFullNightIntensityAtLowDaylight( void )
+{
+   Game_t* game = CreateGame();
+
+   while ( !Game_GetIsAM( game ) )
+   {
+      Game_IncrementDaylightFactor( game );
+   }
+
+   TEST_ASSERT_EQUAL_FLOAT( 0.0f, Game_GetDaylightFactor( game ) );
+   TEST_ASSERT_EQUAL_FLOAT( 0.0f, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+
+   Game_IncrementDaylightFactor( game );
+
+   TEST_ASSERT_EQUAL_FLOAT( 0.0f, Display_GetDayFilterIntensity( Game_GetDisplay( game ) ) );
+   Game_Free( game, (MemArena_t*)1 );
 }
 
 void tearDown( void ) {}
@@ -665,6 +725,48 @@ void test_Game_Create_InitializesDependenciesAndDefaultState( void )
    TEST_ASSERT_EQUAL_UINT( 3, g_playerSpriteTextureIndex );
    TEST_ASSERT_EQUAL_INT( -2, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).x );
    TEST_ASSERT_EQUAL_INT( -4, Entity_GetSpriteOffset( Game_GetPlayerEntity( game, 0 ) ).y );
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f, Game_GetDaylightFactor( game ) );
+   TEST_ASSERT_FALSE( Game_GetIsAM( game ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_IncrementDaylightFactor_ChangesByOneFrame( void )
+{
+   Game_t* game = CreateGame();
+   r32 frameChange = 1.0f / ( DAY_FACTOR_TOTAL_SECONDS * (r32)CLOCK_FPS );
+
+   Game_IncrementDaylightFactor( game );
+
+   TEST_ASSERT_FLOAT_WITHIN( 0.000001f, 1.0f - frameChange, Game_GetDaylightFactor( game ) );
+   TEST_ASSERT_FALSE( Game_GetIsAM( game ) );
+
+   Game_Free( game, (MemArena_t*)1 );
+}
+
+void test_Game_IncrementDaylightFactor_ReversesAtDaylightBoundaries( void )
+{
+   u32 frameCount = 0;
+   Game_t* game = CreateGame();
+
+   while ( !Game_GetIsAM( game ) && frameCount < 4000 )
+   {
+      Game_IncrementDaylightFactor( game );
+      frameCount++;
+   }
+
+   TEST_ASSERT_EQUAL_FLOAT( 0.0f, Game_GetDaylightFactor( game ) );
+   TEST_ASSERT_TRUE( Game_GetIsAM( game ) );
+
+   frameCount = 0;
+   while ( Game_GetIsAM( game ) && frameCount < 4000 )
+   {
+      Game_IncrementDaylightFactor( game );
+      frameCount++;
+   }
+
+   TEST_ASSERT_EQUAL_FLOAT( 1.0f, Game_GetDaylightFactor( game ) );
+   TEST_ASSERT_FALSE( Game_GetIsAM( game ) );
 
    Game_Free( game, (MemArena_t*)1 );
 }
@@ -824,6 +926,12 @@ int main( void )
    
    RUN_TEST( test_Game_Create_InitializesPlayerOrder );
    RUN_TEST( test_Game_Create_InitializesDependenciesAndDefaultState );
+   
+   RUN_TEST( test_Game_IncrementDaylightFactor_ChangesByOneFrame );
+   RUN_TEST( test_Game_IncrementDaylightFactor_ReversesAtDaylightBoundaries );
+   RUN_TEST( test_Game_IncrementDaylightFactor_UsesFullDayIntensityAtHighDaylight );
+   RUN_TEST( test_Game_IncrementDaylightFactor_UsesInterpolatedIntensityDuringDayCycle );
+   RUN_TEST( test_Game_IncrementDaylightFactor_UsesFullNightIntensityAtLowDaylight );
 
    RUN_TEST( test_Game_SetPlayerRect_UpdatesPlayerRectangle );
 

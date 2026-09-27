@@ -260,9 +260,9 @@ u32 TileMap_GetTilesY( TileMap_t* tileMap )
    return tileMap->info.tilesY;
 }
 
-b32 TileMap_GetWraps( TileMap_t* tileMap )
+u32 TileMap_GetFlags( TileMap_t* tileMap )
 {
-   return tileMap->info.wraps;
+   return tileMap->info.flags;
 }
 
 u32 TileMap_GetPortalCount( TileMap_t* tileMap )
@@ -349,7 +349,7 @@ void TileMap_AnchorViewportToPointUnits( TileMap_t* tileMap, u32 x, u32 y )
    newViewportX = (i32)x - halfViewportW;
    newViewportY = (i32)y - halfViewportH;
 
-   if ( !tileMap->info.wraps )
+   if ( !TILEMAP_GET_WRAPS( tileMap->info.flags ) )
    {
       if ( viewport.w >= tileMapW )
       {
@@ -432,7 +432,7 @@ u32 TileMap_GetTileIndexForEntity( TileMap_t* tileMap, Entity_t* entity )
 
    tilesX = (i32)tileMap->info.tilesX;
    tilesY = (i32)tileMap->info.tilesY;
-   if ( tileMap->info.wraps )
+   if ( TILEMAP_GET_WRAPS( tileMap->info.flags ) )
    {
       tileX %= tilesX;
       tileY %= tilesY;

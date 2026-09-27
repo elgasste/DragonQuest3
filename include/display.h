@@ -19,6 +19,9 @@ void Display_Free( Display_t* display, MemArena_t* memArena );
 u32 Display_GetWidth( Display_t* display );
 u32 Display_GetHeight( Display_t* display );
 const u32* Display_GetPixels( Display_t* display );
+r32 Display_GetDayFilterIntensity( Display_t* display );
+
+void Display_SetDayFilterIntensity( Display_t* display, r32 intensity );
 
 void Display_Fill( Display_t* display, u32 color );
 void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color );

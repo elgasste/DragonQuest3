@@ -6,6 +6,15 @@
 #include "vector.h"
 #include "direction.h"
 
+#define TILEMAP_WRAPS                              0x1
+#define TILEMAP_AFFECTS_DAYLIGHT                   0x2
+
+#define TILEMAP_GET_WRAPS( f )                     ( ( f ) & TILEMAP_WRAPS )
+#define TILEMAP_GET_AFFECTS_DAYLIGHT( f )          ( ( f ) & TILEMAP_AFFECTS_DAYLIGHT )
+
+#define TILEMAP_SET_WRAPS( f )                     ( ( f ) |= TILEMAP_WRAPS )
+#define TILEMAP_SET_AFFECTS_DAYLIGHT( f )          ( ( f ) |= TILEMAP_AFFECTS_DAYLIGHT )
+
 typedef enum TileSpeed_t
 {
    TileSpeed_ExtraSlow = 0,
@@ -49,9 +58,9 @@ typedef struct TileMapInfo_t
    u32 id;
    u32 tilesX;
    u32 tilesY;
-   b32 wraps;
    u32 portalCount;
    u32 npcCount;
+   u32 flags;
 }
 TileMapInfo_t;
 END_PACKED_STRUCT
@@ -64,9 +73,9 @@ void TileMap_Free( TileMap_t* tileMap, MemArena_t* memArena );
 u32 TileMap_GetId( TileMap_t* tileMap );
 u32 TileMap_GetTilesX( TileMap_t* tileMap );
 u32 TileMap_GetTilesY( TileMap_t* tileMap );
-b32 TileMap_GetWraps( TileMap_t* tileMap );
 u32 TileMap_GetPortalCount( TileMap_t* tileMap );
 u32 TileMap_GetNpcCount( TileMap_t* tileMap );
+u32 TileMap_GetFlags( TileMap_t* tileMap );
 Tile_t* TileMap_GetTile( TileMap_t* tileMap, u32 tileIndex );
 TileMapPortal_t* TileMap_GetPortal( TileMap_t* tileMap, u32 tileIndex );
 Npc_t* TileMap_GetNpc( TileMap_t* tileMap, u32 npcIndex );

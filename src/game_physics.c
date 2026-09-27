@@ -19,7 +19,7 @@ internal void GamePhysics_AdjustPlayerHistoriesForWrap( Game_t* game, Vector4i32
 
 void Game_TicPhysics( Game_t* game )
 {
-   u32 i;
+   u32 i, flags;
    TileMap_t* tileMap;
    Player_t* activePlayer;
    Vector4i32_t playerRectPrev, playerRectNew;
@@ -28,6 +28,7 @@ void Game_TicPhysics( Game_t* game )
    playerRectPrev = Entity_GetRect( Player_GetEntity( activePlayer ) );
 
    tileMap = Game_GetTileMap( game );
+   flags = TileMap_GetFlags( tileMap );
    GamePhysics_TicEntity( game, Player_GetEntity( activePlayer ), True );
 
    for ( i = 0; i < TileMap_GetNpcCount( tileMap ); i++ )
@@ -36,13 +37,20 @@ void Game_TicPhysics( Game_t* game )
    }
 
    playerRectNew = Entity_GetRect( Player_GetEntity( activePlayer ) );
-   if ( TileMap_GetWraps( tileMap ) )
+
+   if ( TILEMAP_GET_WRAPS( flags ) )
    {
       GamePhysics_AdjustPlayerHistoriesForWrap( game, playerRectPrev, playerRectNew );
    }
+
    if ( playerRectPrev.x != playerRectNew.x || playerRectPrev.y != playerRectNew.y )
    {
       GamePhysics_ChainPlayers( game );
+
+      if ( TILEMAP_GET_AFFECTS_DAYLIGHT( flags ) )
+      {
+         Game_IncrementDaylightFactor( game );
+      }
    }
 }
 
@@ -112,7 +120,7 @@ internal void GamePhysics_TicEntity( Game_t* game, Entity_t* entity, b32 isPlaye
    Entity_SetPosition( entity, entityRect.x, entityRect.y );
 
    // clamp the player to the edge of the map as well, if it doesn't wrap
-   if ( !TileMap_GetWraps( tileMap ) )
+   if ( !TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) ) )
    {
       mapWidth = (i32)( TileMap_GetTilesX( tileMap ) * TileTextureSet_GetTileSize( tileTextureSet ) ) * WORLD_UNITS_PER_PIXEL;
       mapHeight = (i32)( TileMap_GetTilesY( tileMap ) * TileTextureSet_GetTileSize( tileTextureSet ) ) * WORLD_UNITS_PER_PIXEL;
@@ -204,7 +212,7 @@ internal b32 GamePhysics_RectCollidesWithNonPassableTile( TileMap_t* tileMap, Ve
    {
       for ( tileX = firstTileX; tileX <= lastTileX; tileX++ )
       {
-         if ( TileMap_GetWraps( tileMap ) )
+         if ( TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) ) )
          {
             tileIndex = (u32)( ( ( tileY % tilesY ) + tilesY ) % tilesY ) * (u32)tilesX + (u32)( ( ( tileX % tilesX ) + tilesX ) % tilesX );
          }

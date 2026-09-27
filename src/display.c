@@ -8,9 +8,11 @@
 struct Display_t
 {
    PixelBuffer_t* buffer;
+   r32 dayFilterIntensity;
 };
 
 internal u32 Display_AlphaBlendColor( u32 destination, u32 source );
+internal u32 Display_DaylightFilterColor( Display_t* display, u32 color );
 internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSizePixels );
 
 size_t Display_GetStructSize( void )
@@ -22,6 +24,7 @@ Display_t* Display_Create( MemArena_t* memArena, u32 w, u32 h )
 {
    Display_t* display = (Display_t*)MemArena_AllocMem( memArena, sizeof( Display_t ) );
    display->buffer = PixelBuffer_Create( memArena, w, h );
+   display->dayFilterIntensity = 1.0f;
    return display;
 }
 
@@ -44,6 +47,16 @@ u32 Display_GetHeight( Display_t* display )
 const u32* Display_GetPixels( Display_t* display )
 {
    return PixelBuffer_GetPixels( display->buffer );
+}
+
+r32 Display_GetDayFilterIntensity( Display_t* display )
+{
+   return display->dayFilterIntensity;
+}
+
+void Display_SetDayFilterIntensity( Display_t* display, r32 intensity )
+{
+   display->dayFilterIntensity = intensity;
 }
 
 void Display_Fill( Display_t* display, u32 color )
@@ -101,7 +114,15 @@ void Display_DrawRect( Display_t* display, i32 x, i32 y, i32 w, i32 h, u32 color
    {
       for ( col = 0; col < w; col++ )
       {
-         *mem = Display_AlphaBlendColor( *mem, color );
+         if ( ( color >> 24 ) == 0 )
+         {
+            *mem = Display_AlphaBlendColor( *mem, color );
+         }
+         else
+         {
+            *mem = Display_AlphaBlendColor( *mem, color );
+            *mem = Display_DaylightFilterColor( display, *mem );
+         }
          mem++;
       }
 
@@ -166,7 +187,16 @@ void Display_DrawBuffer( Display_t* display, u32* buffer, u32 bufferW, u32 buffe
    {
       for ( col = bufferOffsetL; col < (i32)( bufferW - bufferOffsetR ); col++ )
       {
-         *displayMem = Display_AlphaBlendColor( *displayMem, buffer[( row * bufferW ) + col] );
+         u32 source = buffer[( row * bufferW ) + col];
+         if ( ( source >> 24 ) == 0 )
+         {
+            *displayMem = Display_AlphaBlendColor( *displayMem, source );
+         }
+         else
+         {
+            *displayMem = Display_AlphaBlendColor( *displayMem, source );
+            *displayMem = Display_DaylightFilterColor( display, *displayMem );
+         }
          displayMem++;
       }
 
@@ -199,7 +229,7 @@ void Display_DrawTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTe
    tilesY = TileMap_GetTilesY( tileMap );
    tileMapSizeX = (i32)( tilesX * tileSizePixels );
    tileMapSizeY = (i32)( tilesY * tileSizePixels );
-   wraps = TileMap_GetWraps( tileMap );
+   wraps = TILEMAP_GET_WRAPS( TileMap_GetFlags( tileMap ) );
 
    if ( !wraps && viewportInPixels.w >= tileMapSizeX && viewportInPixels.h >= tileMapSizeY )
    {
@@ -280,6 +310,30 @@ internal u32 Display_AlphaBlendColor( u32 destination, u32 source )
    blue = ( ( destination & 0xFF ) * inverseAlpha + ( source & 0xFF ) * alpha ) / 0xFF;
 
    return ( red << 16 ) | ( green << 8 ) | blue;
+}
+
+internal u32 Display_DaylightFilterColor( Display_t* display, u32 color )
+{
+   u32 red, green, blue;
+   r32 rgFactor, bFactor, rgValue, bValue;
+
+   // the lower these are, the lighter the colors
+   rgFactor = 0.72f;
+   bFactor = 0.45f;
+
+   // leave the blue colors a bit lighter, feels more like nighttime
+   rgValue = 1.0f - ( rgFactor * ( 1.0f - display->dayFilterIntensity ) );
+   bValue = 1.0f - ( bFactor * ( 1.0f - display->dayFilterIntensity ) );
+   
+   red = ( ( color >> 16 ) & 0xFF );
+   green = ( ( color >> 8 ) & 0xFF );
+   blue = ( color & 0xFF );
+
+   red = (u32)( red * rgValue );
+   green = (u32)( green * rgValue );
+   blue = (u32)( blue * bValue );
+
+   return ( (u32)red << 16 ) | ( (u32)green << 8 ) | (u32)blue;
 }
 
 internal void Display_DrawWrappedTileMapViewport( Display_t* display, TileMap_t* tileMap, TileTextureSet_t* tileTextureSet, i32 displayX, i32 displayY, u32 tilesX, u32 tilesY, u32 tileSizePixels )

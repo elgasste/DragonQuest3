@@ -6,6 +6,7 @@ typedef struct PixelBuffer_t PixelBuffer_t;
 typedef struct Display_t
 {
    PixelBuffer_t* buffer;
+   r32 dayFilterIntensity;
 }
 Display_t;
 
