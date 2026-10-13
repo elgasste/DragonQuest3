@@ -1,7 +1,7 @@
 ﻿using DragonQuest3Editor.ViewModels;
 using System.Windows;
 
-namespace DragonQuest3Editor
+namespace DragonQuest3Editor.Views
 {
    public partial class MainWindow : Window
    {
