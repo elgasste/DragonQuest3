@@ -4,3 +4,6 @@ build/
 .vscode
 Testing/
 .obj
+.user
+**/bin/
+**/obj/
