@@ -4,6 +4,8 @@ namespace DragonQuest3Editor.GameData
 {
    public class GameDataRoot
    {
+      public GameDataVersion Version { get; set; } = new( Constants.GameDataLatestVersionMajor, Constants.GameDataLatestVersionMinor, Constants.GameDataLatestVersionMaint );
+
       public GameDataRoot()
       {
       }
